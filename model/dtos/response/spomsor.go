@@ -1,0 +1,13 @@
+package response
+
+type SponsorResponse struct {
+	ID            string                `json:"id"`
+	FirstName     string                `json:"first_name"`
+	LastName      string                `json:"last_name"`
+	Gender        string                `json:"gender"`
+	PhoneNumber   string                `json:"phone_number"`
+	Email         string                `json:"email"`
+	Name          string                `json:"name"`
+	Url           string                `json:"url"`
+	Contributions []TransactionResponse `json:"contributions"`
+}

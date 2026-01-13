@@ -1,0 +1,1227 @@
+basePath: /
+definitions:
+  entities.RegistrationRequest:
+    properties:
+      approvers:
+        items:
+          type: string
+        type: array
+      avatar_blob_id:
+        type: string
+      closed_at:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      identity_card_blob_id:
+        type: string
+      identity_code:
+        type: string
+      is_confirm_register:
+        description: Default as false, when status aprroved, user clicks to update
+          to true, call smart contract to register role
+        type: boolean
+      last_name:
+        type: string
+      phone_number:
+        type: string
+      refuse_reasons:
+        items:
+          type: string
+        type: array
+      refusers:
+        items:
+          type: string
+        type: array
+      region:
+        type: string
+      register_role:
+        type: string
+      status:
+        description: e.g. "Pending", "Approved", "Refused"
+        type: string
+      updated_at:
+        type: string
+    type: object
+  request.AddChildStringMetadaRequest:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    required:
+    - key
+    - value
+    type: object
+  request.CreateRegistrationRequest:
+    properties:
+      avatar_blob_id:
+        type: string
+      identity_card_blob_id:
+        type: string
+      register_role:
+        type: string
+    required:
+    - avatar_blob_id
+    - identity_card_blob_id
+    - register_role
+    type: object
+  request.DonateRequest:
+    properties:
+      amount:
+        minimum: 2000
+        type: integer
+      message:
+        type: string
+    required:
+    - amount
+    type: object
+  request.ExecuteTransactionRequest:
+    properties:
+      signature:
+        type: string
+      tx_bytes:
+        type: string
+    required:
+    - signature
+    - tx_bytes
+    type: object
+  request.LoginRequestV2:
+    properties:
+      address:
+        type: string
+      sub:
+        type: string
+    required:
+    - address
+    - sub
+    type: object
+  request.MoneyActionRequest:
+    properties:
+      action_type:
+        description: '"donate" || "withdraw"'
+        type: string
+      amoun:
+        minimum: 1
+        type: integer
+      coin_type:
+        description: e.g. "SUI", "USDC"
+        type: string
+      message:
+        type: string
+      sender:
+        type: string
+    required:
+    - action_type
+    - amoun
+    - sender
+    type: object
+  request.UploadChildRequest:
+    properties:
+      avatar_blob_id:
+        type: string
+      date_of_birth:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      identity_code:
+        type: string
+      last_name:
+        type: string
+    required:
+    - avatar_blob_id
+    - date_of_birth
+    - first_name
+    - gender
+    - last_name
+    type: object
+  request.UploadProfileRequest:
+    properties:
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      identity_code:
+        type: string
+      last_name:
+        type: string
+      phone_number:
+        type: string
+      region:
+        type: string
+    required:
+    - date_of_birth
+    - email
+    - first_name
+    - gender
+    - identity_code
+    - last_name
+    - phone_number
+    - region
+    type: object
+  request.VoteRequest:
+    properties:
+      is_vote_yes:
+        type: boolean
+      refuse_reason:
+        type: string
+    required:
+    - is_vote_yes
+    type: object
+  response.BuildTransactionResponse:
+    properties:
+      tx_bytes:
+        type: string
+    type: object
+  response.ChildResponse:
+    properties:
+      avatar_blob_id:
+        type: string
+      date_of_birth:
+        type: string
+      dynamic_fields:
+        items:
+          type: string
+        type: array
+      dynamic_values:
+        additionalProperties: true
+        type: object
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      identity_code:
+        type: string
+      image_blob_ids:
+        items:
+          type: string
+        type: array
+      last_name:
+        type: string
+      region:
+        type: string
+      updated_at:
+        type: string
+      upload_image_periods:
+        items:
+          type: string
+        type: array
+      uploaded_at:
+        type: string
+    type: object
+  response.MessageAPIResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  response.PaginationDataResponse:
+    properties:
+      data: {}
+      page:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  response.PersonalProfileResponse:
+    properties:
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      identity_code:
+        type: string
+      last_name:
+        type: string
+      phone_number:
+        type: string
+      region:
+        type: string
+    type: object
+  response.SponsorResponse:
+    properties:
+      contributions:
+        items:
+          $ref: '#/definitions/response.TransactionResponse'
+        type: array
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      name:
+        type: string
+      phone_number:
+        type: string
+      url:
+        type: string
+    type: object
+  response.StaffNftResponse:
+    properties:
+      first_name:
+        type: string
+      id:
+        type: string
+      identity_code:
+        type: string
+      last_name:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+      url:
+        type: string
+    type: object
+  response.StaffResponse:
+    properties:
+      avatar_blob_id:
+        type: string
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      identity_code:
+        type: string
+      last_name:
+        type: string
+      nfts:
+        items:
+          $ref: '#/definitions/response.StaffNftResponse'
+        type: array
+      phone_number:
+        type: string
+      region:
+        type: string
+      string:
+        type: string
+      uploaded_at:
+        type: string
+      user:
+        type: string
+    type: object
+  response.TransactionResponse:
+    properties:
+      action_type:
+        description: e.g., "Deposit", "Withdraw"
+        type: string
+      actor_address:
+        type: string
+      amount:
+        type: integer
+      coin_type:
+        description: e.g., "Sui", "USDC"
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      message:
+        type: string
+    type: object
+host: locahost:8080
+info:
+  contact: {}
+  description: API for RaiseChild Server
+  title: RaiseChild Server API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns access tokens/session data
+      parameters:
+      - description: Login credentials (e.g., address and sub)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.LoginRequestV2'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: User login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidates the session for the specified user address
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - auth
+  /auth/nonce/{address}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a unique nonce for the user to sign
+      parameters:
+      - description: User wallet address
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get login nonce
+      tags:
+      - auth
+  /auth/salt/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a unique salt for the user to login
+      parameters:
+      - description: User sub
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get wallet salt
+      tags:
+      - auth
+  /children:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of children based on filter criteria
+      parameters:
+      - in: query
+        name: gender
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: year_of_birth
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List children
+      tags:
+      - children
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for uploading new child information
+        (e.g., "height", "weight") on-chain
+      parameters:
+      - description: 'Child Information (e.g. '
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UploadChildRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload a new child to Sui Blockchain
+      tags:
+      - children
+  /children/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves child information by its unique ID
+      parameters:
+      - description: Child ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ChildResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get child details
+      tags:
+      - children
+  /children/metadata/number/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for adding new field information
+        to a child information (e.g., height, weight) on-chain
+      parameters:
+      - description: Add child number metadata details (e.g., key, value)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.AddChildStringMetadaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add a new number metadata to a child object
+      tags:
+      - children
+  /children/metadata/string/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for adding new field information
+        to a child information (e.g., height, weight) on-chain
+      parameters:
+      - description: Add child string metadata details (e.g., key, value)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.AddChildStringMetadaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add a new string metadata to a child object
+      tags:
+      - children
+  /payments/callback/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Handles the transaction callback/webhook from the payment provider
+        to update transaction status by ID and build on-chain transaction.
+      parameters:
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Process payment callback
+      tags:
+      - payment
+  /payments/donate:
+    post:
+      consumes:
+      - application/json
+      description: Initiates a donation process, binds the request JSON, and returns
+        payment or redirect information.
+      parameters:
+      - description: Donation Details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.DonateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Note: Redirect user to transaction checkout url'
+          schema:
+            type: string
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Process a donation
+      tags:
+      - payment
+  /profiles/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Upload an account personal information based on profile ID
+      parameters:
+      - description: Profile ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Profile Information
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UploadProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PersonalProfileResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload an account personal information
+      tags:
+      - profile
+  /registrations:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve registration requests with filtering based on query parameters
+      parameters:
+      - in: query
+        name: gender
+        type: string
+      - in: query
+        name: is_closed
+        type: boolean
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: register_role
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get a list of registration requests
+      tags:
+      - registration
+    post:
+      consumes:
+      - application/json
+      description: Submit a new registration request. The phone number should be in
+        a valid format (e.g., 090...) and email must be valid.
+      parameters:
+      - description: Registration Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateRegistrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.RegistrationRequest'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new registration request
+      tags:
+      - registration
+  /registrations/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the full details of a single registration request by its
+        unique ID
+      parameters:
+      - description: Registration Request ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get registration request details
+      tags:
+      - registration
+  /registrations/{id}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for registering new staff information
+        on-chain
+      parameters:
+      - description: Registration Request ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm and register a staff role uploaded to Sui Blockhain
+      tags:
+      - children
+      - registration
+  /registrations/{id}/vote:
+    post:
+      consumes:
+      - application/json
+      description: Submit an approval or refusal vote for a specific registration
+        request.
+      parameters:
+      - description: Registration Request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Vote Details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.VoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Vote on a registration request
+      tags:
+      - registration
+  /registrations/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve specific registration requests associated with a unique
+        wallet address
+      parameters:
+      - default: 0x...
+        description: User Wallet Address
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get registration requests by Wallet ID
+      tags:
+      - registration
+  /sponsors:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of sponsors based on filter criteria
+      parameters:
+      - in: query
+        name: gender
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List sponsors
+      tags:
+      - sponsor
+  /sponsors/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves sponsor information by unique ID
+      parameters:
+      - description: Sponsor ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SponsorResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get sponsor details
+      tags:
+      - sponsor
+  /staffs:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of staffs based on filter criteria
+      parameters:
+      - in: query
+        name: gender
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: role
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: year_of_birth
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List staffs
+      tags:
+      - staffs
+  /staffs/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves staff information by its unique ID
+      parameters:
+      - description: Staff ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.StaffResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get staff details
+      tags:
+      - staffs
+  /tx/build/money:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for money actions (e.g., donate,
+        withdraw) on-chain
+      parameters:
+      - description: Money action details (e.g., amount, sender)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.MoneyActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Build a money-related transaction
+      tags:
+      - transactions
+  /tx/execute:
+    post:
+      consumes:
+      - application/json
+      description: Processes a transaction request and executes it on the Sui Network
+        blockchain
+      parameters:
+      - description: Transaction execution details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ExecuteTransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Execute an on-chain transaction
+      tags:
+      - transactions
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,0 +1,180 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"log"
+	"raise-child/constants/noti"
+	"raise-child/interfaces/repository"
+	"raise-child/model/dtos/request"
+	"raise-child/model/entities"
+)
+
+type paymentRepo struct {
+	db        *sql.DB
+	errLogger *log.Logger
+}
+
+const (
+	payment_table        string = "payments"
+	payment_limit_record int    = 10
+)
+
+func InitializePaymentRepository(db *sql.DB, errLogger *log.Logger) repository.IPaymentRepository {
+	return &paymentRepo{
+		db:        db,
+		errLogger: errLogger,
+	}
+}
+
+// CreatePayment implements repository.IPaymentRepository.
+func (p *paymentRepo) CreatePayment(payment entities.Payment, ctx context.Context) error {
+	var query string = "INSERT INTO " + payment_table +
+		" (id, actor, transaction_id, " +
+		"amount, currency, status, method, cancel_reason, " +
+		"message, expired_at, created_at, updated_at) " +
+		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, payment_table) + "CreatePayment - "
+
+	if _, err := p.db.Exec(query, payment.ID, payment.Actor, payment.TransactionId,
+		payment.Amount, payment.Currency, payment.Status, payment.Method, payment.CancelReason,
+		payment.Message, payment.ExpiredAt, payment.CreatedAt, payment.UpdatedAt); err != nil {
+
+		p.errLogger.Println(errLogMsg + err.Error())
+		return errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	return nil
+}
+
+// GetPaymentById implements repository.IPaymentRepository.
+func (p *paymentRepo) GetPaymentById(id string, ctx context.Context) (*entities.Payment, error) {
+	var query string = "SELECT * FROM " + payment_table + " WHERE id = $1"
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, payment_table) + "GetPaymentById - "
+
+	var res entities.Payment
+	if err := p.db.QueryRow(query, id).Scan(
+		&res.ID, &res.Actor, &res.TransactionId,
+		&res.Amount, &res.Currency, &res.Status, &res.Method, &res.CancelReason,
+		&res.Message, &res.ExpiredAt, &res.CreatedAt, &res.UpdatedAt); err != nil {
+
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		p.errLogger.Println(errLogMsg + err.Error())
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	return &res, nil
+}
+
+// GetPayments implements repository.IPaymentRepository.
+func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Context) (*[]entities.Payment, int, error) {
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, payment_table) + "GetPayments - "
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+
+	var queryCondition string
+	var isHavePreviosCondition bool = false
+	if req.Status != "" {
+		queryCondition += fmt.Sprintf("status = %s", req.Status)
+		isHavePreviosCondition = true
+	}
+
+	if req.Method != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("method = %s", req.Method)
+		isHavePreviosCondition = true
+	}
+
+	if req.Actor != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("actor = %s", req.Actor)
+		isHavePreviosCondition = true
+	}
+
+	var filterProp string = req.FilterProp
+	if filterProp == "" {
+		filterProp = "created_at"
+	}
+
+	var sortOrder string = req.SortOrder
+	if sortOrder == "" {
+		sortOrder = "DESC"
+	}
+
+	if isHavePreviosCondition {
+		queryCondition += " "
+	}
+
+	queryCondition += fmt.Sprintf("ORDER BY %s %s", filterProp, sortOrder)
+	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
+		table:       payment_table,
+		limitAmount: payment_limit_record,
+		condition:   queryCondition,
+		page:        req.Page,
+		isGetCount:  false,
+	})
+
+	rows, err := p.db.Query(query)
+	if err != nil {
+		p.errLogger.Println(errLogMsg + err.Error())
+		return nil, 0, internalErr
+	}
+
+	var res []entities.Payment
+	for rows.Next() {
+		var x entities.Payment
+		if err := rows.Scan(
+			&x.ID, &x.Actor, &x.TransactionId,
+			&x.Amount, &x.Currency, &x.Status, &x.Method, &x.CancelReason,
+			&x.Message, &x.ExpiredAt, &x.CreatedAt, &x.UpdatedAt); err != nil {
+
+			p.errLogger.Println(errLogMsg + err.Error())
+			return nil, 0, errors.New(noti.INTERNALL_ERR_MSG)
+		}
+
+		res = append(res, x)
+	}
+
+	// Track total records in table
+	var totalRecords int
+	p.db.QueryRow(generateCountTotalRecordsQuery(payment_table, queryCondition)).Scan(&totalRecords)
+
+	return &res, caculateTotalPages(totalRecords, payment_limit_record), nil
+}
+
+// UpdatePayment implements repository.IPaymentRepository.
+func (p *paymentRepo) UpdatePayment(payment entities.Payment, ctx context.Context) error {
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, payment_table) + "UpdatePayment - "
+	var query string = "UPDATE " + payment_table + " SET status = $1, method = $2, cancel_reason = $3, updated_at = $4 WHERE id = $5"
+
+	res, err := p.db.Exec(query, payment.Status, payment.Method, payment.CancelReason, payment.UpdatedAt, payment.ID)
+
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+
+	if err != nil {
+		p.errLogger.Println(errLogMsg + err.Error())
+		return internalErr
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		p.errLogger.Println(errLogMsg + err.Error())
+		return internalErr
+	}
+
+	if rowsAffected == 0 {
+		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, payment_table))
+	}
+
+	return nil
+}
