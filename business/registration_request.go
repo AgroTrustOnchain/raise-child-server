@@ -308,6 +308,20 @@ func (r *registrationRequestService) VoteRegistrationRequest(id string, req requ
 		return errors.New(noti.ALREADY_VOTE_MESSAGE)
 	}
 
+	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    r.clients[constant.SuiTestnet],
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: r.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	// Not admins or local leaders
+	if !slices.Contains(manageObj.AdminIds, voter) && !slices.Contains(manageObj.LocalLeaderIds, voter) {
+		return errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	}
+
 	if req.IsVoteYes {
 		request.Aprrovers = append(request.Aprrovers, voter)
 	} else {

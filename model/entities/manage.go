@@ -2,7 +2,7 @@ package entities
 
 type Manage struct {
 	ID             string   `json:"id"`
-	Admin          string   `json:"admin"`
+	AdminIds       []string `json:"admin_ids"`
 	ChildIds       []string `json:"child_ids"`
 	VolunteerIds   []string `json:"volunteer_ids"`
 	LocalLeaderIds []string `json:"local_leader_ids"`
