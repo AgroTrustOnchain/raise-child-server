@@ -95,7 +95,6 @@ func (p *profileService) UploadProfile(id string, req request.UploadProfileReque
 	}
 
 	profile.IdentityCode = identityCode
-	profile.Region = strings.TrimSpace(req.Region)
 	profile.FirstName = strings.TrimSpace(req.FirstName)
 	profile.LastName = strings.TrimSpace(req.LastName)
 	profile.Gender = gender

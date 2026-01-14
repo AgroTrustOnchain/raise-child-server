@@ -21,6 +21,7 @@ type VoteRequest struct {
 
 type CreateRegistrationRequest struct {
 	RegisterRole       string `json:"register_role" validate:"required"`
+	Region             string `json:"region" validate:"required"`
 	IdentityCardBlobID string `json:"identity_card_blob_id" validate:"required"`
 	AvatarBlobID       string `json:"avatar_blob_id" validate:"required"`
 }

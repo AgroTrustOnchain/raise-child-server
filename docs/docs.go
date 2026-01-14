@@ -640,6 +640,29 @@ const docTemplate = `{
                 }
             }
         },
+        "/regions": {
+            "get": {
+                "description": "Retrieves a list of all available regions.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "regions"
+                ],
+                "summary": "Get list of regions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.RegionsResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/registrations": {
             "get": {
                 "description": "Retrieve registration requests with filtering based on query parameters",
@@ -1396,6 +1419,7 @@ const docTemplate = `{
             "required": [
                 "avatar_blob_id",
                 "identity_card_blob_id",
+                "region",
                 "register_role"
             ],
             "properties": {
@@ -1403,6 +1427,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "identity_card_blob_id": {
+                    "type": "string"
+                },
+                "region": {
                     "type": "string"
                 },
                 "register_role": {
@@ -1677,9 +1704,17 @@ const docTemplate = `{
                 },
                 "phone_number": {
                     "type": "string"
-                },
-                "region": {
-                    "type": "string"
+                }
+            }
+        },
+        "response.RegionsResponse": {
+            "type": "object",
+            "properties": {
+                "regions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

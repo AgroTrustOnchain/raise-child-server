@@ -84,10 +84,10 @@ func (p *profileRepo) IsPhoneNumberRegistered(phoneNumber string, ctx context.Co
 // UploadProfile implements repository.IProfileRepository.
 func (p *profileRepo) UploadProfile(pfl entities.Profile, ctx context.Context) error {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "UploadProfile - "
-	var query string = "UPDATE " + profile_table + " SET identity_code = $1, region = $2, first_name = $3, last_name = $4, gender = $5, date_of_birth = $6, phone_number = $8, email = $9, updated_at = $10 WHERE id = $11"
+	var query string = "UPDATE " + profile_table + " SET identity_code = $1, first_name = $2, last_name = $3, gender = $4, date_of_birth = $5, phone_number = $6, email = $7, updated_at = $8 WHERE id = $9"
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	res, err := p.db.Exec(query, pfl.IdentityCode, pfl.Region, pfl.FirstName, pfl.LastName,
+	res, err := p.db.Exec(query, pfl.IdentityCode, pfl.FirstName, pfl.LastName,
 		pfl.Gender, pfl.DateOfBirth, pfl.PhoneNumber, pfl.Email, pfl.UpdatedAt, pfl.ID)
 	if err != nil {
 		p.errLogger.Println(errLogMsg + err.Error())
@@ -160,11 +160,11 @@ func (p *profileRepo) Logout(id string, ctx context.Context) error {
 // CreateProfile implements repository.IProfileRepository.
 func (p *profileRepo) CreateProfile(pfl entities.Profile, ctx context.Context) error {
 	var query string = "INSERT INTO " + profile_table +
-		" (id, salt, created_at) values ($1, $2, $3)"
+		" (id, salt, created_at, updated_at) values ($1, $2, $3, $4)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "CreateProfile - "
 
-	if _, err := p.db.Exec(query, pfl.ID, pfl.Salt, pfl.CreatedAt); err != nil {
+	if _, err := p.db.Exec(query, pfl.ID, pfl.Salt, pfl.CreatedAt, pfl.UpdatedAt); err != nil {
 
 		p.errLogger.Println(errLogMsg + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
@@ -180,7 +180,9 @@ func (p *profileRepo) GetProfile(id string, ctx context.Context) (*entities.Prof
 
 	var res entities.Profile
 	if err := p.db.QueryRow(query, id).Scan(
-		&res.ID, &res.Salt, &res.CreatedAt); err != nil {
+		&res.ID, &res.Salt, &res.IdentityCode, &res.FirstName, &res.LastName,
+		&res.Gender, res.DateOfBirth, &res.PhoneNumber, &res.Email,
+		&res.Token, &res.UpdatedAt, &res.CreatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
 			return nil, nil

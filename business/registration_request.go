@@ -138,7 +138,7 @@ func (r *registrationRequestService) ConfirmRegistrationRequest(id string, ctx c
 				IdentityCode:       profile.IdentityCode,
 				IdentityCardBlobID: req.IdentityCardBlobID,
 				Role:               req.RegisterRole,
-				Region:             profile.Region,
+				Region:             req.Region,
 				FirstName:          profile.FirstName,
 				LastName:           profile.LastName,
 				Gender:             profile.Gender,
@@ -186,37 +186,43 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 		return nil, genericErr
 	}
 
-	if role == volunteer_role {
-		var client = r.clients[constant.SuiTestnet]
-		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-			Client:    client,
-			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
-			ErrLogger: r.errLogger,
-		}, ctx)
-		if err != nil {
-			return nil, err
-		}
+	if !isRegionExist(req.Region) {
+		return nil, genericErr
+	}
 
-		leaders, err := on_chain.GetOnChainObjects[entities.Staff](on_chain.GetOnChainObjectsRequest{
-			Client:    client,
-			ObjectIds: manageObj.LocalLeaderIds,
-			ErrLogger: r.errLogger,
-		}, ctx)
-		if err != nil {
-			return nil, err
-		}
+	var client = r.clients[constant.SuiTestnet]
+	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: r.errLogger,
+	}, ctx)
+	if err != nil {
+		return nil, err
+	}
 
-		var isRegionAvailable bool = false
-		for _, leader := range leaders {
-			if leader.Region == profile.Region {
+	leaders, err := on_chain.GetOnChainObjects[entities.Staff](on_chain.GetOnChainObjectsRequest{
+		Client:    client,
+		ObjectIds: manageObj.LocalLeaderIds,
+		ErrLogger: r.errLogger,
+	}, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var isRegionAvailable bool = false
+	for _, leader := range leaders {
+		if leader.Region == req.Region {
+			if role == volunteer_role {
 				isRegionAvailable = true
 				break
+			} else if role == local_leader_role {
+				return nil, errors.New(noti.LEADER_EXISTS_REGION_MESSAGE)
 			}
 		}
+	}
 
-		if !isRegionAvailable {
-			return nil, errors.New(noti.REGION_NOT_ADDED_WARN_MSG)
-		}
+	if !isRegionAvailable {
+		return nil, errors.New(noti.REGION_NOT_ADDED_WARN_MSG)
 	}
 
 	// todo: validate identity code
@@ -227,7 +233,7 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 		IdentityCode:       util.StanderizeString(profile.IdentityCode),
 		IdentityCardBlobID: strings.TrimSpace(req.IdentityCardBlobID),
 		AvatarBlobID:       strings.TrimSpace(req.AvatarBlobID),
-		Region:             profile.Region,
+		Region:             req.Region,
 		FirstName:          strings.TrimSpace(profile.FirstName),
 		LastName:           strings.TrimSpace(profile.LastName),
 		Gender:             profile.Gender,

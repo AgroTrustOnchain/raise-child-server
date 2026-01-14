@@ -9,7 +9,6 @@ type Profile struct {
 	ID           string    `json:"id"`
 	Salt         string    `json:"salt"`
 	IdentityCode string    `json:"identity_code"`
-	Region       string    `json:"region"`
 	FirstName    string    `json:"first_name"`
 	LastName     string    `json:"last_name"`
 	Gender       string    `json:"gender"`
@@ -29,7 +28,6 @@ func (p Profile) ToPersonalProfile() response.PersonalProfileResponse {
 	return response.PersonalProfileResponse{
 		ID:           p.ID,
 		IdentityCode: p.IdentityCode,
-		Region:       p.Region,
 		FirstName:    p.FirstName,
 		LastName:     p.LastName,
 		Gender:       p.Gender,

@@ -98,12 +98,14 @@ func (a *authService) GetSalt(id string, ctx context.Context) (response.GetSaltR
 
 	if profile == nil {
 		var salt string = util.GenerateString()
+		var curTime = time.Now()
 		return response.GetSaltResponse{
 				Salt: salt,
 			}, a.profileRepo.CreateProfile(entities.Profile{
 				ID:        id,
 				Salt:      salt,
-				CreatedAt: time.Now(),
+				CreatedAt: curTime,
+				UpdatedAt: curTime,
 			}, ctx)
 	}
 

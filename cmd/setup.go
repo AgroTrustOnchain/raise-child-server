@@ -35,6 +35,9 @@ func setupApiRoutes(server *gin.Engine) {
 	// Sponsor API endpoints
 	api_route.InitializeSponsorRoutes(server)
 
+	// Region API endpoints
+	api_route.InitializeRegionRoutes(server)
+
 	// Default route to Swagger documentation
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusMovedPermanently, "/swagger/index.html#")

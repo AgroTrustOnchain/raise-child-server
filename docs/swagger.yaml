@@ -70,11 +70,14 @@ definitions:
         type: string
       identity_card_blob_id:
         type: string
+      region:
+        type: string
       register_role:
         type: string
     required:
     - avatar_blob_id
     - identity_card_blob_id
+    - region
     - register_role
     type: object
   request.DonateRequest:
@@ -259,8 +262,13 @@ definitions:
         type: string
       phone_number:
         type: string
-      region:
-        type: string
+    type: object
+  response.RegionsResponse:
+    properties:
+      regions:
+        items:
+          type: string
+        type: array
     type: object
   response.SponsorResponse:
     properties:
@@ -779,6 +787,21 @@ paths:
       summary: Upload an account personal information
       tags:
       - profile
+  /regions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all available regions.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.RegionsResponse'
+      summary: Get list of regions
+      tags:
+      - regions
   /registrations:
     get:
       consumes:

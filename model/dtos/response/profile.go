@@ -3,7 +3,6 @@ package response
 type PersonalProfileResponse struct {
 	ID           string `json:"id"`
 	IdentityCode string `json:"identity_code"`
-	Region       string `json:"region"`
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name"`
 	Gender       string `json:"gender"`
