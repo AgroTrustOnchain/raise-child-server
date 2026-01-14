@@ -10,7 +10,8 @@ type GetChildrenRequest struct {
 }
 
 type UploadChildRequest struct {
-	IdentityCode string `json:"identity_code"`
+	IdentityCode string `json:"identity_code" validate:"required"`
+	Region       string `json:"region" validate:"required"`
 	FirstName    string `json:"first_name" validate:"required"`
 	LastName     string `json:"last_name" validate:"required"`
 	Gender       string `json:"gender" validate:"required"`

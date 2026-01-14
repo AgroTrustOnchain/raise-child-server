@@ -28,6 +28,8 @@ const (
 
 	STILL_PENDING_REQUEST_MESSAGE string = "This request is in pending request."
 
+	CHILD_STILL_REQUESTED_MESSAGE string = "This child is now being requested."
+
 	TOKEN_EXPIRED_MESSAGE string = "Token expired."
 
 	LEADER_EXISTS_REGION_MESSAGE string = "This region already has local leader."

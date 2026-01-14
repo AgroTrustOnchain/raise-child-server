@@ -24,7 +24,7 @@ func setupApiRoutes(server *gin.Engine) {
 	api_route.InitializeChildRoutes(server)
 
 	// Registraion Request API endpoints
-	api_route.InitializeRegistraionRequestRoute(server)
+	api_route.InitializeRegistrationRequestRoute(server)
 
 	// Profile API endpoints
 	api_route.InitializeProfileRoutes(server)
@@ -37,6 +37,9 @@ func setupApiRoutes(server *gin.Engine) {
 
 	// Region API endpoints
 	api_route.InitializeRegionRoutes(server)
+
+	// Upload Child Request API endpoints
+	api_route.InitializeUploadChildRequestRoute(server)
 
 	// Default route to Swagger documentation
 	server.GET("/", func(ctx *gin.Context) {

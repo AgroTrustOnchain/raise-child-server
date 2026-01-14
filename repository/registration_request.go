@@ -91,9 +91,9 @@ func (r *registratioRequestRepo) CreateRegistrationRequest(req entities.Registra
 func (r *registratioRequestRepo) UpdateRegistrationRequest(req entities.RegistrationRequest, ctx context.Context) error {
 	var query string = "UPDATE " + registraion_request_table + " SET " +
 		"region = $1, first_name = $2, last_name = $3, gender = $4, " +
-		"date_of_birth = $5, phone_number = $5, email = $6, " +
-		"approvers = $7, refusers = $8, refuse_reasons = $9, " +
-		"status = $10, is_confirm_register = $11, updated_at = $12 WHERE id = $13"
+		"date_of_birth = $5, phone_number = $6, email = $7, " +
+		"approvers = $8, refusers = $9, refuse_reasons = $10, " +
+		"status = $11, is_confirm_register = $12, updated_at = $13 WHERE id = $14"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.REGISTRAION_REQUEST_REPOSITORY) + "UpdateRegistrationRequest - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
@@ -255,7 +255,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 
 // GetWalletRegistrationRequests implements repository.IRegistrationRequestRepository.
 func (r *registratioRequestRepo) GetWalletRegistrationRequests(id string, ctx context.Context) ([]entities.RegistrationRequest, error) {
-	var query string = "SELECT * FROM " + registraion_request_table + " WHERE created_by = $1"
+	var query string = "SELECT * FROM " + registraion_request_table + " WHERE created_by = $1 ORDER BY created_at DESC"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.REGISTRAION_REQUEST_REPOSITORY) + "GetWalletRegistrationRequests - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 

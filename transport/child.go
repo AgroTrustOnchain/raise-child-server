@@ -80,7 +80,7 @@ func GetChild(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.UploadChildRequest   true  "Child Information (e.g. "first name", "last name", "gender")"
-// @Success      200      {object}  response.BuildTransactionResponse
+// @Success      201      {object}  response.BuildTransactionResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."

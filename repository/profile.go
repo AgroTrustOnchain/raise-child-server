@@ -29,7 +29,6 @@ func InitializeProfileRepository(db *sql.DB, errLogger *log.Logger) repository.I
 
 // IsPersonalInfoExist implements repository.IProfileRepository.
 func (p *profileRepo) IsPersonalInfoExist(identityCode string, phoneNumber string, email string, ctx context.Context) (bool, error) {
-	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "IsPersonalInfoExist - "
 	var query string = "SELECT id FROM " + profile_table + " WHERE LOWER(email) = LOWER(" + email + ") OR phone_number = " + phoneNumber + " OR identity_code = " + identityCode + " LIMIT 1"
 
 	var id string
@@ -38,7 +37,7 @@ func (p *profileRepo) IsPersonalInfoExist(identityCode string, phoneNumber strin
 			return false, nil
 		}
 
-		p.errLogger.Println(errLogMsg + err.Error())
+		p.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "IsPersonalInfoExist - " + err.Error())
 		return false, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 

@@ -54,6 +54,59 @@ definitions:
       updated_at:
         type: string
     type: object
+  entities.UploadChildRequest:
+    properties:
+      approvers:
+        items:
+          type: string
+        type: array
+      avatar_blob_id:
+        type: string
+      closed_at:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      date_of_birth:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      identity_code:
+        type: string
+      is_confirm_upload:
+        description: Default as false, when status aprroved, user clicks to update
+          to true, call smart contract to register role
+        type: boolean
+      last_name:
+        type: string
+      refuse_reasons:
+        items:
+          type: string
+        type: array
+      refusers:
+        items:
+          type: string
+        type: array
+      region:
+        type: string
+      status:
+        description: e.g. "Pending", "Approved", "Refused"
+        type: string
+      updated_at:
+        type: string
+    required:
+    - avatar_blob_id
+    - date_of_birth
+    - first_name
+    - gender
+    - last_name
+    - region
+    type: object
   request.AddChildStringMetadaRequest:
     properties:
       key:
@@ -144,12 +197,16 @@ definitions:
         type: string
       last_name:
         type: string
+      region:
+        type: string
     required:
     - avatar_blob_id
     - date_of_birth
     - first_name
     - gender
+    - identity_code
     - last_name
+    - region
     type: object
   request.UploadProfileRequest:
     properties:
@@ -490,6 +547,228 @@ paths:
       summary: Get wallet salt
       tags:
       - auth
+  /child-upload-reqs:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of child upload requests based on query parameters.
+      parameters:
+      - in: query
+        name: gender
+        type: string
+      - in: query
+        name: is_closed
+        type: boolean
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get upload-child requests
+      tags:
+      - Child Upload Request
+    post:
+      consumes:
+      - application/json
+      description: Submit a JSON payload to create a new child upload request in the
+        system.
+      parameters:
+      - description: Upload-child request payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UploadChildRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.UploadChildRequest'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new upload-child request
+      tags:
+      - Child Upload Request
+  /child-upload-reqs/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the full details of a single upload-child request by its
+        unique ID
+      parameters:
+      - description: Upload-child Request ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get upload-child request details
+      tags:
+      - Child Upload Request
+  /child-upload-reqs/{id}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for registering new child information
+        on-chain
+      parameters:
+      - description: UploadChild Request ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm and store a child information to Sui Blockhain
+      tags:
+      - Child Upload Request
+  /child-upload-reqs/{id}/vote:
+    post:
+      consumes:
+      - application/json
+      description: Submit an approval or refusal vote for a specific child upload
+        request using its ID.
+      parameters:
+      - description: Upload Child Request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Voting details (e.g., vote type, comments)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.VoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Vote on an upload-child request
+      tags:
+      - Child Upload Request
+  /child-upload-reqs/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve child upload requests associated with a specific wallet
+        and page number.
+      parameters:
+      - description: Wallet address
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get upload-child requests by a wallet
+      tags:
+      - Child Upload Request
   /children:
     get:
       consumes:
@@ -548,8 +827,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/response.BuildTransactionResponse'
         "400":
@@ -866,8 +1145,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/entities.RegistrationRequest'
         "400":
@@ -951,7 +1230,6 @@ paths:
       - BearerAuth: []
       summary: Confirm and register a staff role uploaded to Sui Blockhain
       tags:
-      - children
       - registration
   /registrations/{id}/vote:
     post:
@@ -1021,7 +1299,7 @@ paths:
             Please try again later.
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
-      summary: Get registration requests by Wallet ID
+      summary: Get registration requests by a wallet
       tags:
       - registration
   /sponsors:

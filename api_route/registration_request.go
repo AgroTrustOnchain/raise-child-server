@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitializeRegistraionRequestRoute(server *gin.Engine) {
+func InitializeRegistrationRequestRoute(server *gin.Engine) {
 	var contextPath string = "registrations"
 
 	// Normal group

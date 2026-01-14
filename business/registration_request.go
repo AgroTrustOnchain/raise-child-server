@@ -101,26 +101,28 @@ func (r *registrationRequestService) ConfirmRegistrationRequest(id string, ctx c
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
-	// Pending preocess
-	var isHaveToUpdateRequest bool = false
-	if req.ClosedAt.Before(time.Now()) {
+	// Pending process
+	if req.ClosedAt.After(time.Now()) {
 		return response.BuildTransactionResponse{}, errors.New(noti.STILL_PENDING_REQUEST_MESSAGE)
 	} else { // Request closed
 		var rate float32 = float32(len(req.Aprrovers)) / float32(len(req.Aprrovers)+len(req.Refusers))
+		var isDenied bool = false
+
 		if rate >= approve_rate_limit {
 			req.Status = request_approved_status
 			req.IsConfirmRegister = true
 		} else {
 			req.Status = request_refused_status
+			isDenied = true
 		}
 
-		isHaveToUpdateRequest = true
 		req.UpdatedAt = time.Now()
-	}
-
-	if isHaveToUpdateRequest {
 		if err := r.registrationRequestRepo.UpdateRegistrationRequest(*req, ctx); err != nil {
 			return response.BuildTransactionResponse{}, err
+		}
+
+		if isDenied {
+			return response.BuildTransactionResponse{}, nil
 		}
 	}
 

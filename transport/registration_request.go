@@ -45,7 +45,7 @@ func GetRegistrationRequests(ctx *gin.Context) {
 }
 
 // GetWalletRegistrationRequests godoc
-// @Summary      Get registration requests by Wallet ID
+// @Summary      Get registration requests by a wallet
 // @Description  Retrieve specific registration requests associated with a unique wallet address
 // @Tags         registration
 // @Accept       json
@@ -108,7 +108,7 @@ func GetRegistrationRequest(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.CreateRegistrationRequest  true  "Registration Request Body"
-// @Success      200      {object}  entities.RegistrationRequest
+// @Success      201      {object}  entities.RegistrationRequest
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /registrations [post]
@@ -131,7 +131,7 @@ func CreateRegistrationRequest(ctx *gin.Context) {
 		Data2:    res,
 		ErrMsg:   err,
 		Context:  ctx,
-		PostType: action_type.NON_POST,
+		PostType: action_type.CREATE_ACTION,
 	})
 }
 
@@ -171,7 +171,6 @@ func VoteRegistrationRequest(ctx *gin.Context) {
 // ConfirmRegistrationRequest godoc
 // @Summary      Confirm and register a staff role uploaded to Sui Blockhain
 // @Description  Prepares and builds a transaction for registering new staff information on-chain
-// @Tags         children
 // @Tags         registration
 // @Accept       json
 // @Produce      json

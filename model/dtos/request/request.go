@@ -19,6 +19,7 @@ type VoteRequest struct {
 // 	Email              string `json:"email"`
 // }
 
+// Registraion requests
 type CreateRegistrationRequest struct {
 	RegisterRole       string `json:"register_role" validate:"required"`
 	Region             string `json:"region" validate:"required"`
@@ -27,14 +28,8 @@ type CreateRegistrationRequest struct {
 }
 
 type GetRegistrationRequests struct {
-	Keyword      string `json:"keyword"`
 	RegisterRole string `json:"register_role"`
-	Region       string `json:"region"`
-	Gender       string `json:"gender"`
-	Status       string `json:"status"`
-	IsClosed     *bool  `json:"is_closed"`
-	SortOrder    string `json:"sort_order"`
-	Page         int    `json:"page"`
+	GetUploadChildRequests
 }
 
 type RegistrationRoleRequest struct {
@@ -49,6 +44,17 @@ type RegistrationRoleRequest struct {
 	DateOfBirth        string `json:"date_of_birth" validate:"required"`
 	PhoneNumber        string `json:"phone_number" validate:"required"`
 	Email              string `json:"email" validate:"required"`
+}
+
+// Upload-child requests
+type GetUploadChildRequests struct {
+	Keyword   string `json:"keyword"`
+	Region    string `json:"region"`
+	Gender    string `json:"gender"`
+	Status    string `json:"status"`
+	IsClosed  *bool  `json:"is_closed"`
+	SortOrder string `json:"sort_order"`
+	Page      int    `json:"page"`
 }
 
 type WithdrawRequest struct {
