@@ -17,5 +17,5 @@ func InitializeBankProfileRoutes(server *gin.Engine) {
 	// Auth group
 	var authGroup = server.Group(contextPath, middleware.Authorize)
 	authGroup.POST("", transport.CreateBankProfile)
-	authGroup.PUT("", transport.UpdateBankProfile)
+	authGroup.PUT("/:id", transport.UpdateBankProfile)
 }
