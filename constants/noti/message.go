@@ -41,6 +41,8 @@ const (
 	PAYMENT_EXPIRED_MESSAGE string = "This payment transaction has been exipred."
 
 	PAYMENT_CANCEL_MESSAGE string = "Your payment has been canceled."
+
+	BANK_PROFILE_EXISTED_MESSAGE string = "You have created your bank profile previously."
 )
 
 const (

@@ -41,6 +41,9 @@ func setupApiRoutes(server *gin.Engine) {
 	// Upload Child Request API endpoints
 	api_route.InitializeUploadChildRequestRoute(server)
 
+	// Bank Profile API endpoints
+	api_route.InitializeBankProfileRoutes(server)
+
 	// Default route to Swagger documentation
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusMovedPermanently, "/swagger/index.html#")

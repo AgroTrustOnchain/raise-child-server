@@ -16,5 +16,5 @@ func InitializeAuthHandlerRoutes(server *gin.Engine) {
 	norGroup.GET("/salt/:id", transport.GetSalt)
 
 	var authGroup = server.Group(contextPath, middleware.Authorize)
-	authGroup.POST("/logout/:address", transport.Logout)
+	authGroup.POST("/logout", transport.Logout)
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"raise-child/constants/noti"
+	"raise-child/constants/shared"
 	"raise-child/interfaces/repository"
 	"raise-child/model/dtos/request"
 	"raise-child/model/entities"
@@ -36,7 +37,7 @@ func (p *paymentRepo) CreatePayment(payment entities.Payment, ctx context.Contex
 		"amount, currency, status, method, cancel_reason, " +
 		"message, expired_at, created_at, updated_at) " +
 		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
-	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, payment_table) + "CreatePayment - "
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "CreatePayment - "
 
 	if _, err := p.db.Exec(query, payment.ID, payment.Actor, payment.TransactionId,
 		payment.Amount, payment.Currency, payment.Status, payment.Method, payment.CancelReason,
@@ -52,7 +53,7 @@ func (p *paymentRepo) CreatePayment(payment entities.Payment, ctx context.Contex
 // GetPaymentById implements repository.IPaymentRepository.
 func (p *paymentRepo) GetPaymentById(id string, ctx context.Context) (*entities.Payment, error) {
 	var query string = "SELECT * FROM " + payment_table + " WHERE id = $1"
-	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, payment_table) + "GetPaymentById - "
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "GetPaymentById - "
 
 	var res entities.Payment
 	if err := p.db.QueryRow(query, id).Scan(
@@ -73,7 +74,7 @@ func (p *paymentRepo) GetPaymentById(id string, ctx context.Context) (*entities.
 
 // GetPayments implements repository.IPaymentRepository.
 func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Context) (*[]entities.Payment, int, error) {
-	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, payment_table) + "GetPayments - "
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "GetPayments - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
@@ -154,7 +155,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 
 // UpdatePayment implements repository.IPaymentRepository.
 func (p *paymentRepo) UpdatePayment(payment entities.Payment, ctx context.Context) error {
-	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, payment_table) + "UpdatePayment - "
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "UpdatePayment - "
 	var query string = "UPDATE " + payment_table + " SET status = $1, method = $2, cancel_reason = $3, updated_at = $4 WHERE id = $5"
 
 	res, err := p.db.Exec(query, payment.Status, payment.Method, payment.CancelReason, payment.UpdatedAt, payment.ID)

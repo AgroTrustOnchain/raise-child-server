@@ -192,6 +192,169 @@
                 }
             }
         },
+        "/banks": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Submit bank details to create a new profile in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "banks"
+                ],
+                "summary": "Create a new bank profile",
+                "parameters": [
+                    {
+                        "description": "Bank Profile Creation Data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateBankProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/entities.BankProfile"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/banks/{id}": {
+            "get": {
+                "description": "Retrieve detailed bank profile information using the bank's owner wallet",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "banks"
+                ],
+                "summary": "Get bank profile owned by a wallet",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Wallet address",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BankProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Modify the details of an existing bank profile by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "banks"
+                ],
+                "summary": "Update an existing bank profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bank Profile ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Bank Profile Data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdateBankProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entities.BankProfile"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/child-upload-reqs": {
             "get": {
                 "description": "Retrieve a list of child upload requests based on query parameters.",
@@ -1645,6 +1808,41 @@
         }
     },
     "definitions": {
+        "entities.BankProfile": {
+            "type": "object",
+            "properties": {
+                "bank_code": {
+                    "type": "string"
+                },
+                "bank_org": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "owner_name": {
+                    "type": "string"
+                },
+                "payos_api_key": {
+                    "type": "string"
+                },
+                "payos_check_sum_key": {
+                    "type": "string"
+                },
+                "payos_client_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "entities.RegistrationRequest": {
             "type": "object",
             "properties": {
@@ -1814,6 +2012,34 @@
                 }
             }
         },
+        "request.CreateBankProfileRequest": {
+            "type": "object",
+            "required": [
+                "bank_code",
+                "bank_org",
+                "owner_name"
+            ],
+            "properties": {
+                "bank_code": {
+                    "type": "string"
+                },
+                "bank_org": {
+                    "type": "string"
+                },
+                "owner_name": {
+                    "type": "string"
+                },
+                "payos_api_key": {
+                    "type": "string"
+                },
+                "payos_check_sum_key": {
+                    "type": "string"
+                },
+                "payos_client_id": {
+                    "type": "string"
+                }
+            }
+        },
         "request.CreateRegistrationRequest": {
             "type": "object",
             "required": [
@@ -1910,6 +2136,29 @@
                 }
             }
         },
+        "request.UpdateBankProfileRequest": {
+            "type": "object",
+            "properties": {
+                "bank_code": {
+                    "type": "string"
+                },
+                "bank_org": {
+                    "type": "string"
+                },
+                "owner_name": {
+                    "type": "string"
+                },
+                "payos_api_key": {
+                    "type": "string"
+                },
+                "payos_check_sum_key": {
+                    "type": "string"
+                },
+                "payos_client_id": {
+                    "type": "string"
+                }
+            }
+        },
         "request.UploadChildRequest": {
             "type": "object",
             "required": [
@@ -1994,6 +2243,26 @@
                     "type": "boolean"
                 },
                 "refuse_reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.BankProfileResponse": {
+            "type": "object",
+            "properties": {
+                "bank_code": {
+                    "type": "string"
+                },
+                "bank_org": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "owner_name": {
                     "type": "string"
                 }
             }

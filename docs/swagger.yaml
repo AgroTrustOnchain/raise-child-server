@@ -1,5 +1,28 @@
 basePath: /
 definitions:
+  entities.BankProfile:
+    properties:
+      bank_code:
+        type: string
+      bank_org:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      owner:
+        type: string
+      owner_name:
+        type: string
+      payos_api_key:
+        type: string
+      payos_check_sum_key:
+        type: string
+      payos_client_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
   entities.RegistrationRequest:
     properties:
       approvers:
@@ -117,6 +140,25 @@ definitions:
     - key
     - value
     type: object
+  request.CreateBankProfileRequest:
+    properties:
+      bank_code:
+        type: string
+      bank_org:
+        type: string
+      owner_name:
+        type: string
+      payos_api_key:
+        type: string
+      payos_check_sum_key:
+        type: string
+      payos_client_id:
+        type: string
+    required:
+    - bank_code
+    - bank_org
+    - owner_name
+    type: object
   request.CreateRegistrationRequest:
     properties:
       avatar_blob_id:
@@ -183,6 +225,21 @@ definitions:
     - amoun
     - sender
     type: object
+  request.UpdateBankProfileRequest:
+    properties:
+      bank_code:
+        type: string
+      bank_org:
+        type: string
+      owner_name:
+        type: string
+      payos_api_key:
+        type: string
+      payos_check_sum_key:
+        type: string
+      payos_client_id:
+        type: string
+    type: object
   request.UploadChildRequest:
     properties:
       avatar_blob_id:
@@ -244,6 +301,19 @@ definitions:
         type: string
     required:
     - is_vote_yes
+    type: object
+  response.BankProfileResponse:
+    properties:
+      bank_code:
+        type: string
+      bank_org:
+        type: string
+      id:
+        type: string
+      owner:
+        type: string
+      owner_name:
+        type: string
     type: object
   response.BuildTransactionResponse:
     properties:
@@ -547,6 +617,115 @@ paths:
       summary: Get wallet salt
       tags:
       - auth
+  /banks:
+    post:
+      consumes:
+      - application/json
+      description: Submit bank details to create a new profile in the system
+      parameters:
+      - description: Bank Profile Creation Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateBankProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.BankProfile'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new bank profile
+      tags:
+      - banks
+  /banks/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed bank profile information using the bank's owner
+        wallet
+      parameters:
+      - description: Wallet address
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BankProfileResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get bank profile owned by a wallet
+      tags:
+      - banks
+    put:
+      consumes:
+      - application/json
+      description: Modify the details of an existing bank profile by its ID
+      parameters:
+      - description: Bank Profile ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated Bank Profile Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateBankProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.BankProfile'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an existing bank profile
+      tags:
+      - banks
   /child-upload-reqs:
     get:
       consumes:
