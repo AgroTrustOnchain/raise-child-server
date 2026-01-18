@@ -10,6 +10,7 @@ type GetPaymentsRequest struct {
 }
 
 type DonateRequest struct {
+	PoolId  string `json:"pool_id" validate:"required"`
 	Amount  int64  `json:"amount" validate:"required,min=2000"`
 	Message string `json:"message"`
 }

@@ -43,6 +43,16 @@ const (
 	PAYMENT_CANCEL_MESSAGE string = "Your payment has been canceled."
 
 	BANK_PROFILE_EXISTED_MESSAGE string = "You have created your bank profile previously."
+
+	WITHDRAW_PROPOSAL_CLOSED_MESSAGE string = "This withdraw proposal has been closed."
+
+	HAVE_TO_DONATE_TO_VOTE string = "You have to donate to RaiseChild Platform to vote this request."
+
+	WITHDRAW_PROPOSAL_EXECUTED_MESSSAGE string = "This withdraw proposal has been executed."
+
+	WITHDRAW_PROPOSAL_FAIL_CONDITION_MESSAGE string = "This withdraw proposal approve rate has been failed."
+
+	POOL_CURRENTLY_NOT_ENOUGH_BALENCE string = "Pool is now not enough balence for this withdraw request."
 )
 
 const (

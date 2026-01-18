@@ -10,4 +10,5 @@ const (
 // Payment methods
 const (
 	PAYMENT_PAYOS_METHOD string = "Payos"
+	MANUAL_BANK_METHOD   string = "Manual Bank"
 )

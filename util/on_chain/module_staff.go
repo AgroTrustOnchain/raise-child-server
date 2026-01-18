@@ -37,6 +37,7 @@ func InitializeModuleStaff() IModuleStaff {
 func (m *moduleStaff) ToRegisterStaffArguements(args RegisterStaffArguements) []interface{} {
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
+		os.Getenv(env.POOL_ID),
 		args.IdentityCode,
 		args.IdentityCardBlobID,
 		args.Role,

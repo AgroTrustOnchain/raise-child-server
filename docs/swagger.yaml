@@ -175,6 +175,20 @@ definitions:
     - region
     - register_role
     type: object
+  request.CreateWithdrawProposalRequest:
+    properties:
+      description:
+        type: string
+      pool_id:
+        type: string
+      withdraw_amount:
+        maximum: 20000000
+        minimum: 10000
+        type: integer
+    required:
+    - pool_id
+    - withdraw_amount
+    type: object
   request.DonateRequest:
     properties:
       amount:
@@ -182,8 +196,11 @@ definitions:
         type: integer
       message:
         type: string
+      pool_id:
+        type: string
     required:
     - amount
+    - pool_id
     type: object
   request.ExecuteTransactionRequest:
     properties:
@@ -488,6 +505,55 @@ definitions:
         type: string
       message:
         type: string
+      pool_name:
+        type: string
+    type: object
+  response.WithDrawProposalResponse:
+    properties:
+      approve_weight:
+        type: integer
+      approved_periods:
+        items:
+          type: string
+        type: array
+      approvers:
+        items:
+          type: string
+        type: array
+      closed_at:
+        type: string
+      created_at:
+        type: string
+      creator:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      is_executed:
+        type: boolean
+      is_from_local_pool:
+        type: boolean
+      pool_name:
+        type: string
+      refuse_reasons:
+        items:
+          type: string
+        type: array
+      refuse_weight:
+        type: integer
+      refused_periods:
+        items:
+          type: string
+        type: array
+      refusers:
+        items:
+          type: string
+        type: array
+      updated_at:
+        type: string
+      withdraw_amount:
+        type: integer
     type: object
 host: locahost:8080
 info:
@@ -1332,6 +1398,10 @@ paths:
           description: Invalid data. Please try again.
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
         "500":
           description: There is something wrong in the system during the process.
             Please try again later.
@@ -1437,6 +1507,10 @@ paths:
             $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
         "500":
@@ -1697,6 +1771,248 @@ paths:
       summary: Execute an on-chain transaction
       tags:
       - transactions
+  /withdraw-proposals:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of withdraw proposals with optional query filters
+      parameters:
+      - in: query
+        name: creator
+        type: string
+      - in: query
+        name: is_closed
+        type: boolean
+      - in: query
+        name: is_executed
+        type: boolean
+      - description: Filter for pool ID, pool name, desc
+        in: query
+        name: keyword
+        type: string
+      - in: query
+        name: max_amount
+        type: integer
+      - in: query
+        name: min_amount
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: sort_criteria
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List withdraw proposals
+      tags:
+      - Withdrawal
+    post:
+      consumes:
+      - application/json
+      description: Prepare and create a new withdraw proposal on-chain
+      parameters:
+      - description: 'Withdraw Proposal details (e.g., '
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateWithdrawProposalRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new withdraw proposal
+      tags:
+      - Withdrawal
+  /withdraw-proposals/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific withdraw proposal by its ID
+      parameters:
+      - description: Withdraw Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.WithDrawProposalResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get a withdraw proposal
+      tags:
+      - Withdrawal
+  /withdraw-proposals/{id}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Finalize and confirm a specific withdraw proposal by ID
+      parameters:
+      - description: Withdraw Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm a withdraw proposal
+      tags:
+      - Withdrawal
+  /withdraw-proposals/{id}/main-pool-confirm:
+    post:
+      consumes:
+      - application/json
+      description: Finalize and confirm a specific withdraw proposal by ID from main
+        pool
+      parameters:
+      - description: Withdraw Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bank Transaction Capture Image Blob ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm a withdraw proposal from main pool
+      tags:
+      - Withdrawal
+  /withdraw-proposals/{id}/vote:
+    post:
+      consumes:
+      - application/json
+      description: 'Submit a vote for a specific withdraw proposal. Note: This uses
+        query parameters for the vote data.'
+      parameters:
+      - description: Withdraw Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - in: query
+        name: is_vote_yes
+        required: true
+        type: boolean
+      - in: query
+        name: refuse_reason
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Vote on a withdraw proposal
+      tags:
+      - Withdrawal
 schemes:
 - http
 securityDefinitions:

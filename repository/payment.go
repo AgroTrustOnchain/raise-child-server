@@ -33,13 +33,13 @@ func InitializePaymentRepository(db *sql.DB, errLogger *log.Logger) repository.I
 // CreatePayment implements repository.IPaymentRepository.
 func (p *paymentRepo) CreatePayment(payment entities.Payment, ctx context.Context) error {
 	var query string = "INSERT INTO " + payment_table +
-		" (id, actor, transaction_id, " +
+		" (id, actor, target, is_donate_tx, transaction_id, " +
 		"amount, currency, status, method, cancel_reason, " +
 		"message, expired_at, created_at, updated_at) " +
 		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "CreatePayment - "
 
-	if _, err := p.db.Exec(query, payment.ID, payment.Actor, payment.TransactionId,
+	if _, err := p.db.Exec(query, payment.ID, payment.Actor, payment.Target, payment.IsDonateTx, payment.TransactionId,
 		payment.Amount, payment.Currency, payment.Status, payment.Method, payment.CancelReason,
 		payment.Message, payment.ExpiredAt, payment.CreatedAt, payment.UpdatedAt); err != nil {
 
@@ -57,7 +57,7 @@ func (p *paymentRepo) GetPaymentById(id string, ctx context.Context) (*entities.
 
 	var res entities.Payment
 	if err := p.db.QueryRow(query, id).Scan(
-		&res.ID, &res.Actor, &res.TransactionId,
+		&res.ID, &res.Actor, &res.Target, &res.IsDonateTx, &res.TransactionId,
 		&res.Amount, &res.Currency, &res.Status, &res.Method, &res.CancelReason,
 		&res.Message, &res.ExpiredAt, &res.CreatedAt, &res.UpdatedAt); err != nil {
 
@@ -135,7 +135,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 	for rows.Next() {
 		var x entities.Payment
 		if err := rows.Scan(
-			&x.ID, &x.Actor, &x.TransactionId,
+			&x.ID, &x.Actor, &x.Target, &x.IsDonateTx, &x.TransactionId,
 			&x.Amount, &x.Currency, &x.Status, &x.Method, &x.CancelReason,
 			&x.Message, &x.ExpiredAt, &x.CreatedAt, &x.UpdatedAt); err != nil {
 

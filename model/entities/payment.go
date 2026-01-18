@@ -5,6 +5,8 @@ import "time"
 type Payment struct {
 	ID            string    `json:"id"`
 	Actor         string    `json:"actor"`
+	Target        string    `json:"target"` // e.g. Pool ID
+	IsDonateTx    bool      `json:"is_donate_tx"`
 	TransactionId string    `json:"transaction_id"`
 	Amount        int64     `json:"amount"`
 	Currency      string    `json:"currency"` // e.g. "VND"

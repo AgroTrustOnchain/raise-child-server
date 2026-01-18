@@ -5,6 +5,7 @@ import "time"
 const dateFormat string = "25/12/2026"
 
 var request_duration time.Duration = time.Hour * 72 // 3 days
+var bank_request_duration time.Duration = time.Hour * 24 * 7
 
 func ToMilliseconds(time time.Time) int64 {
 	return time.UnixMilli()
@@ -21,4 +22,8 @@ func MilliSecToTime(milliseconds int64) time.Time {
 
 func GetRequestDuration() time.Time {
 	return time.Now().Add(request_duration)
+}
+
+func GetBankTransactionDuration() time.Time {
+	return time.Now().Add(bank_request_duration)
 }

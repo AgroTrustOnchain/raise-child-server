@@ -110,6 +110,7 @@ func GetRegistrationRequest(ctx *gin.Context) {
 // @Param        request  body      request.CreateRegistrationRequest  true  "Registration Request Body"
 // @Success      201      {object}  entities.RegistrationRequest
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /registrations [post]
 func CreateRegistrationRequest(ctx *gin.Context) {
@@ -146,6 +147,7 @@ func CreateRegistrationRequest(ctx *gin.Context) {
 // @Param        request  body      request.VoteRequest   true  "Vote Details"
 // @Success      200      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /registrations/{id}/vote [post]
 func VoteRegistrationRequest(ctx *gin.Context) {

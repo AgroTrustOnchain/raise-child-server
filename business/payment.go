@@ -22,7 +22,9 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
+	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/block-vision/sui-go-sdk/utils"
 	"github.com/payOSHQ/payos-lib-golang"
 )
 
@@ -57,6 +59,18 @@ func GeneratePaymentService() (business.IPaymentService, error) {
 	}
 
 	return InitializePaymentService(cnn, errLogger), nil
+}
+
+// ConfirmWithdrawProposal implements business.IPaymentService.
+func (p *paymentService) ConfirmWithdrawProposal(id string, ctx context.Context) (map[string]interface{}, error) {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+
+	var sender string = ctx.Value("address").(string)
+	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) || !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+		return nil, genericErr
+	}
+
+	return nil, nil
 }
 
 // CallbackTx implements business.IPaymentService.
@@ -138,13 +152,17 @@ func (p *paymentService) CallbackTx(id string, ctx context.Context) (response.Bu
 
 // Donate implements business.IPaymentService.
 func (p *paymentService) Donate(req request.DonateRequest, ctx context.Context) (string, error) {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if !utils.IsValidSuiAddress(models.SuiAddress(req.PoolId)) {
+		return "", genericErr
+	}
 	profile, err := p.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
 	if err != nil {
 		return "", err
 	}
 
 	if profile == nil {
-		return "", errors.New(noti.GENERIC_ERROR_WARN_MSG)
+		return "", genericErr
 	}
 
 	if profile.IdentityCode == "" {
@@ -176,6 +194,8 @@ func (p *paymentService) Donate(req request.DonateRequest, ctx context.Context) 
 	if err := p.paymentRepo.CreatePayment(entities.Payment{
 		ID:            paymentId,
 		Actor:         ctx.Value("address").(string),
+		Target:        req.PoolId,
+		IsDonateTx:    true,
 		TransactionId: fmt.Sprint(orderCode),
 		Amount:        req.Amount,
 		Currency:      shared.VIETNAMDONG_CURRENCY,
