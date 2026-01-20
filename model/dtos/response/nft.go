@@ -4,7 +4,6 @@ import "time"
 
 type StaffNftResponse struct {
 	ID                 string    `json:"id"`
-	Owner              string    `json:"owner"`
 	Role               string    `json:"role"`
 	IdentityCode       string    `json:"identity_code"`
 	IdentityCardBlobID string    `json:"identity_card_blob_id"`
@@ -23,7 +22,6 @@ type StaffNftResponse struct {
 
 type AdminNftResponse struct {
 	ID                 string    `json:"id"`
-	Owner              string    `json:"owner"`
 	IdentityCode       string    `json:"identity_code"`
 	IdentityCardBlobID string    `json:"identity_card_blob_id"`
 	AvatarBlobID       string    `json:"avatar_blob_id"`

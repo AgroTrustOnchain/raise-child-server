@@ -4,6 +4,7 @@ import "raise-child/model/dtos/response"
 
 type Sponsor struct {
 	ID          ID     `json:"id"`
+	Owner       string `json:"owner"`
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
 	Gender      string `json:"gender"`
@@ -19,7 +20,7 @@ func (s Sponsor) ToSponsorResponse() response.SponsorResponse {
 	}
 
 	return response.SponsorResponse{
-		ID:          s.ID.ID,
+		ID:          s.Owner,
 		FirstName:   s.FirstName,
 		LastName:    s.LastName,
 		Gender:      s.Gender,

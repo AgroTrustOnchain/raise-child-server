@@ -182,3 +182,8 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 		TotalPages: totalPages,
 	}, nil
 }
+
+// GetStaffsV2 implements business.IStaffService.
+func (s *staffService) GetStaffsV2(req request.GetStaffsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	panic("unimplemented")
+}

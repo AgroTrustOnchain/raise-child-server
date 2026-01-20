@@ -49,8 +49,7 @@ func (s StaffNft) ToStaffNftResponse() response.StaffNftResponse {
 
 	uploadedAt, _ := strconv.ParseInt(s.UploadedAt, 10, 64)
 	return response.StaffNftResponse{
-		ID:                 s.ID.ID,
-		Owner:              s.Owner,
+		ID:                 s.Owner,
 		Role:               s.Role,
 		IdentityCode:       s.IdentityCode,
 		IdentityCardBlobID: s.IdentityCardBlobID,
@@ -75,8 +74,7 @@ func (a AdminNft) ToAdminNftResponse() response.AdminNftResponse {
 
 	uploadedAt, _ := strconv.ParseInt(a.UploadedAt, 10, 64)
 	return response.AdminNftResponse{
-		ID:                 a.ID.ID,
-		Owner:              a.Owner,
+		ID:                 a.Owner,
 		IdentityCode:       a.IdentityCode,
 		IdentityCardBlobID: a.IdentityCardBlobID,
 		AvatarBlobID:       a.AvatarBlobID,

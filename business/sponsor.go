@@ -137,9 +137,6 @@ func (s *sponsorService) GetSponsors(req request.GetSponsorsRequest, ctx context
 			}
 		}
 
-		// Set Sponsor NFT ID to Sponsor Address
-		sponsor.ID.ID = manageObj.SponsorIds[i]
-
 		filteredSponsors = append(filteredSponsors, sponsor)
 	}
 

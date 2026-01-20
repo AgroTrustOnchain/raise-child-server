@@ -490,8 +490,6 @@ definitions:
         type: string
       name:
         type: string
-      owner:
-        type: string
       phone_number:
         type: string
       region:
@@ -612,6 +610,48 @@ info:
   version: "1.0"
 paths:
   /admins:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of admins based on filter criteria
+      parameters:
+      - in: query
+        name: gender
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: sort_criteria
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: year_of_birth
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List admins
+      tags:
+      - admins
     post:
       consumes:
       - application/json
@@ -648,7 +688,7 @@ paths:
       - BearerAuth: []
       summary: Update publisher information
       tags:
-      - admin
+      - admins
   /auth/login:
     post:
       consumes:
