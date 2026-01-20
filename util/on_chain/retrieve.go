@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"raise-child/constants/noti"
 	"raise-child/model/dtos/response"
@@ -54,6 +55,11 @@ func GetOnChainObject[T any](req GetOnChainObjectRequest, ctx context.Context) (
 		return nil, internalErr
 	}
 
+	if res.Error != nil {
+		handleGetEmptyOnChainObject(res.Error.Code, req.ObjectId, req.ErrLogger)
+		return nil, nil
+	}
+
 	jsonBytes, err := json.Marshal(res.Data.Content.Fields)
 	if err != nil {
 		req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
@@ -81,7 +87,13 @@ func GetOnChainObjects[T any](req GetOnChainObjectsRequest, ctx context.Context)
 	}
 
 	var objects []T
-	for _, object := range res {
+	for i := 0; i < len(res); i++ {
+		var object = res[i]
+		if object.Error != nil {
+			handleGetEmptyOnChainObject(object.Error.Code, req.ObjectIds[i], req.ErrLogger)
+			continue
+		}
+
 		jsonBytes, err := json.Marshal(object.Data.Content.Fields)
 		if err != nil {
 			req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
@@ -116,7 +128,13 @@ func GetOnChainOwnedObjects[T any](req GetOnChainOwnedObjectsRequest, ctx contex
 	}
 
 	var objects []T
-	for _, object := range res.Data {
+	for i := 0; i < len(res.Data); i++ {
+		var object = res.Data[i]
+		if object.Error != nil {
+			handleGetEmptyOnChainObject(object.Error.Code, object.Data.ObjectId, req.ErrLogger)
+			continue
+		}
+
 		jsonBytes, err := json.Marshal(object.Data.Content.Fields)
 		if err != nil {
 			req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
@@ -125,7 +143,6 @@ func GetOnChainOwnedObjects[T any](req GetOnChainOwnedObjectsRequest, ctx contex
 
 		objects = append(objects, util.JsonStringToObject[T](string(jsonBytes)))
 	}
-
 	return objects, nil
 }
 
@@ -201,4 +218,20 @@ func GetOnChainSpecificTypeObjects[T any](req GetOnChainSpecificTypeObjectsReque
 	}
 
 	return objects, nil
+}
+
+func handleGetEmptyOnChainObject(err, id string, logger *log.Logger) {
+	var msg string
+	switch err {
+	case "deleted":
+		msg = fmt.Sprintf("Object %s was deleted from the network.")
+		break
+	case "notExists":
+		msg = fmt.Sprintf("Object %s does not exist.")
+		break
+	}
+
+	if msg != "" {
+		logger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + msg)
+	}
 }

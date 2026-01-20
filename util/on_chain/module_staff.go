@@ -23,7 +23,6 @@ type IModuleStaff interface {
 	GetModule() string
 	ToRegisterStaffArguements(args RegisterStaffArguements) []interface{}
 	GetFunctionRegisterStaff() string
-	GetStaffObjectStruct() string
 	GetStaffNftObjectStruct() string
 }
 
@@ -65,9 +64,4 @@ func (m *moduleStaff) GetModule() string {
 // GetStaffNftObjectStruct implements IModuleStaff.
 func (m *moduleStaff) GetStaffNftObjectStruct() string {
 	return sui.STAFF_NFT_STRUCT
-}
-
-// GetStaffObjectStruct implements IModuleStaff.
-func (m *moduleStaff) GetStaffObjectStruct() string {
-	return sui.STAFF_STRUCT
 }

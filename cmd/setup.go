@@ -47,6 +47,9 @@ func setupApiRoutes(server *gin.Engine) {
 	// Withdraw Proposal API endpoints
 	api_route.InitializeWithdrawProposalRoute(server)
 
+	// Admin API endpoints
+	api_route.InitializeAdminRoute(server)
+
 	// Default route to Swagger documentation
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusMovedPermanently, "/swagger/index.html#")

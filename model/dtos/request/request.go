@@ -57,6 +57,19 @@ type GetUploadChildRequests struct {
 	Page      int    `json:"page"`
 }
 
+// Publisher
+type UpdatePublisherInfoRequest struct {
+	IdentityCode       string `json:"identity_code" validate:"required"`
+	IdentityCardBlobID string `json:"identity_card_blob_id" validate:"required"`
+	AvatarBlobID       string `json:"avatar_blob_id" validate:"required"`
+	FirstName          string `json:"first_name" validate:"required"`
+	LastName           string `json:"last_name" validate:"required"`
+	Gender             string `json:"gender" validate:"required"`
+	DateOfBirth        string `json:"date_of_birth" validate:"required"`
+	PhoneNumber        string `json:"phone_number" validate:"required"`
+	Email              string `json:"email" validate:"required"`
+}
+
 type WithdrawRequest struct {
 	Description string `json:"description" validate:"required"`
 	Amount      int64  `json:"amount" validate:"required,min=10000"`

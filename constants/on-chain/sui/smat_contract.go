@@ -25,6 +25,7 @@ const (
 	WITHDRAW_FROM_POOL_FUNCTION       string = "withdraw_from_pool"
 	CREATE_WITHDRAW_PROPOSAL_FUNCTION string = "create_withdraw_proposal"
 	VOTE_WITHDRAW_PROPOSAL_FUNCTION   string = "vote_withdraw_proposal"
+	UPDATE_PUBLISHER_NFT_FUNCTION     string = "update_publisher_nft"
 )
 
 // Structs
@@ -33,7 +34,7 @@ const (
 	SUI_POOL_STRUCT           string = "SuiPool"
 	TRANSACTION_RECORD_STRUCT string = "TransactionRecord"
 	CHILD_STRUCT              string = "Child"
-	STAFF_STRUCT              string = "Staff"
+	ADMIN_NFT_STRUCT          string = "AdminNFT"
 	STAFF_NFT_STRUCT          string = "StaffNFT"
 	SPONSOR_NFT_STRUCT        string = "SponsorNFT"
 )

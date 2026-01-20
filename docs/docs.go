@@ -15,6 +15,63 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admins": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the details of publisher (admin) based on the provided request body with just only 1 call permitted.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Update publisher information",
+                "parameters": [
+                    {
+                        "description": "Publisher Update Information",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdatePublisherInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Authenticates a user and returns access tokens/session data",
@@ -2564,6 +2621,49 @@ const docTemplate = `{
                 }
             }
         },
+        "request.UpdatePublisherInfoRequest": {
+            "type": "object",
+            "required": [
+                "avatar_blob_id",
+                "date_of_birth",
+                "email",
+                "first_name",
+                "gender",
+                "identity_card_blob_id",
+                "identity_code",
+                "last_name",
+                "phone_number"
+            ],
+            "properties": {
+                "avatar_blob_id": {
+                    "type": "string"
+                },
+                "date_of_birth": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "identity_card_blob_id": {
+                    "type": "string"
+                },
+                "identity_code": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                }
+            }
+        },
         "request.UploadChildRequest": {
             "type": "object",
             "required": [
@@ -2835,10 +2935,25 @@ const docTemplate = `{
         "response.StaffNftResponse": {
             "type": "object",
             "properties": {
+                "avatar_blob_id": {
+                    "type": "string"
+                },
+                "date_of_birth": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
                 "first_name": {
                     "type": "string"
                 },
+                "gender": {
+                    "type": "string"
+                },
                 "id": {
+                    "type": "string"
+                },
+                "identity_card_blob_id": {
                     "type": "string"
                 },
                 "identity_code": {
@@ -2850,7 +2965,19 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "owner": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
                 "role": {
+                    "type": "string"
+                },
+                "uploaded_at": {
                     "type": "string"
                 },
                 "url": {

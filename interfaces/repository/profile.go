@@ -6,6 +6,7 @@ import (
 )
 
 type IProfileRepository interface {
+	GetFirstProfile(ctx context.Context) (*entities.Profile, error)
 	GetProfile(id string, ctx context.Context) (*entities.Profile, error)
 	CreateProfile(pfl entities.Profile, ctx context.Context) error
 	UploadProfile(pfl entities.Profile, ctx context.Context) error

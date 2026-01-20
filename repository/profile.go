@@ -193,3 +193,25 @@ func (p *profileRepo) GetProfile(id string, ctx context.Context) (*entities.Prof
 
 	return &res, nil
 }
+
+// GetFirstProfile implements repository.IProfileRepository.
+func (p *profileRepo) GetFirstProfile(ctx context.Context) (*entities.Profile, error) {
+	var query string = "SELECT * FROM " + profile_table + " ORDER BY id ASC LIMIT 1"
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "GetFirstProfile - "
+
+	var res entities.Profile
+	if err := p.db.QueryRow(query).Scan(
+		&res.ID, &res.Salt, &res.IdentityCode, &res.FirstName, &res.LastName,
+		&res.Gender, res.DateOfBirth, &res.PhoneNumber, &res.Email,
+		&res.Token, &res.UpdatedAt, &res.CreatedAt); err != nil {
+
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		p.errLogger.Println(errLogMsg + err.Error())
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	return &res, nil
+}

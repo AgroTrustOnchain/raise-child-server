@@ -68,7 +68,7 @@ func (s *staffService) GetStaff(id string, ctx context.Context) (response.StaffR
 	}, ctx); nfts != nil {
 		var nftsRes []response.StaffNftResponse
 		for _, nft := range nfts {
-			nftsRes = append(nftsRes, nft.ToNftResponse())
+			nftsRes = append(nftsRes, nft.ToStaffNftResponse())
 		}
 
 		res.Nfts = nftsRes
@@ -90,7 +90,7 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 		return response.PaginationDataResponse{}, err
 	}
 
-	staffs, err := on_chain.GetOnChainObjects[entities.Staff](on_chain.GetOnChainObjectsRequest{
+	staffs, err := on_chain.GetOnChainObjects[entities.StaffNft](on_chain.GetOnChainObjectsRequest{
 		Client:    client,
 		ObjectIds: manageObj.ChildIds,
 		ErrLogger: s.errLogger,
@@ -111,9 +111,9 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 
 	var keyword string = util.StanderizeString(req.Keyword)
 	var region string = util.StanderizeString(req.Region)
-	var filteredStaffs []entities.Staff
+	var filteredStaffs []entities.StaffNft
 	for i := len(staffs) - 1; i >= 0; i-- {
-		var staff entities.Staff = staffs[i]
+		var staff entities.StaffNft = staffs[i]
 
 		if req.Role != "" {
 			if util.StanderizeString(staff.Role) != util.StanderizeString(req.Role) { // Not matched
@@ -171,9 +171,9 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 
 	var totalPages int = len(filteredStaffs)/staff_records_limit + 1
 
-	var data []response.StaffResponse
+	var data []response.StaffNftResponse
 	for i := skippedRecords; i < len(filteredStaffs); i++ {
-		data = append(data, filteredStaffs[i].ToStaffResponse())
+		data = append(data, filteredStaffs[i].ToStaffNftResponse())
 	}
 
 	return response.PaginationDataResponse{

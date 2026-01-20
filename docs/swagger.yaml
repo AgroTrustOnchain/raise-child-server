@@ -257,6 +257,37 @@ definitions:
       payos_client_id:
         type: string
     type: object
+  request.UpdatePublisherInfoRequest:
+    properties:
+      avatar_blob_id:
+        type: string
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      identity_card_blob_id:
+        type: string
+      identity_code:
+        type: string
+      last_name:
+        type: string
+      phone_number:
+        type: string
+    required:
+    - avatar_blob_id
+    - date_of_birth
+    - email
+    - first_name
+    - gender
+    - identity_card_blob_id
+    - identity_code
+    - last_name
+    - phone_number
+    type: object
   request.UploadChildRequest:
     properties:
       avatar_blob_id:
@@ -439,9 +470,19 @@ definitions:
     type: object
   response.StaffNftResponse:
     properties:
+      avatar_blob_id:
+        type: string
+      date_of_birth:
+        type: string
+      email:
+        type: string
       first_name:
         type: string
+      gender:
+        type: string
       id:
+        type: string
+      identity_card_blob_id:
         type: string
       identity_code:
         type: string
@@ -449,7 +490,15 @@ definitions:
         type: string
       name:
         type: string
+      owner:
+        type: string
+      phone_number:
+        type: string
+      region:
+        type: string
       role:
+        type: string
+      uploaded_at:
         type: string
       url:
         type: string
@@ -562,6 +611,44 @@ info:
   title: RaiseChild Server API
   version: "1.0"
 paths:
+  /admins:
+    post:
+      consumes:
+      - application/json
+      description: Updates the details of publisher (admin) based on the provided
+        request body with just only 1 call permitted.
+      parameters:
+      - description: Publisher Update Information
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdatePublisherInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update publisher information
+      tags:
+      - admin
   /auth/login:
     post:
       consumes:
