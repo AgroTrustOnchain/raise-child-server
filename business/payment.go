@@ -134,7 +134,7 @@ func (p *paymentService) CallbackTx(id string, ctx context.Context) (response.Bu
 		Module:    module.GetModule(),
 		Function:  module.GetFunctionDonateToPool(),
 		ErrLogger: p.errLogger,
-		Arguments: module.ToDonateToPoolArguements(on_chain.DonateToPoolArguements{
+		Arguments: module.ToDonateToPoolArguments(on_chain.DonateToPoolArguments{
 			Amount:      payment.Amount,
 			FirstName:   profile.FirstName,
 			LastName:    profile.LastName,

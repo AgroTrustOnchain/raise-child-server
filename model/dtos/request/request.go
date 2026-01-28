@@ -20,6 +20,41 @@ type VoteRequest struct {
 // }
 
 // Registraion requests
+
+type AdminRegistrationRequest struct {
+	IdentityCardBlobID string `json:"identity_card_blob_id" validate:"required"`
+	AvatarBlobID       string `json:"avatar_blob_id" validate:"required"`
+}
+
+type VolunteerRegistrationRequest struct {
+	Region string `json:"region" validate:"required"`
+	AdminRegistrationRequest
+}
+
+type LocalLeaderRegistrationRequest struct {
+	CenterAddress     string `json:"center_address" validate:"required"`
+	CenterPhoneNumber string `json:"center_phone_number" validate:"required"`
+	CenterImageBlobID string `json:"center_image_blob_id" validate:"required"`
+	VolunteerRegistrationRequest
+}
+
+// For Admin role
+type GetAdminRegistrationRequets struct {
+	Keyword   string `json:"keyword"`
+	Gender    string `json:"gender"`
+	Status    string `json:"status"`
+	IsClosed  *bool  `json:"is_closed"`
+	IsConfirm *bool  `json:"is_confirm"`
+	SortOrder string `json:"sort_order"`
+	Page      int    `json:"page"`
+}
+
+// For Volunteer, Local Leader role
+type GetNormalStaffRegistrationRequests struct {
+	Region string `json:"region"`
+	GetAdminRegistrationRequets
+}
+
 type CreateRegistrationRequest struct {
 	RegisterRole       string `json:"register_role" validate:"required"`
 	Region             string `json:"region" validate:"required"`
@@ -28,7 +63,8 @@ type CreateRegistrationRequest struct {
 }
 
 type GetRegistrationRequests struct {
-	RegisterRole string `json:"register_role"`
+	RegisterRole         string `json:"register_role"`
+	IsAvailableToConfirm *bool  `json:"is_available_to_confirm"`
 	GetUploadChildRequests
 }
 

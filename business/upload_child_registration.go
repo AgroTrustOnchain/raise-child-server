@@ -79,7 +79,7 @@ func (u *uploadChildRequestService) ConfirmUploadChildRequest(id string, ctx con
 	if req.ClosedAt.After(time.Now()) {
 		return response.BuildTransactionResponse{}, errors.New(noti.STILL_PENDING_REQUEST_MESSAGE)
 	} else { // Request closed
-		var rate float32 = float32(len(req.Aprrovers)) / float32(len(req.Aprrovers)+len(req.Refusers))
+		var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
 		var isDenied bool = false
 
 		if rate >= approve_rate_limit {
@@ -110,7 +110,7 @@ func (u *uploadChildRequestService) ConfirmUploadChildRequest(id string, ctx con
 			Module:    module.GetModule(),
 			Function:  module.GetFunctionAddChild(),
 			ErrLogger: u.errLogger,
-			Arguments: module.ToAddChildArguements(on_chain.AddChildArguements{
+			Arguments: module.ToAddChildArguments(on_chain.AddChildArguments{
 				IdentityCode: req.IdentityCode,
 				FirstName:    req.FirstName,
 				LastName:     req.LastName,
@@ -146,8 +146,25 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 		return nil, errors.New(noti.CHILD_STILL_REQUESTED_MESSAGE)
 	}
 
+	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    u.clients[constant.SuiTestnet],
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: u.errLogger,
+	}, ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	var region string = strings.TrimSpace(req.Region)
-	if !isRegionExist(region) {
+	var isRegionAvailable bool = false
+	for i, addedRegion := range manageObj.LocalRegions {
+		if addedRegion == region && manageObj.CenterConfirmStatuses[i] {
+			isRegionAvailable = true
+			break
+		}
+	}
+
+	if !isRegionAvailable {
 		return nil, errors.New(noti.REGION_NOT_ADDED_WARN_MSG)
 	}
 
@@ -159,6 +176,10 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 	var dateOfBirth string = strings.TrimSpace(req.DateOfBirth)
 	if dob := util.RawDateToTime(dateOfBirth); dob.IsZero() {
 		return nil, errors.New(noti.INVALID_DATE_FORMAT_WARN_MSG)
+	} else {
+		if !isChildAgeInSupport(dob.Year()) {
+			return nil, errors.New(noti.CHILD_AGE_OUT_OF_SUPPORT_MESSAGE)
+		}
 	}
 
 	var curTime time.Time = time.Now()
@@ -250,7 +271,7 @@ func (u *uploadChildRequestService) VoteUploadChildRequest(id string, req reques
 		return errors.New(noti.OWNER_VOTE_WARN_MSG)
 	}
 
-	if slices.Contains(request.Aprrovers, voter) || slices.Contains(request.Refusers, voter) {
+	if slices.Contains(request.Approvers, voter) || slices.Contains(request.Refusers, voter) {
 		return errors.New(noti.ALREADY_VOTE_MESSAGE)
 	}
 
@@ -269,7 +290,7 @@ func (u *uploadChildRequestService) VoteUploadChildRequest(id string, req reques
 	}
 
 	if req.IsVoteYes {
-		request.Aprrovers = append(request.Aprrovers, voter)
+		request.Approvers = append(request.Approvers, voter)
 	} else {
 		request.Refusers = append(request.Refusers, voter)
 		if req.RefuseReason == "" {

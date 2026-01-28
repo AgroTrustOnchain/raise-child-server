@@ -97,7 +97,7 @@ func (a *authService) GetSalt(id string, ctx context.Context) (response.GetSaltR
 	}
 
 	if profile == nil {
-		var salt string = util.GenerateString()
+		var salt string = util.GenerateSalt()
 		var curTime = time.Now()
 		return response.GetSaltResponse{
 				Salt: salt,

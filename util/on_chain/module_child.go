@@ -6,7 +6,7 @@ import (
 	"raise-child/constants/on-chain/sui"
 )
 
-type AddChildArguements struct {
+type AddChildArguments struct {
 	IdentityCode string
 	FirstName    string
 	LastName     string
@@ -15,11 +15,21 @@ type AddChildArguements struct {
 	AvatarBlobId string
 }
 
+type CreateCenterArguments struct {
+	CapID       string
+	Region      string
+	Address     string
+	PhoneNumber string
+	ImageBlobID string
+}
+
 type IModuleChild interface {
 	GetModule() string
 	GetChildObjectStruct() string
-	ToAddChildArguements(args AddChildArguements) []interface{}
+	ToAddChildArguments(args AddChildArguments) []interface{}
+	ToCreateCenterArguments(args CreateCenterArguments) []interface{}
 	GetFunctionAddChild() string
+	GetFunctionUploadCenter() string
 	GetFunctionAddStringMetadata() string
 	GetFunctionAddNumberMetadata() string
 	GetFunctionUpdateStringMetadata() string
@@ -32,8 +42,8 @@ func InitializeModuleChild() IModuleChild {
 	return &moduleChild{}
 }
 
-// ToAddChildArguements implements IModuleChild.
-func (m *moduleChild) ToAddChildArguements(args AddChildArguements) []interface{} {
+// ToAddChildArguments implements IModuleChild.
+func (m *moduleChild) ToAddChildArguments(args AddChildArguments) []interface{} {
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		args.IdentityCode,
@@ -44,6 +54,24 @@ func (m *moduleChild) ToAddChildArguements(args AddChildArguements) []interface{
 		args.AvatarBlobId,
 		sui.CLOCK_OBJECT_ID,
 	}
+}
+
+// ToCreateCenterArguments implements IModuleChild.
+func (m *moduleChild) ToCreateCenterArguments(args CreateCenterArguments) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		args.CapID,
+		args.Region,
+		args.Address,
+		args.PhoneNumber,
+		args.ImageBlobID,
+		sui.CLOCK_OBJECT_ID,
+	}
+}
+
+// GetFunctionUploadCenter implements IModuleChild.
+func (m *moduleChild) GetFunctionUploadCenter() string {
+	return sui.CREATE_CENTER_FUNCTION
 }
 
 // GetFunctionUpdateNumberMetadata implements IModuleChild.

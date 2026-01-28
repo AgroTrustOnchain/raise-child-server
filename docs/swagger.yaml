@@ -23,6 +23,48 @@ definitions:
       updated_at:
         type: string
     type: object
+  entities.CenterRequest:
+    properties:
+      address:
+        type: string
+      approvers:
+        items:
+          type: string
+        type: array
+      closed_at:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      id:
+        type: string
+      image_blob_id:
+        type: string
+      is_confirm_register:
+        description: Default as false, when status aprroved, user clicks to update
+          to true, call smart contract to register role
+        type: boolean
+      isAvailableToConfirm:
+        type: boolean
+      phone_number:
+        type: string
+      refuse_reasons:
+        items:
+          type: string
+        type: array
+      refusers:
+        items:
+          type: string
+        type: array
+      region:
+        type: string
+      status:
+        description: e.g. "Pending", "Approved", "Refused"
+        type: string
+      updated_at:
+        type: string
+    type: object
   entities.RegistrationRequest:
     properties:
       approvers:
@@ -54,6 +96,8 @@ definitions:
       is_confirm_register:
         description: Default as false, when status aprroved, user clicks to update
           to true, call smart contract to register role
+        type: boolean
+      isAvailableToConfirm:
         type: boolean
       last_name:
         type: string
@@ -140,6 +184,13 @@ definitions:
     - key
     - value
     type: object
+  request.ConfirmReceiveGiftRequest:
+    properties:
+      delivered_image_blob_id:
+        type: string
+    required:
+    - delivered_image_blob_id
+    type: object
   request.CreateBankProfileRequest:
     properties:
       bank_code:
@@ -158,6 +209,51 @@ definitions:
     - bank_code
     - bank_org
     - owner_name
+    type: object
+  request.CreateCenterRequest:
+    properties:
+      address:
+        type: string
+      image_blob_id:
+        type: string
+      phone_number:
+        type: string
+      region:
+        type: string
+    required:
+    - address
+    - image_blob_id
+    - phone_number
+    - region
+    type: object
+  request.CreateGiftRequest:
+    properties:
+      carrier:
+        type: string
+      category:
+        type: string
+      child_id:
+        type: string
+      description:
+        type: string
+      gift_image_blob_id:
+        type: string
+      gift_value:
+        minimum: 2000
+        type: integer
+      message:
+        type: string
+      tracking_code:
+        type: string
+    required:
+    - carrier
+    - category
+    - child_id
+    - description
+    - gift_image_blob_id
+    - gift_value
+    - message
+    - tracking_code
     type: object
   request.CreateRegistrationRequest:
     properties:
@@ -406,6 +502,41 @@ definitions:
       uploaded_at:
         type: string
     type: object
+  response.GiftResponse:
+    properties:
+      cancel_reason:
+        type: string
+      carrier:
+        type: string
+      category:
+        type: string
+      child_id:
+        type: string
+      confirm_recieved_by:
+        type: string
+      delivered_at:
+        type: string
+      delivered_image_blob_id:
+        type: string
+      description:
+        type: string
+      gift_image_blob_id:
+        type: string
+      id:
+        type: string
+      message:
+        type: string
+      sender:
+        type: string
+      status:
+        type: string
+      tracking_code:
+        type: string
+      updated_at:
+        type: string
+      uploaded_at:
+        type: string
+    type: object
   response.MessageAPIResponse:
     properties:
       message:
@@ -465,6 +596,8 @@ definitions:
         type: string
       phone_number:
         type: string
+      total_donation:
+        type: integer
       url:
         type: string
     type: object
@@ -919,6 +1052,230 @@ paths:
       summary: Update an existing bank profile
       tags:
       - banks
+  /centers:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve center requests with filtering based on query parameters
+      parameters:
+      - in: query
+        name: is_available_to_confirm
+        type: boolean
+      - in: query
+        name: is_closed
+        type: boolean
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get a list of center requests
+      tags:
+      - center
+    post:
+      consumes:
+      - application/json
+      description: Submit a new center request
+      parameters:
+      - description: Center Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateCenterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.CenterRequest'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new center request
+      tags:
+      - center
+  /centers/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the full details of a single Center request by its unique
+        ID
+      parameters:
+      - description: Center Request ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get center request details
+      tags:
+      - center
+  /centers/{id}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for uploading center information
+        on-chain
+      parameters:
+      - description: Center Request ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm and upload center information to Sui Blockhain
+      tags:
+      - center
+  /centers/{id}/vote:
+    post:
+      consumes:
+      - application/json
+      description: Submit an approval or refusal vote for a specific center request.
+      parameters:
+      - description: Center Request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Vote Details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.VoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Vote on a center request
+      tags:
+      - center
+  /centers/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve specific center requests associated with a unique wallet
+        address
+      parameters:
+      - default: 0x...
+        description: User Wallet Address
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get Center requests by a wallet
+      tags:
+      - center
   /child-upload-reqs:
     get:
       consumes:
@@ -1327,6 +1684,184 @@ paths:
       summary: Add a new string metadata to a child object
       tags:
       - children
+  /gifts:
+    post:
+      consumes:
+      - application/json
+      description: Prepare and create a new gift for a child on-chain
+      parameters:
+      - description: Create gift details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateGiftRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new gift for a child
+      tags:
+      - gift
+  /gifts/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific gift by its ID
+      parameters:
+      - description: Gift ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.GiftResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get a gift information
+      tags:
+      - gift
+  /gifts/{id}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Finalize and confirm a specific withdraw proposal by ID
+      parameters:
+      - description: Gift ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Confirm receive gift details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ConfirmReceiveGiftRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm a withdraw proposal
+      tags:
+      - gift
+  /gifts/child/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of gifts sent to a child with optional query filters
+      parameters:
+      - description: Child ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - in: query
+        name: category
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List gifts of a child
+      tags:
+      - gift
+  /mints:
+    post:
+      consumes:
+      - application/json
+      description: Processes a transaction request and executes it on the Sui Network
+        blockchain
+      produces:
+      - application/json
+      responses: {}
+      summary: Execute an on-chain transaction
+      tags:
+      - mints
+  /mints/caps:
+    post:
+      consumes:
+      - application/json
+      description: Processes a transaction request and executes it on the Sui Network
+        blockchain
+      produces:
+      - application/json
+      responses: {}
+      summary: Execute an on-chain transaction
+      tags:
+      - mints
   /payments/callback/{id}:
     get:
       consumes:
@@ -1462,6 +1997,9 @@ paths:
       - in: query
         name: gender
         type: string
+      - in: query
+        name: is_available_to_confirm
+        type: boolean
       - in: query
         name: is_closed
         type: boolean

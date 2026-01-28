@@ -13,6 +13,7 @@ import (
 	internal_sui "raise-child/constants/on-chain/sui"
 
 	"github.com/block-vision/sui-go-sdk/models"
+	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
 )
 
@@ -25,9 +26,13 @@ type BuildTransactionRequest struct {
 	Arguments []interface{}
 }
 
-type BuildMultiTransactionRequest struct {
+type BuildMultiTransactionsRequest struct {
+	Sender string
+	BuildMultiBackgroundTransactionsRequest
+}
+
+type BuildMultiBackgroundTransactionsRequest struct {
 	Client    sui.ISuiAPI
-	Sender    string
 	Modules   []string
 	Functions []string
 	Arguments [][]interface{}
@@ -59,7 +64,7 @@ type DonateTransactionRequest struct {
 }
 
 const (
-	defaultGasBudget   int    = 100000000
+	defaultGasBudget   int    = 100_000_000
 	defaultRequestType string = "WaitForLocalExecution"
 )
 
@@ -71,15 +76,8 @@ func BuildTransaction(req BuildTransactionRequest, ctx context.Context) (string,
 		Function:        req.Function,
 		TypeArguments:   []interface{}{},
 		Arguments:       req.Arguments,
-		//GasBudget:       fmt.Sprint(defaultGasBudget),
+		GasBudget:       fmt.Sprint(defaultGasBudget),
 	})
-
-	// t, err := req.Client.BatchTransaction(ctx, models.BatchTransactionRequest{
-	// 	Signer: req.Sender,
-	// 	RPCTransactionRequestParams: []models.RPCTransactionRequestParams{
-	// 		models.RPCTransactionRequestParams{},
-	// 	},
-	// })
 
 	if err != nil {
 		req.ErrLogger.Println(noti.BUILDING_TX_ERR_MSG + err.Error())
@@ -89,7 +87,64 @@ func BuildTransaction(req BuildTransactionRequest, ctx context.Context) (string,
 	return res.TxBytes, nil
 }
 
-func BuildMultiTransactions(req BuildMultiTransactionRequest, ctx context.Context) (string, error) {
+func BuildMultiBackgroundTransactions(req BuildMultiBackgroundTransactionsRequest, ctx context.Context) error {
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	signer, err := signer.NewSignerWithSecretKey(os.Getenv(""))
+	if err != nil {
+		req.ErrLogger.Println(err.Error())
+		return internalErr
+	}
+
+	var packageId string = os.Getenv(env.PACKAGE_ID)
+	var rawGasBudget string = fmt.Sprint(defaultGasBudget)
+	var sender string = os.Getenv("")
+	var txRequestParams []models.RPCTransactionRequestParams
+
+	for i := 0; i < len(req.Functions); i++ {
+		txRequestParams = append(txRequestParams, models.RPCTransactionRequestParams{
+			MoveCallRequestParams: &models.MoveCallRequest{
+				Signer:          sender,
+				PackageObjectId: packageId,
+				Module:          req.Modules[i],
+				Function:        req.Functions[i],
+				TypeArguments:   []interface{}{},
+				Arguments:       req.Arguments[i],
+				GasBudget:       rawGasBudget,
+			},
+		})
+	}
+
+	res, err := req.Client.BatchTransaction(ctx, models.BatchTransactionRequest{
+		Signer:                         sender,
+		RPCTransactionRequestParams:    txRequestParams,
+		GasBudget:                      "20000000",
+		SuiTransactionBlockBuilderMode: "Commit",
+	})
+	if err != nil {
+		req.ErrLogger.Println(err.Error())
+		return internalErr
+	}
+
+	if _, err := req.Client.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
+		TxnMetaData: models.TxnMetaData{
+			Gas:          res.Gas,
+			InputObjects: res.InputObjects,
+			TxBytes:      res.TxBytes,
+		},
+		PriKey:      signer.PriKey,
+		RequestType: "WaitForLocalExecution",
+		Options: models.SuiTransactionBlockOptions{
+			ShowEffects: true,
+		},
+	}); err != nil {
+		req.ErrLogger.Println(err.Error())
+		return internalErr
+	}
+
+	return nil
+}
+
+func BuildMultiTransactions(req BuildMultiTransactionsRequest, ctx context.Context) (string, error) {
 	var packageId string = os.Getenv(env.PACKAGE_ID)
 	var rawGasBudget string = fmt.Sprint(defaultGasBudget)
 	var txRequestParams []models.RPCTransactionRequestParams
@@ -103,7 +158,7 @@ func BuildMultiTransactions(req BuildMultiTransactionRequest, ctx context.Contex
 				Function:        req.Functions[i],
 				TypeArguments:   []interface{}{},
 				Arguments:       req.Arguments[i],
-				//GasBudget:       rawGasBudget,
+				GasBudget:       rawGasBudget,
 			},
 		})
 	}
@@ -169,6 +224,7 @@ func BuildDonateTransaction(req DonateTransactionRequest, ctx context.Context) (
 }
 
 func ExecuteTransaction(req ExecuteTransactionRequest, ctx context.Context) (models.SuiTransactionBlockResponse, error) {
+	//req.Client.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{})
 	res, err := req.Client.SuiExecuteTransactionBlock(ctx, models.SuiExecuteTransactionBlockRequest{
 		TxBytes:     req.TxBytes,
 		Signature:   req.Signature,

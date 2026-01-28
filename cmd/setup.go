@@ -1,13 +1,17 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	api_route "raise-child/api_route"
+	"raise-child/business"
 	"raise-child/constants/env/payment"
 	"raise-child/constants/noti"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/payOSHQ/payos-lib-golang"
@@ -50,6 +54,12 @@ func setupApiRoutes(server *gin.Engine) {
 	// Admin API endpoints
 	api_route.InitializeAdminRoute(server)
 
+	// Center API endpoints
+	api_route.InitializeCenterRequestRoute(server)
+
+	// Gift API endpoints
+	api_route.InitializeGiftRoute(server)
+
 	// Default route to Swagger documentation
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusMovedPermanently, "/swagger/index.html#")
@@ -60,5 +70,67 @@ func setupPayments(errLogger *log.Logger) {
 	// Payos
 	if err := payos.Key(os.Getenv(payment.PAYOS_CLIENT_ID), os.Getenv(payment.PAYOS_API_KEY), os.Getenv(payment.PAYOS_CHECKSUM_KEY)); err != nil {
 		errLogger.Println(fmt.Sprintf(noti.PAYMENT_INIT_ENV_ERR_MSG, "payos") + err.Error())
+	}
+}
+
+func setupBackgroundService(ctx context.Context, wg *sync.WaitGroup) {
+	var services = []func(context.Context, *sync.WaitGroup, time.Duration){
+		processCenterBackgroundService,
+		processRegistrationBackgroundService,
+		processUploadChildBackgroundService,
+	}
+
+	wg.Add(len(services))
+	var duration time.Duration = time.Minute
+	for _, service := range services {
+		go service(ctx, wg, duration)
+	}
+}
+
+func processCenterBackgroundService(ctx context.Context, wg *sync.WaitGroup, duration time.Duration) {
+	defer wg.Done()
+	var ticker = time.NewTicker(duration)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if service, err := business.GenerateBackgroundService(); err == nil {
+				service.ProcessBackgroundCenterRequests(ctx)
+			}
+		}
+	}
+}
+
+func processRegistrationBackgroundService(ctx context.Context, wg *sync.WaitGroup, duration time.Duration) {
+	defer wg.Done()
+	var ticker = time.NewTicker(duration)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if service, err := business.GenerateBackgroundService(); err == nil {
+				service.ProcessBackgroundRegistrationRequests(ctx)
+			}
+		}
+	}
+}
+
+func processUploadChildBackgroundService(ctx context.Context, wg *sync.WaitGroup, duration time.Duration) {
+	defer wg.Done()
+	var ticker = time.NewTicker(duration)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if service, err := business.GenerateBackgroundService(); err == nil {
+				service.ProcessBackgroundUploadChildRequests(ctx)
+			}
+		}
 	}
 }

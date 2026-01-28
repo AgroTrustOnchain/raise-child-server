@@ -3,6 +3,7 @@ package entities
 import (
 	"raise-child/model/dtos/response"
 	"raise-child/util"
+	"strconv"
 	"time"
 )
 
@@ -16,10 +17,11 @@ type Child struct {
 	Region             string   `json:"region"`
 	AvatarBlobId       string   `json:"avatar_blob_id"`
 	ImageBlobIds       []string `json:"image_blob_ids"`
-	UploadImagePeriods []int64  `json:"upload_image_periods"`
+	UploadImagePeriods []string `json:"upload_image_periods"`
 	DynamicFields      []string `json:"dynamic_fields"`
-	UploadedAt         int64    `json:"uploaded_at"`
-	UpdatedAt          int64    `json:"updated_at"`
+	Gifts              []string `json:"gifts"`
+	UploadedAt         string   `json:"uploaded_at"`
+	UpdatedAt          string   `json:"updated_at"`
 }
 type ID struct {
 	ID string `json:"id"`
@@ -32,8 +34,12 @@ func (c Child) ToChildResponse() response.ChildResponse {
 
 	var uploadImagePeriods []time.Time
 	for _, period := range c.UploadImagePeriods {
-		uploadImagePeriods = append(uploadImagePeriods, util.MilliSecToTime(period))
+		uploadPeriod, _ := strconv.ParseInt(period, 10, 64)
+		uploadImagePeriods = append(uploadImagePeriods, util.MilliSecToTime(uploadPeriod))
 	}
+
+	uploadedAt, _ := strconv.ParseInt(c.UploadedAt, 10, 64)
+	updatedAt, _ := strconv.ParseInt(c.UpdatedAt, 10, 64)
 
 	return response.ChildResponse{
 		ID:                 c.ID.ID,
@@ -46,7 +52,7 @@ func (c Child) ToChildResponse() response.ChildResponse {
 		AvatarBlobId:       c.AvatarBlobId,
 		ImageBlobIds:       c.ImageBlobIds,
 		UploadImagePeriods: uploadImagePeriods,
-		UploadedAt:         util.MilliSecToTime(c.UploadedAt),
-		UpdatedAt:          util.MilliSecToTime(c.UpdatedAt),
+		UploadedAt:         util.MilliSecToTime(uploadedAt),
+		UpdatedAt:          util.MilliSecToTime(updatedAt),
 	}
 }

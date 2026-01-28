@@ -477,6 +477,341 @@
                 }
             }
         },
+        "/centers": {
+            "get": {
+                "description": "Retrieve center requests with filtering based on query parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "center"
+                ],
+                "summary": "Get a list of center requests",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "name": "is_available_to_confirm",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "is_closed",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "region",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Submit a new center request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "center"
+                ],
+                "summary": "Create a new center request",
+                "parameters": [
+                    {
+                        "description": "Center Request Body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateCenterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/entities.CenterRequest"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/centers/user/{id}": {
+            "get": {
+                "description": "Retrieve specific center requests associated with a unique wallet address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "center"
+                ],
+                "summary": "Get Center requests by a wallet",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "0x...",
+                        "description": "User Wallet Address",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/centers/{id}": {
+            "get": {
+                "description": "Retrieve the full details of a single Center request by its unique ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "center"
+                ],
+                "summary": "Get center request details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Center Request ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/centers/{id}/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for uploading center information on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "center"
+                ],
+                "summary": "Confirm and upload center information to Sui Blockhain",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Center Request ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/centers/{id}/vote": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Submit an approval or refusal vote for a specific center request.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "center"
+                ],
+                "summary": "Vote on a center request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Center Request ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Vote Details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.VoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/child-upload-reqs": {
             "get": {
                 "description": "Retrieve a list of child upload requests based on query parameters.",
@@ -1086,6 +1421,272 @@
                 }
             }
         },
+        "/gifts": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepare and create a new gift for a child on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gift"
+                ],
+                "summary": "Create a new gift for a child",
+                "parameters": [
+                    {
+                        "description": "Create gift details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateGiftRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/gifts/child/{id}": {
+            "get": {
+                "description": "Retrieve a list of gifts sent to a child with optional query filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gift"
+                ],
+                "summary": "List gifts of a child",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Child ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/gifts/{id}": {
+            "get": {
+                "description": "Retrieve details of a specific gift by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gift"
+                ],
+                "summary": "Get a gift information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Gift ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.GiftResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/gifts/{id}/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Finalize and confirm a specific withdraw proposal by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gift"
+                ],
+                "summary": "Confirm a withdraw proposal",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Gift ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Confirm receive gift details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ConfirmReceiveGiftRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mints": {
+            "post": {
+                "description": "Processes a transaction request and executes it on the Sui Network blockchain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mints"
+                ],
+                "summary": "Execute an on-chain transaction",
+                "responses": {}
+            }
+        },
+        "/mints/caps": {
+            "post": {
+                "description": "Processes a transaction request and executes it on the Sui Network blockchain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mints"
+                ],
+                "summary": "Execute an on-chain transaction",
+                "responses": {}
+            }
+        },
         "/payments/callback/{id}": {
             "get": {
                 "description": "Handles the transaction callback/webhook from the payment provider to update transaction status by ID and build on-chain transaction.",
@@ -1291,6 +1892,11 @@
                     {
                         "type": "string",
                         "name": "gender",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "is_available_to_confirm",
                         "in": "query"
                     },
                     {
@@ -2343,6 +2949,67 @@
                 }
             }
         },
+        "entities.CenterRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "approvers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "closed_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_blob_id": {
+                    "type": "string"
+                },
+                "isAvailableToConfirm": {
+                    "type": "boolean"
+                },
+                "is_confirm_register": {
+                    "description": "Default as false, when status aprroved, user clicks to update to true, call smart contract to register role",
+                    "type": "boolean"
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "refuse_reasons": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "refusers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "region": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "e.g. \"Pending\", \"Approved\", \"Refused\"",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "entities.RegistrationRequest": {
             "type": "object",
             "properties": {
@@ -2384,6 +3051,9 @@
                 },
                 "identity_code": {
                     "type": "string"
+                },
+                "isAvailableToConfirm": {
+                    "type": "boolean"
                 },
                 "is_confirm_register": {
                     "description": "Default as false, when status aprroved, user clicks to update to true, call smart contract to register role",
@@ -2512,6 +3182,17 @@
                 }
             }
         },
+        "request.ConfirmReceiveGiftRequest": {
+            "type": "object",
+            "required": [
+                "delivered_image_blob_id"
+            ],
+            "properties": {
+                "delivered_image_blob_id": {
+                    "type": "string"
+                }
+            }
+        },
         "request.CreateBankProfileRequest": {
             "type": "object",
             "required": [
@@ -2536,6 +3217,69 @@
                     "type": "string"
                 },
                 "payos_client_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CreateCenterRequest": {
+            "type": "object",
+            "required": [
+                "address",
+                "image_blob_id",
+                "phone_number",
+                "region"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "image_blob_id": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CreateGiftRequest": {
+            "type": "object",
+            "required": [
+                "carrier",
+                "category",
+                "child_id",
+                "description",
+                "gift_image_blob_id",
+                "gift_value",
+                "message",
+                "tracking_code"
+            ],
+            "properties": {
+                "carrier": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "child_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "gift_image_blob_id": {
+                    "type": "string"
+                },
+                "gift_value": {
+                    "type": "integer",
+                    "minimum": 2000
+                },
+                "message": {
+                    "type": "string"
+                },
+                "tracking_code": {
                     "type": "string"
                 }
             }
@@ -2899,6 +3643,59 @@
                 }
             }
         },
+        "response.GiftResponse": {
+            "type": "object",
+            "properties": {
+                "cancel_reason": {
+                    "type": "string"
+                },
+                "carrier": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "child_id": {
+                    "type": "string"
+                },
+                "confirm_recieved_by": {
+                    "type": "string"
+                },
+                "delivered_at": {
+                    "type": "string"
+                },
+                "delivered_image_blob_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "gift_image_blob_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "sender": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tracking_code": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "uploaded_at": {
+                    "type": "string"
+                }
+            }
+        },
         "response.MessageAPIResponse": {
             "type": "object",
             "properties": {
@@ -2988,6 +3785,9 @@
                 },
                 "phone_number": {
                     "type": "string"
+                },
+                "total_donation": {
+                    "type": "integer"
                 },
                 "url": {
                     "type": "string"

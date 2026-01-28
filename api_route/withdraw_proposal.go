@@ -21,5 +21,4 @@ func InitializeWithdrawProposalRoute(server *gin.Engine) {
 	authGroup.POST("/:id/vote", transport.VoteWithdrawProposal)
 	authGroup.POST("/:id/confirm", transport.ConfirmWithdrawProposal)
 	authGroup.POST("/:id/main-pool-confirm", transport.ConfirmMainPoolWithdrawProposal)
-
 }

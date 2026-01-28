@@ -53,6 +53,10 @@ const (
 	WITHDRAW_PROPOSAL_FAIL_CONDITION_MESSAGE string = "This withdraw proposal approve rate has been failed."
 
 	POOL_CURRENTLY_NOT_ENOUGH_BALENCE string = "Pool is now not enough balence for this withdraw request."
+
+	CHILD_AGE_OUT_OF_SUPPORT_MESSAGE string = "This child's age is out of our support range."
+
+	PROFILE_EMPTY_MESSAGE string = "Your profile is empty. Please fill it with your personal information."
 )
 
 const (

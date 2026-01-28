@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"raise-child/constants/env"
@@ -29,6 +30,7 @@ import (
 )
 
 const (
+	admin_role        string = "Admin"
 	local_leader_role string = "Local Leader"
 	volunteer_role    string = "Volunteer"
 )
@@ -92,20 +94,11 @@ func (r *registrationRequestService) ConfirmRegistrationRequest(id string, ctx c
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
 
-	profile, err := r.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
-
-	if profile == nil {
-		return response.BuildTransactionResponse{}, genericErr
-	}
-
 	// Pending process
 	if req.ClosedAt.After(time.Now()) {
 		return response.BuildTransactionResponse{}, errors.New(noti.STILL_PENDING_REQUEST_MESSAGE)
 	} else { // Request closed
-		var rate float32 = float32(len(req.Aprrovers)) / float32(len(req.Aprrovers)+len(req.Refusers))
+		var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
 		var isDenied bool = false
 
 		if rate >= approve_rate_limit {
@@ -126,34 +119,101 @@ func (r *registrationRequestService) ConfirmRegistrationRequest(id string, ctx c
 		}
 	}
 
-	var res response.BuildTransactionResponse
-	var errRes error
-	if req.IsConfirmRegister {
-		var module = on_chain.InitializeModuleStaff()
-		txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-			Client:    r.clients[constant.SuiTestnet],
-			Sender:    sender,
-			Module:    module.GetModule(),
-			Function:  module.GetFunctionRegisterStaff(),
-			ErrLogger: r.errLogger,
-			Arguments: module.ToRegisterStaffArguements(on_chain.RegisterStaffArguements{
-				IdentityCode:       profile.IdentityCode,
-				IdentityCardBlobID: req.IdentityCardBlobID,
-				Role:               req.RegisterRole,
-				Region:             req.Region,
-				FirstName:          profile.FirstName,
-				LastName:           profile.LastName,
-				Gender:             profile.Gender,
-				PhoneNumber:        profile.PhoneNumber,
-				Email:              profile.Email,
-			}),
-		}, ctx)
-
-		res.TxBytes = txBytes
-		errRes = err
+	// Wait for background server to mint cap object to register
+	if !req.IsAvailableToConfirm {
+		return response.BuildTransactionResponse{}, nil
 	}
 
-	return res, errRes
+	var client = r.clients[constant.SuiTestnet]
+	var manageModule = on_chain.InitializeModuleManage()
+	var capType string
+
+	switch req.RegisterRole {
+	case admin_role:
+		capType = manageModule.GetRegisterAdminCapStruct()
+	case local_leader_role:
+		capType = manageModule.GetRegisterLeaderCapStruct()
+	case volunteer_role:
+		capType = manageModule.GetRegisterVolunteerCapStruct()
+	}
+
+	caps, err := on_chain.GetOnChainOwnedObjects[entities.Cap](on_chain.GetOnChainOwnedObjectsRequest{
+		Client:       client,
+		OwnerAddress: sender,
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manageModule.GetModule(), capType),
+		ErrLogger:    r.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
+	}
+
+	var args []interface{}
+	var function string
+	var staffModule = on_chain.InitializeModuleStaff()
+	switch req.RegisterRole {
+	case admin_role:
+		function = staffModule.GetFunctionRegisterAdmin()
+		args = staffModule.ToRegisterAdminArguments(on_chain.RegisterAdminArguments{
+			CapID:              caps[0].ID.ID,
+			IdentityCode:       req.IdentityCode,
+			IdentityCardBlobID: req.IdentityCardBlobID,
+			AvatarBlobID:       req.AvatarBlobID,
+			FirstName:          req.FirstName,
+			LastName:           req.LastName,
+			Gender:             req.Gender,
+			DateOfBirth:        req.DateOfBirth,
+			PhoneNumber:        req.PhoneNumber,
+			Email:              req.Email,
+		})
+	case local_leader_role:
+		function = staffModule.GetFunctionRegisterLeader()
+		args = staffModule.ToRegisterNormalStaffArguments(on_chain.RegisterNormalStaffArguments{
+			Region: req.Region,
+			RegisterAdminArguments: on_chain.RegisterAdminArguments{
+				CapID:              caps[0].ID.ID,
+				IdentityCode:       req.IdentityCode,
+				IdentityCardBlobID: req.IdentityCardBlobID,
+				AvatarBlobID:       req.AvatarBlobID,
+				FirstName:          req.FirstName,
+				LastName:           req.LastName,
+				Gender:             req.Gender,
+				DateOfBirth:        req.DateOfBirth,
+				PhoneNumber:        req.PhoneNumber,
+				Email:              req.Email,
+			},
+		})
+	case volunteer_role:
+		function = staffModule.GetFunctionRegisterVolunteer()
+		args = staffModule.ToRegisterNormalStaffArguments(on_chain.RegisterNormalStaffArguments{
+			Region: req.Region,
+			RegisterAdminArguments: on_chain.RegisterAdminArguments{
+				CapID:              caps[0].ID.ID,
+				IdentityCode:       req.IdentityCode,
+				IdentityCardBlobID: req.IdentityCardBlobID,
+				AvatarBlobID:       req.AvatarBlobID,
+				FirstName:          req.FirstName,
+				LastName:           req.LastName,
+				Gender:             req.Gender,
+				DateOfBirth:        req.DateOfBirth,
+				PhoneNumber:        req.PhoneNumber,
+				Email:              req.Email,
+			},
+		})
+	}
+
+	var module = on_chain.InitializeModuleStaff()
+	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+		Client:    r.clients[constant.SuiTestnet],
+		Sender:    sender,
+		Module:    module.GetModule(),
+		Function:  function,
+		ErrLogger: r.errLogger,
+		Arguments: args,
+	}, ctx)
+
+	return response.BuildTransactionResponse{
+		TxBytes: txBytes,
+	}, err
 }
 
 // CreateRegistrationRequest implements business.IRegistrationRequestService.
@@ -188,6 +248,13 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 		return nil, genericErr
 	}
 
+	// Admin registration request not contain region
+	if role == admin_role {
+		if req.Region != "" {
+			return nil, genericErr
+		}
+	}
+
 	if !isRegionExist(req.Region) {
 		return nil, genericErr
 	}
@@ -202,52 +269,34 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 		return nil, err
 	}
 
-	leaders, err := on_chain.GetOnChainObjects[entities.Staff](on_chain.GetOnChainObjectsRequest{
-		Client:    client,
-		ObjectIds: manageObj.LocalLeaderIds,
-		ErrLogger: r.errLogger,
-	}, ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var isRegionAvailable bool = false
-	for _, leader := range leaders {
-		if leader.Region == req.Region {
-			if role == volunteer_role {
-				isRegionAvailable = true
-				break
-			} else if role == local_leader_role {
-				return nil, errors.New(noti.LEADER_EXISTS_REGION_MESSAGE)
-			}
+	if role == volunteer_role {
+		if !slices.Contains(manageObj.LocalRegions, req.Region) {
+			return nil, errors.New(noti.REGION_NOT_ADDED_WARN_MSG)
 		}
-	}
-
-	if !isRegionAvailable {
-		return nil, errors.New(noti.REGION_NOT_ADDED_WARN_MSG)
 	}
 
 	// todo: validate identity code
 	var curTime time.Time = time.Now()
 	var request = entities.RegistrationRequest{
-		ID:                 util.GenerateId(),
-		RegisterRole:       role,
-		IdentityCode:       util.StanderizeString(profile.IdentityCode),
-		IdentityCardBlobID: strings.TrimSpace(req.IdentityCardBlobID),
-		AvatarBlobID:       strings.TrimSpace(req.AvatarBlobID),
-		Region:             req.Region,
-		FirstName:          strings.TrimSpace(profile.FirstName),
-		LastName:           strings.TrimSpace(profile.LastName),
-		Gender:             profile.Gender,
-		DateOfBirth:        profile.DateOfBirth,
-		PhoneNumber:        profile.PhoneNumber,
-		Email:              profile.Email,
-		Status:             request_pending_status,
-		IsConfirmRegister:  false,
-		CreatedBy:          sender,
-		CreatedAt:          curTime,
-		UpdatedAt:          curTime,
-		ClosedAt:           util.GetRequestDuration(),
+		ID:                   util.GenerateId(),
+		RegisterRole:         role,
+		IdentityCode:         util.StanderizeString(profile.IdentityCode),
+		IdentityCardBlobID:   strings.TrimSpace(req.IdentityCardBlobID),
+		AvatarBlobID:         strings.TrimSpace(req.AvatarBlobID),
+		Region:               req.Region,
+		FirstName:            strings.TrimSpace(profile.FirstName),
+		LastName:             strings.TrimSpace(profile.LastName),
+		Gender:               profile.Gender,
+		DateOfBirth:          profile.DateOfBirth,
+		PhoneNumber:          profile.PhoneNumber,
+		Email:                profile.Email,
+		Status:               request_pending_status,
+		IsAvailableToConfirm: false,
+		IsConfirmRegister:    false,
+		CreatedBy:            sender,
+		CreatedAt:            curTime,
+		UpdatedAt:            curTime,
+		ClosedAt:             util.GetRequestDuration(),
 	}
 
 	return &request, r.registrationRequestRepo.CreateRegistrationRequest(request, ctx)
@@ -264,7 +313,7 @@ func (r *registrationRequestService) GetRegistrationRequest(id string, ctx conte
 
 // GetRegistrationRequests implements business.IRegistrationRequestService.
 func (r *registrationRequestService) GetRegistrationRequests(req request.GetRegistrationRequests, ctx context.Context) (response.PaginationDataResponse, error) {
-	if req.Page <= 0 {
+	if req.Page < 1 {
 		req.Page = 1
 	}
 
@@ -312,7 +361,7 @@ func (r *registrationRequestService) VoteRegistrationRequest(id string, req requ
 		return errors.New(noti.OWNER_VOTE_WARN_MSG)
 	}
 
-	if slices.Contains(request.Aprrovers, voter) || slices.Contains(request.Refusers, voter) {
+	if slices.Contains(request.Approvers, voter) || slices.Contains(request.Refusers, voter) {
 		return errors.New(noti.ALREADY_VOTE_MESSAGE)
 	}
 
@@ -331,7 +380,7 @@ func (r *registrationRequestService) VoteRegistrationRequest(id string, req requ
 	}
 
 	if req.IsVoteYes {
-		request.Aprrovers = append(request.Aprrovers, voter)
+		request.Approvers = append(request.Approvers, voter)
 	} else {
 		request.Refusers = append(request.Refusers, voter)
 		if req.RefuseReason == "" {

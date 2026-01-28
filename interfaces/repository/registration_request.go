@@ -13,4 +13,7 @@ type IRegistrationRequestRepository interface {
 	GetWalletRegistrationRequests(id string, ctx context.Context) ([]entities.RegistrationRequest, error)
 	CreateRegistrationRequest(req entities.RegistrationRequest, ctx context.Context) error
 	UpdateRegistrationRequest(req entities.RegistrationRequest, ctx context.Context) error
+	GetPendingRequests(ctx context.Context) ([]entities.BackgroundRecord, []entities.BackgroundRecord, error)
+	SetApprovedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error
+	SetRefusedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error
 }

@@ -25,6 +25,7 @@ import (
 
 	"github.com/block-vision/sui-go-sdk/constant"
 	"github.com/block-vision/sui-go-sdk/models"
+	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/utils"
 )
@@ -154,6 +155,11 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 
+	signer, _ := signer.NewSignerWithSecretKey("")
+	a.clients[""].SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
+		PriKey: signer.PriKey,
+	})
+
 	var sender string = ctx.Value("address").(string)
 	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
 		return response.BuildTransactionResponse{}, genericErr
@@ -197,7 +203,7 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 		Module:    module.GetModule(),
 		Function:  module.GetFunctionUpdatePublisherNft(),
 		ErrLogger: a.errLogger,
-		Arguments: module.ToUpdatePublisherNftArguements(on_chain.UpdatePublisherNftArguements{
+		Arguments: module.ToUpdatePublisherNftArguments(on_chain.UpdatePublisherNftArguments{
 			IdentityCode:       identityCode,
 			IdentityCardBlobID: strings.TrimSpace(req.IdentityCardBlobID),
 			AvatarBlobID:       strings.TrimSpace(req.AvatarBlobID),

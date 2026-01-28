@@ -6,7 +6,7 @@ import (
 	"raise-child/constants/on-chain/sui"
 )
 
-type DonateToPoolArguements struct {
+type DonateToPoolArguments struct {
 	Amount      int64
 	FirstName   string
 	LastName    string
@@ -16,12 +16,12 @@ type DonateToPoolArguements struct {
 	Message     string
 }
 
-type DonateToLocalPoolArguements struct {
+type DonateToLocalPoolArguments struct {
 	LocalPoolId string
-	DonateToPoolArguements
+	DonateToPoolArguments
 }
 
-type CreateWithdrawProposalArguements struct {
+type CreateWithdrawProposalArguments struct {
 	LocalPoolId     string
 	WithdrawAmount  int64
 	Description     string
@@ -29,25 +29,25 @@ type CreateWithdrawProposalArguements struct {
 	ClosedAt        int64
 }
 
-type VoteWithdrawProposalArguements struct {
+type VoteWithdrawProposalArguments struct {
 	ProposalId   string
 	SponsorId    string
 	IsApprove    bool
 	RefuseReason string
 }
 
-type WithdrawFromPoolArguements struct {
+type WithdrawFromPoolArguments struct {
 	LocalPoolId        string
 	WithdrawProposalId string
 }
 
 type IModulePool interface {
 	GetModule() string
-	ToDonateToPoolArguements(args DonateToPoolArguements) []interface{}
-	ToDonateToLocalPoolArguements(args DonateToLocalPoolArguements) []interface{}
-	ToCreateWithdrawProposalArguements(args CreateWithdrawProposalArguements) []interface{}
-	ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguements) []interface{}
-	ToWithdrawFromPoolArguements(args WithdrawFromPoolArguements) []interface{}
+	ToDonateToPoolArguments(args DonateToPoolArguments) []interface{}
+	ToDonateToLocalPoolArguments(args DonateToLocalPoolArguments) []interface{}
+	ToCreateWithdrawProposalArguments(args CreateWithdrawProposalArguments) []interface{}
+	ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguments) []interface{}
+	ToWithdrawFromPoolArguments(args WithdrawFromPoolArguments) []interface{}
 	GetFunctionDonateToPool() string
 	GetFunctionDonateToLocalPool() string
 	GetFunctionWithdrawFromPool() string
@@ -76,8 +76,8 @@ func (m *modulePool) GetFunctionVoteWithdrawProposal() string {
 	return sui.VOTE_WITHDRAW_PROPOSAL_FUNCTION
 }
 
-// ToWithdrawFromPoolArguements implements IModulePool.
-func (m *modulePool) ToWithdrawFromPoolArguements(args WithdrawFromPoolArguements) []interface{} {
+// ToWithdrawFromPoolArguments implements IModulePool.
+func (m *modulePool) ToWithdrawFromPoolArguments(args WithdrawFromPoolArguments) []interface{} {
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
@@ -89,8 +89,8 @@ func (m *modulePool) ToWithdrawFromPoolArguements(args WithdrawFromPoolArguement
 	}
 }
 
-// ToCreateWithdrawProposalArguements implements IModulePool.
-func (m *modulePool) ToCreateWithdrawProposalArguements(args CreateWithdrawProposalArguements) []interface{} {
+// ToCreateWithdrawProposalArguments implements IModulePool.
+func (m *modulePool) ToCreateWithdrawProposalArguments(args CreateWithdrawProposalArguments) []interface{} {
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
@@ -104,7 +104,7 @@ func (m *modulePool) ToCreateWithdrawProposalArguements(args CreateWithdrawPropo
 }
 
 // ToVoteWithdrawProposal implements IModulePool.
-func (m *modulePool) ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguements) []interface{} {
+func (m *modulePool) ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguments) []interface{} {
 	return []interface{}{
 		args.ProposalId,
 		args.SponsorId,
@@ -115,8 +115,8 @@ func (m *modulePool) ToVoteWithdrawProposalArguments(args VoteWithdrawProposalAr
 	}
 }
 
-// ToDonateToLocalPoolArguements implements IModulePool.
-func (m *modulePool) ToDonateToLocalPoolArguements(args DonateToLocalPoolArguements) []interface{} {
+// ToDonateToLocalPoolArguments implements IModulePool.
+func (m *modulePool) ToDonateToLocalPoolArguments(args DonateToLocalPoolArguments) []interface{} {
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
@@ -133,8 +133,8 @@ func (m *modulePool) ToDonateToLocalPoolArguements(args DonateToLocalPoolArgueme
 	}
 }
 
-// ToDonateToPoolArguements implements IModulePool.
-func (m *modulePool) ToDonateToPoolArguements(args DonateToPoolArguements) []interface{} {
+// ToDonateToPoolArguments implements IModulePool.
+func (m *modulePool) ToDonateToPoolArguments(args DonateToPoolArguments) []interface{} {
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),

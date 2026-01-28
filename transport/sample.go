@@ -13,7 +13,7 @@ import (
 )
 
 var client = sui.NewSuiClient(constant.BvTestnetEndpoint)
-var address string = "0x19cf411f6f34893331a360bb66c8d6dc50f41b31309d31c9038d6494508a82ff"
+var address string = ""
 
 func stringToByteArray(s string) []interface{} {
 	bytes := []byte(s)

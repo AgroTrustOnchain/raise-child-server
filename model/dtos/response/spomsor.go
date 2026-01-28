@@ -8,6 +8,7 @@ type SponsorResponse struct {
 	PhoneNumber   string                `json:"phone_number"`
 	Email         string                `json:"email"`
 	Name          string                `json:"name"`
+	TotalDonation int64                 `json:"total_donation"`
 	Url           string                `json:"url"`
 	Contributions []TransactionResponse `json:"contributions"`
 }

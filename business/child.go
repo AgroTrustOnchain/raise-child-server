@@ -190,7 +190,7 @@ func (c *childService) UploadChild(req request.UploadChildRequest, ctx context.C
 		Module:    module.GetModule(),
 		Function:  module.GetFunctionAddChild(),
 		ErrLogger: c.errLogger,
-		Arguments: module.ToAddChildArguements(on_chain.AddChildArguements{
+		Arguments: module.ToAddChildArguments(on_chain.AddChildArguments{
 			IdentityCode: util.StanderizeString(req.IdentityCode),
 			FirstName:    util.StanderizeString(req.FirstName),
 			LastName:     util.StanderizeString(req.LastName),

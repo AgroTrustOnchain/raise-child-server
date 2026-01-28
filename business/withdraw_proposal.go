@@ -181,7 +181,7 @@ func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithd
 		Module:    module.GetModule(),
 		Function:  module.GetFunctionCreateWithdrawProposal(),
 		ErrLogger: w.errLogger,
-		Arguments: module.ToCreateWithdrawProposalArguements(on_chain.CreateWithdrawProposalArguements{
+		Arguments: module.ToCreateWithdrawProposalArguments(on_chain.CreateWithdrawProposalArguments{
 			LocalPoolId:     localPoolId,
 			WithdrawAmount:  req.WithdrawAmount,
 			Description:     description,
@@ -394,7 +394,7 @@ func (w *withdrawProposalService) ConfirmMainPoolWithdrawProposal(id string, cap
 		Module:    module.GetModule(),
 		Function:  module.GetFunctionWithdrawFromPool(),
 		ErrLogger: w.errLogger,
-		Arguments: module.ToWithdrawFromPoolArguements(on_chain.WithdrawFromPoolArguements{
+		Arguments: module.ToWithdrawFromPoolArguments(on_chain.WithdrawFromPoolArguments{
 			LocalPoolId:        mainPool.LocalPools[0],
 			WithdrawProposalId: id,
 		}),
@@ -622,7 +622,7 @@ func (w *withdrawProposalService) VoteWithdrawProposal(id string, req request.Vo
 		Module:    poolModule.GetModule(),
 		Function:  poolModule.GetFunctionVoteWithdrawProposal(),
 		ErrLogger: w.errLogger,
-		Arguments: poolModule.ToVoteWithdrawProposalArguments(on_chain.VoteWithdrawProposalArguements{
+		Arguments: poolModule.ToVoteWithdrawProposalArguments(on_chain.VoteWithdrawProposalArguments{
 			ProposalId:   id,
 			SponsorId:    nfts[0].ID.ID,
 			IsApprove:    req.IsVoteYes,
