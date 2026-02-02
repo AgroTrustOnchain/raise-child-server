@@ -77,7 +77,6 @@ func setupBackgroundService(ctx context.Context, wg *sync.WaitGroup) {
 	var services = []func(context.Context, *sync.WaitGroup, time.Duration){
 		processCenterBackgroundService,
 		processRegistrationBackgroundService,
-		processUploadChildBackgroundService,
 	}
 
 	wg.Add(len(services))
@@ -119,18 +118,18 @@ func processRegistrationBackgroundService(ctx context.Context, wg *sync.WaitGrou
 	}
 }
 
-func processUploadChildBackgroundService(ctx context.Context, wg *sync.WaitGroup, duration time.Duration) {
-	defer wg.Done()
-	var ticker = time.NewTicker(duration)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if service, err := business.GenerateBackgroundService(); err == nil {
-				service.ProcessBackgroundUploadChildRequests(ctx)
-			}
-		}
-	}
-}
+// func processUploadChildBackgroundService(ctx context.Context, wg *sync.WaitGroup, duration time.Duration) {
+// 	defer wg.Done()
+// 	var ticker = time.NewTicker(duration)
+// 	defer ticker.Stop()
+// 	for {
+// 		select {
+// 		case <-ctx.Done():
+// 			return
+// 		case <-ticker.C:
+// 			if service, err := business.GenerateBackgroundService(); err == nil {
+// 				service.ProcessBackgroundUploadChildRequests(ctx)
+// 			}
+// 		}
+// 	}
+// }

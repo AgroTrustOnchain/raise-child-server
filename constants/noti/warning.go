@@ -36,6 +36,8 @@ const (
 	REGION_NOT_ADDED_WARN_MSG string = "This region temporarily has not been supported yet."
 
 	NOT_ARRPOVED_REQUEST_WARN_MSG string = "This request has been not approved yet."
+
+	TOO_MANY_REQUESTS_WARN_MSG string = "Too many requests."
 )
 
 const (

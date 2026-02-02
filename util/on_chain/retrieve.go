@@ -55,12 +55,12 @@ func GetOnChainObject[T any](req GetOnChainObjectRequest, ctx context.Context) (
 		return nil, internalErr
 	}
 
-	if res.Error != nil {
-		handleGetEmptyOnChainObject(res.Error.Code, req.ObjectId, req.ErrLogger)
+	var jsonData = res.Data.Content.Fields
+	if jsonData == nil {
 		return nil, nil
 	}
 
-	jsonBytes, err := json.Marshal(res.Data.Content.Fields)
+	jsonBytes, err := json.Marshal(jsonData)
 	if err != nil {
 		req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
 		return nil, internalErr
@@ -153,7 +153,7 @@ func GetDynamicFields(id string, client sui.ISuiAPI, errLogger *log.Logger, ctx 
 	})
 
 	if err != nil {
-		errLogger.Println(noti.RETRIEVE_DYNAMOC_FIELDS_ERR_MSG + err.Error())
+		errLogger.Println(noti.ApproRETRIEVE_DYNAMIC_FIELDS_ERR_MSGvers + err.Error())
 		return nil, internalErr
 	}
 
@@ -168,7 +168,7 @@ func GetDynamicFields(id string, client sui.ISuiAPI, errLogger *log.Logger, ctx 
 		})
 
 		if err != nil {
-			errLogger.Println(noti.RETRIEVE_DYNAMOC_FIELDS_ERR_MSG + err.Error())
+			errLogger.Println(noti.ApproRETRIEVE_DYNAMIC_FIELDS_ERR_MSGvers + err.Error())
 			return nil, internalErr
 		}
 

@@ -71,7 +71,14 @@ func (b *backgroundService) ProcessBackgroundCenterRequests(ctx context.Context)
 	var module = on_chain.InitializeModuleManage()
 	for i, req := range approvedRes {
 		modules[i] = module.GetModule()
-		functions[i] = module.GetFunctionMintUploadCenterCap()
+		switch req.Role {
+		case admin_role:
+			functions[i] = module.GetFunctionMintRegisterAdminCap()
+		case local_leader_role:
+			functions[i] = module.GetFunctionMintRegisterLeaderCap()
+		case volunteer_role:
+			functions[i] = module.GetFunctionMintRegisterVolunteerCap()
+		}
 		args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
 			Recipient: req.Sender,
 		}))

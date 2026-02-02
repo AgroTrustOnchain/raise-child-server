@@ -89,7 +89,7 @@ func BuildTransaction(req BuildTransactionRequest, ctx context.Context) (string,
 
 func BuildMultiBackgroundTransactions(req BuildMultiBackgroundTransactionsRequest, ctx context.Context) error {
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
-	signer, err := signer.NewSignerWithSecretKey(os.Getenv(""))
+	signer, err := signer.NewSignerWithSecretKey(os.Getenv(env.PUBLISHER_PRIVATE_KEY))
 	if err != nil {
 		req.ErrLogger.Println(err.Error())
 		return internalErr
@@ -97,7 +97,7 @@ func BuildMultiBackgroundTransactions(req BuildMultiBackgroundTransactionsReques
 
 	var packageId string = os.Getenv(env.PACKAGE_ID)
 	var rawGasBudget string = fmt.Sprint(defaultGasBudget)
-	var sender string = os.Getenv("")
+	var sender string = os.Getenv(env.PUBLISHER_ADDRESS)
 	var txRequestParams []models.RPCTransactionRequestParams
 
 	for i := 0; i < len(req.Functions); i++ {
@@ -215,7 +215,7 @@ func BuildDonateTransaction(req DonateTransactionRequest, ctx context.Context) (
 		Function:  module.GetFunctionDonateSuiPool(),
 		ErrLogger: req.ErrLogger,
 		Arguments: []interface{}{
-			os.Getenv(env.SUI_POOL_ID),
+			os.Getenv(env.POOL_ID),
 			targetCoin.CoinObjectId,
 			internal_sui.CLOCK_OBJECT_ID,
 			req.Message,

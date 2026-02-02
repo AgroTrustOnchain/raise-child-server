@@ -47,6 +47,13 @@ func GetUnAuthBodyResponse(ctx *gin.Context) response.APIResponse {
 	}
 }
 
+func GetRateLimitRequestBodyResponse(ctx *gin.Context) response.APIResponse {
+	return response.APIResponse{
+		ErrMsg:  errors.New(noti.TOO_MANY_REQUESTS_WARN_MSG),
+		Context: ctx,
+	}
+}
+
 func ProcessLoginResponse(data response.APIResponse) {
 	if data.ErrMsg != nil {
 		processFailResponse(data.ErrMsg, data.Context)
@@ -98,6 +105,8 @@ func processFailResponse(err error, ctx *gin.Context) {
 		errCode = http.StatusInternalServerError
 	case noti.GENERIC_RIGHT_ACCESS_WARN_MSG:
 		errCode = http.StatusForbidden
+	case noti.TOO_MANY_REQUESTS_WARN_MSG:
+		errCode = http.StatusTooManyRequests
 	default:
 		errCode = http.StatusBadRequest
 	}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"raise-child/constants/env"
 	"raise-child/constants/env/payment"
 	"raise-child/constants/noti"
 	"raise-child/constants/shared"
@@ -86,6 +87,10 @@ func (p *paymentService) CallbackTx(id string, ctx context.Context) (response.Bu
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
+	if !payment.IsDonateTx {
+		return response.BuildTransactionResponse{}, genericErr
+	}
+
 	// Expired
 	if payment.ExpiredAt.Before(time.Now()) {
 		return response.BuildTransactionResponse{}, errors.New(noti.PAYMENT_EXPIRED_MESSAGE)
@@ -128,13 +133,25 @@ func (p *paymentService) CallbackTx(id string, ctx context.Context) (response.Bu
 	}
 
 	var module = on_chain.InitializeModulePool()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    p.clients[constant.SuiTestnet],
-		Sender:    ctx.Value("address").(string),
-		Module:    module.GetModule(),
-		Function:  module.GetFunctionDonateToPool(),
-		ErrLogger: p.errLogger,
-		Arguments: module.ToDonateToPoolArguments(on_chain.DonateToPoolArguments{
+	var function string
+	var args []interface{}
+	if payment.Target != os.Getenv(env.POOL_ID) { // Local Pool
+		function = module.GetFunctionDonateToLocalPool()
+		args = module.ToDonateToLocalPoolArguments(on_chain.DonateToLocalPoolArguments{
+			LocalPoolId: payment.Target,
+			DonateToPoolArguments: on_chain.DonateToPoolArguments{
+				Amount:      payment.Amount,
+				FirstName:   profile.FirstName,
+				LastName:    profile.LastName,
+				Gender:      profile.Gender,
+				PhoneNumber: profile.PhoneNumber,
+				Email:       profile.Email,
+				Message:     payment.Message,
+			},
+		})
+	} else { // Main pool
+		function = module.GetFunctionDonateToPool()
+		args = module.ToDonateToPoolArguments(on_chain.DonateToPoolArguments{
 			Amount:      payment.Amount,
 			FirstName:   profile.FirstName,
 			LastName:    profile.LastName,
@@ -142,7 +159,16 @@ func (p *paymentService) CallbackTx(id string, ctx context.Context) (response.Bu
 			PhoneNumber: profile.PhoneNumber,
 			Email:       profile.Email,
 			Message:     payment.Message,
-		}),
+		})
+	}
+
+	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+		Client:    p.clients[constant.SuiTestnet],
+		Sender:    payment.Actor,
+		Module:    module.GetModule(),
+		Function:  function,
+		ErrLogger: p.errLogger,
+		Arguments: args,
 	}, ctx)
 
 	return response.BuildTransactionResponse{

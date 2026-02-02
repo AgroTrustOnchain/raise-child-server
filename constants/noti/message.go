@@ -57,6 +57,8 @@ const (
 	CHILD_AGE_OUT_OF_SUPPORT_MESSAGE string = "This child's age is out of our support range."
 
 	PROFILE_EMPTY_MESSAGE string = "Your profile is empty. Please fill it with your personal information."
+
+	LEADER_NOT_UPLOAD_BANK_PROFILE_MESSAGE string = "Leader has not uploaded bank profile yet."
 )
 
 const (

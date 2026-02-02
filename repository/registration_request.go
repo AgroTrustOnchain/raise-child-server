@@ -323,7 +323,7 @@ func (r *registratioRequestRepo) GetWalletRegistrationRequests(id string, ctx co
 
 // GetPendingRequests implements repository.IRegistrationRequestRepository.
 func (r *registratioRequestRepo) GetPendingRequests(ctx context.Context) ([]entities.BackgroundRecord, []entities.BackgroundRecord, error) {
-	var query string = "SELECT id, approvers, refusers, created_by, status FROM " + registraion_request_table + " WHERE is_available_to_confirm = false AND closed_at <= NOW() AND (status = 'Pending' OR status = 'Approved')"
+	var query string = "SELECT id, approvers, refusers, register_role, created_by, status FROM " + registraion_request_table + " WHERE is_available_to_confirm = false AND closed_at <= NOW() AND (status = 'Pending' OR status = 'Approved')"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.REGISTRAION_REQUEST_REPOSITORY) + "GetPendingRequests - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
@@ -338,7 +338,7 @@ func (r *registratioRequestRepo) GetPendingRequests(ctx context.Context) ([]enti
 		var x entities.BackgroundRecord
 		var status string
 		if err := rows.Scan(
-			&x.ID, pq.Array(&x.Approvers), pq.Array(&x.Refusers), &x.Sender, &status); err != nil {
+			&x.ID, pq.Array(&x.Approvers), pq.Array(&x.Refusers), &x.Role, &x.Sender, &status); err != nil {
 
 			r.errLogger.Println(errLogMsg + err.Error())
 			return nil, nil, internalErr

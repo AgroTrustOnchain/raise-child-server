@@ -93,10 +93,10 @@ func (o *onChainService) BuildMoneyTransaction(req request.MoneyActionRequest, c
 		}, err
 	}
 
-	// Not admin
-	if req.Sender != os.Getenv(env.ADMIN) {
-		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	}
+	// // Not admin
+	// if req.Sender != os.Getenv(env.ADMIN) {
+	// 	return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	// }
 
 	var module = on_chain.InitializeModuleManage()
 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
@@ -105,7 +105,7 @@ func (o *onChainService) BuildMoneyTransaction(req request.MoneyActionRequest, c
 		Module:   module.GetModule(),
 		Function: module.GetFunctionWithdrawSuiPool(),
 		Arguments: []interface{}{
-			os.Getenv(env.SUI_POOL_ID),
+			os.Getenv(env.POOL_ID),
 			on_chain.StandarizeToSuiMist(req.Amount),
 			internal_sui.CLOCK_OBJECT_ID,
 			req.Message,

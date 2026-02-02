@@ -3,8 +3,10 @@ package apiroute
 import (
 	"raise-child/transport"
 	"raise-child/util/middleware"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 )
 
 func InitializeBankProfileRoutes(server *gin.Engine) {
@@ -16,6 +18,7 @@ func InitializeBankProfileRoutes(server *gin.Engine) {
 
 	// Auth group
 	var authGroup = server.Group(contextPath, middleware.Authorize)
-	authGroup.POST("", transport.CreateBankProfile)
-	authGroup.PUT("/:id", transport.UpdateBankProfile)
+	var rateLimit = middleware.InitalizeRateLimiter(rate.Every(time.Minute/5), 5)
+	authGroup.POST("", middleware.RateLimitMiddleware(rateLimit), transport.CreateBankProfile)
+	authGroup.PUT("/:id", middleware.RateLimitMiddleware(rateLimit), transport.UpdateBankProfile)
 }

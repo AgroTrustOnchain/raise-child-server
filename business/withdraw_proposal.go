@@ -115,18 +115,61 @@ func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithd
 			return response.BuildTransactionResponse{}, internalErr
 		}
 
-		if isLeader {
-			var isMatched bool = false
-			for i := 0; i < len(manageObj.LocalRegions); i++ {
-				if manageObj.LocalLeaderIds[i] == sender && manageObj.LocalRegions[i] == localPool.Region {
-					isMatched = true
+		var startIdx int
+		for i, region := range manageObj.LocalRegions {
+			if region == localPool.Region {
+				startIdx = i
+				break
+			}
+		}
+
+		leaders, err := on_chain.GetOnChainObjects[entities.StaffNft](on_chain.GetOnChainObjectsRequest{
+			Client:    client,
+			ObjectIds: manageObj.LocalLeaderNfts[startIdx:],
+			ErrLogger: w.errLogger,
+		}, ctx)
+		if err != nil {
+			return response.BuildTransactionResponse{}, err
+		}
+
+		var isLeaderUploadBank bool = false
+		var isLeaderOfRegion bool = false
+		for _, leader := range leaders {
+			if isLeaderUploadBank {
+				if isLeader {
+					if isLeaderOfRegion {
+						break
+					}
+				} else {
 					break
 				}
 			}
 
-			if !isMatched {
-				return response.BuildTransactionResponse{}, genericErr
+			// Any leaders of that region has uploaded bank profile
+			if leader.Region == localPool.Region {
+				if leader.Owner == sender {
+					isLeaderOfRegion = true
+				}
+
+				bankProfile, err := w.bankProfileRepo.GetBankProfileByOwner(leader.Owner, ctx)
+				if err != nil {
+					return response.BuildTransactionResponse{}, err
+				}
+
+				if bankProfile != nil {
+					isLeaderUploadBank = true
+				}
 			}
+		}
+
+		if isLeader {
+			if !isLeaderOfRegion { // Not leader of requested pool reion
+				return response.BuildTransactionResponse{}, genericRightErr
+			}
+		}
+
+		if !isLeaderUploadBank {
+			return response.BuildTransactionResponse{}, errors.New(noti.LEADER_NOT_UPLOAD_BANK_PROFILE_MESSAGE)
 		}
 
 		totalAmount, _ := strconv.ParseInt(localPool.TotalAmount, 10, 64)
