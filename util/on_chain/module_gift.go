@@ -7,8 +7,8 @@ import (
 )
 
 type CreateGiftArguments struct {
-	SponsorID       string
-	ChildID         string
+	DonorID         string
+	Recipient       string
 	TrackingCode    string
 	Carrier         string
 	GiftImageBlobID string
@@ -30,7 +30,7 @@ type CancelGiftArguments struct {
 
 type ConfirmReceiveGiftArguments struct {
 	GiftID      string
-	ChildID     string
+	Recipient   string
 	StaffID     string
 	ImageBlobID string
 }
@@ -41,9 +41,11 @@ type IModuleGift interface {
 	ToCreateGiftArguments(args CreateGiftArguments) []interface{}
 	ToCancelGiftArguments(args CancelGiftArguments) []interface{}
 	ToConfirmReceiveGiftArguments(args ConfirmReceiveGiftArguments) []interface{}
-	GetFunctionCreateGift() string
+	GetFunctionCreateGiftForChild() string
+	GetFunctionCreateGiftForCenter() string
+	GetFunctionConfirmReceiveChildGift() string
+	GetFunctionConfirmReceiveCenterGift() string
 	GetFunctionCancelGift() string
-	GetFunctionConfirmReceiveGift() string
 }
 
 type moduleGift struct{}
@@ -52,19 +54,29 @@ func InitializeModuleGift() IModuleGift {
 	return &moduleGift{}
 }
 
+// GetFunctionConfirmReceiveCenterGift implements IModuleGift.
+func (m *moduleGift) GetFunctionConfirmReceiveCenterGift() string {
+	return sui.CONFIRM_RECIEVE_CENTER_GIFT_FUNCTION
+}
+
+// GetFunctionCreateGiftForCenter implements IModuleGift.
+func (m *moduleGift) GetFunctionCreateGiftForCenter() string {
+	return sui.CREATE_GIFT_FOR_CENTER_FUNCTION
+}
+
 // GetFunctionCancelGift implements IModuleGift.
 func (m *moduleGift) GetFunctionCancelGift() string {
 	return sui.CANCEL_GIFT_FUNCTION
 }
 
-// GetFunctionConfirmReceiveGift implements IModuleGift.
-func (m *moduleGift) GetFunctionConfirmReceiveGift() string {
-	return sui.CONFIRM_RECIEVE_GIFT_FUNCTION
+// GetFunctionConfirmReceiveChildGift implements IModuleGift.
+func (m *moduleGift) GetFunctionConfirmReceiveChildGift() string {
+	return sui.CONFIRM_RECIEVE_CHILD_GIFT_FUNCTION
 }
 
-// GetFunctionCreateGift implements IModuleGift.
-func (m *moduleGift) GetFunctionCreateGift() string {
-	return sui.CREATE_GIFT_FUNCTION
+// GetFunctionCreateGiftForChild implements IModuleGift.
+func (m *moduleGift) GetFunctionCreateGiftForChild() string {
+	return sui.CREATE_GIFT_FOR_CHILD_FUNCTION
 }
 
 // GetGiftObjectStruct implements IModuleGift.
@@ -90,7 +102,7 @@ func (m *moduleGift) ToCancelGiftArguments(args CancelGiftArguments) []interface
 func (m *moduleGift) ToConfirmReceiveGiftArguments(args ConfirmReceiveGiftArguments) []interface{} {
 	return []interface{}{
 		args.GiftID,
-		args.ChildID,
+		args.Recipient,
 		args.StaffID,
 		args.ImageBlobID,
 		sui.CLOCK_OBJECT_ID,
@@ -101,8 +113,8 @@ func (m *moduleGift) ToConfirmReceiveGiftArguments(args ConfirmReceiveGiftArgume
 func (m *moduleGift) ToCreateGiftArguments(args CreateGiftArguments) []interface{} {
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
-		args.SponsorID,
-		args.ChildID,
+		args.DonorID,
+		args.Recipient,
 		args.TrackingCode,
 		args.Carrier,
 		args.GiftImageBlobID,

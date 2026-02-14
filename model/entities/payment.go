@@ -5,7 +5,9 @@ import "time"
 type Payment struct {
 	ID            string    `json:"id"`
 	Actor         string    `json:"actor"`
-	Target        string    `json:"target"` // e.g. Pool ID
+	Sub           string    `json:"sub"`
+	ProposalID    *string   `json:"proposal_id"`
+	DonationID    *string   `json:"donation_id"`
 	IsDonateTx    bool      `json:"is_donate_tx"`
 	TransactionId string    `json:"transaction_id"`
 	Amount        int64     `json:"amount"`
@@ -18,3 +20,17 @@ type Payment struct {
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
+
+type PaymentPurpose string
+
+const (
+	DONATE_PURPOSE       PaymentPurpose = "Donate"
+	WITHDRAW_PURPOSE     PaymentPurpose = "Withdraw"
+	BOOKS_NEED_PURPOSE   PaymentPurpose = "Child Books Need"
+	MEAL_NEED_PURPOSE    PaymentPurpose = "Child Meal Need"
+	SPECIAL_NEED_PURPOSE PaymentPurpose = "Child Special Need"
+)
+
+
+
+

@@ -6,7 +6,7 @@ import (
 	"raise-child/model/dtos/response"
 )
 
-type ISponsorService interface {
-	GetSponsors(req request.GetSponsorsRequest, ctx context.Context) (response.PaginationDataResponse, error)
-	GetSponsor(id string, ctx context.Context) (response.SponsorResponse, error)
+type IDonorService interface {
+	GetDonors(req request.GetDonorsRequest, ctx context.Context) (response.PaginationDataResponse, error)
+	GetDonor(id string, ctx context.Context) (response.DonorResponse, error)
 }

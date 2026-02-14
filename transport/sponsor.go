@@ -10,25 +10,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetSponsor godoc
-// @Summary      Get sponsor details
-// @Description  Retrieves sponsor information by unique ID
-// @Tags         sponsor
+// GetDonor godoc
+// @Summary      Get donor details
+// @Description  Retrieves donor information by unique ID
+// @Tags         donor
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string  true  "Sponsor ID"
-// @Success      200      {object}  response.SponsorResponse
+// @Param        id   path      string  true  "Donor ID"
+// @Success      200      {object}  response.DonorResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /sponsors/{id} [get]
-func GetSponsor(ctx *gin.Context) {
-	service, err := business.GenerateSponsorService()
+// @Router       /donors/{id} [get]
+func GetDonor(ctx *gin.Context) {
+	service, err := business.GenerateDonorService()
 	if err != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
 		return
 	}
 
-	res, err := service.GetSponsor(ctx.Param("id"), ctx)
+	res, err := service.GetDonor(ctx.Param("id"), ctx)
 	util.ProcessResponse(response.APIResponse{
 		Data1:    res,
 		Data2:    res,
@@ -38,31 +38,31 @@ func GetSponsor(ctx *gin.Context) {
 	})
 }
 
-// GetSponsors godoc
-// @Summary      List sponsors
-// @Description  Retrieves a list of sponsors based on filter criteria
-// @Tags         sponsor
+// GetDonors godoc
+// @Summary      List donors
+// @Description  Retrieves a list of donors based on filter criteria
+// @Tags         donor
 // @Accept       json
 // @Produce      json
-// @Param        request  query     request.GetSponsorsRequest  true  "Filter Criteria"
+// @Param        request  query     request.GetDonorsRequest  true  "Filter Criteria"
 // @Success      200      {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /sponsors [get]
-func GetSponsors(ctx *gin.Context) {
-	var request request.GetSponsorsRequest
+// @Router       /donors [get]
+func GetDonors(ctx *gin.Context) {
+	var request request.GetDonorsRequest
 	if ctx.ShouldBindQuery(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return
 	}
 
-	service, err := business.GenerateSponsorService()
+	service, err := business.GenerateDonorService()
 	if err != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
 		return
 	}
 
-	res, err := service.GetSponsors(request, ctx)
+	res, err := service.GetDonors(request, ctx)
 	util.ProcessResponse(response.APIResponse{
 		Data1:    res,
 		Data2:    res,

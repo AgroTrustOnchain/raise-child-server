@@ -20,7 +20,7 @@ const (
 	refresh_duration       time.Duration = access_duration * 7 // 1 tuần
 )
 
-func GenerateActionToken(address, sub string, logger *log.Logger) (string, int64, error) {
+func GenerateActionToken(address, sub, role string, logger *log.Logger) (string, int64, error) {
 	var bytes = []byte(os.Getenv(env.SECRET_KEY))
 	var errMsg string = "Error while generating token - "
 
@@ -28,6 +28,7 @@ func GenerateActionToken(address, sub string, logger *log.Logger) (string, int64
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"address": address,
 		"sub":     sub,
+		"role":    role,
 		"expire":  exp,
 	}).SignedString(bytes)
 	if err != nil {
@@ -38,14 +39,14 @@ func GenerateActionToken(address, sub string, logger *log.Logger) (string, int64
 	return token, exp, nil
 }
 
-func ExtractDataFromToken(tokenString string, logger *log.Logger) (string, string, time.Time, error) {
+func ExtractDataFromToken(tokenString string, logger *log.Logger) (string, string, string, time.Time, error) {
 	var errRes error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	var errLogMsg string = "Error at ExtractDataFromToken - "
 
 	// Check for empty token
 	if tokenString == "" {
 		logger.Println(errLogMsg + "empty token")
-		return "", "", time.Time{}, errRes
+		return "", "", "", time.Time{}, errRes
 	}
 
 	// Remove "Bearer " prefix if present
@@ -60,7 +61,7 @@ func ExtractDataFromToken(tokenString string, logger *log.Logger) (string, strin
 	for i, c := range tokenString {
 		if !unicode.IsPrint(c) || c == ' ' {
 			logger.Printf(errLogMsg+"invalid character at position %d: %q\n", i, c)
-			return "", "", time.Time{}, errRes
+			return "", "", "", time.Time{}, errRes
 		}
 	}
 
@@ -82,39 +83,46 @@ func ExtractDataFromToken(tokenString string, logger *log.Logger) (string, strin
 
 	if err != nil {
 		logger.Println(errLogMsg + err.Error())
-		return "", "", time.Time{}, errRes
+		return "", "", "", time.Time{}, errRes
 	}
 
 	// Extract claims
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
 		logger.Println(errLogMsg + "invalid claims or token")
-		return "", "", time.Time{}, errRes
+		return "", "", "", time.Time{}, errRes
 	}
 
 	// Extract address
 	address, ok := claims["address"].(string)
 	if !ok || address == "" {
 		logger.Println(errLogMsg + "missing or invalid address claim")
-		return "", "", time.Time{}, errRes
+		return "", "", "", time.Time{}, errRes
 	}
 
 	// Extract nonce
 	sub, ok := claims["sub"].(string)
 	if !ok || sub == "" {
 		logger.Println(errLogMsg + "missing or invalid sub claim")
-		return "", "", time.Time{}, errRes
+		return "", "", "", time.Time{}, errRes
+	}
+
+	// Extract nonce
+	role, ok := claims["role"].(string)
+	if !ok || sub == "" {
+		logger.Println(errLogMsg + "missing or invalid role claim")
+		return "", "", "", time.Time{}, errRes
 	}
 
 	// Extract expiration
 	expFloat, ok := claims["expire"].(float64)
 	if !ok {
 		logger.Println(errLogMsg + "missing or invalid expiration claim")
-		return "", "", time.Time{}, errRes
+		return "", "", "", time.Time{}, errRes
 	}
 
 	// Convert Unix timestamp to time.Time
 	exp := time.Unix(int64(expFloat), 0)
 
-	return address, sub, exp, nil
+	return address, sub, role, exp, nil
 }

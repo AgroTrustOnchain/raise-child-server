@@ -1,6 +1,6 @@
 package response
 
-type SponsorResponse struct {
+type DonorResponse struct {
 	ID            string                `json:"id"`
 	FirstName     string                `json:"first_name"`
 	LastName      string                `json:"last_name"`

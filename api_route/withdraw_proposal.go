@@ -29,10 +29,10 @@ func InitializeWithdrawProposalRoute(server *gin.Engine) {
 	var contextPath string = "withdraw-proposals"
 
 	// Rate limits
-	var viewLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/5), 20)
-	var createLimit = middleware.InitalizeRateLimiter(rate.Every(time.Minute*2), 2)
-	var voteLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/1), 5)
-	var confirmLimit = middleware.InitalizeRateLimiter(rate.Every(time.Minute/4), 4)
+	var viewLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/5), 20)
+	var createLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute*2), 2)
+	var voteLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/1), 5)
+	var confirmLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/4), 4)
 
 	// Normal group
 	var norGroup = server.Group(contextPath)

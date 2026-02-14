@@ -2,23 +2,23 @@ package onchain
 
 import "raise-child/constants/on-chain/sui"
 
-type IModuleSponsor interface {
+type IModuleDonor interface {
 	GetModule() string
-	GetSponsorNftStruct() string
+	GetDonorNftStruct() string
 }
 
-type moduleSponsor struct{}
+type moduleDonor struct{}
 
-func InitializeModuleSponsor() IModuleSponsor {
-	return &moduleSponsor{}
+func InitializeModuleDonor() IModuleDonor {
+	return &moduleDonor{}
 }
 
-// GetModule implements IModuleSponsor.
-func (m *moduleSponsor) GetModule() string {
-	return sui.MODULE_SPONSOR
+// GetModule implements IModuleDonor.
+func (m *moduleDonor) GetModule() string {
+	return sui.MODULE_DONOR
 }
 
-// GetSponsorNftStruct implements IModuleSponsor.
-func (m *moduleSponsor) GetSponsorNftStruct() string {
-	return sui.SPONSOR_NFT_STRUCT
+// GetDonorNftStruct implements IModuleDonor.
+func (m *moduleDonor) GetDonorNftStruct() string {
+	return sui.DONOR_NFT_STRUCT
 }

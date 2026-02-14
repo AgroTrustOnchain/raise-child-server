@@ -5,7 +5,9 @@ import (
 	"errors"
 	"log"
 	"raise-child/constants/noti"
+	"raise-child/model/entities"
 	on_chain "raise-child/util/on_chain"
+	"strconv"
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/sui"
@@ -49,4 +51,16 @@ func getOnChainObject[T any](client sui.ISuiAPI, id string, errLogger *log.Logge
 func isChildAgeInSupport(yearOfBirth int) bool {
 	var curTime time.Time = time.Now()
 	return curTime.Year()-yearOfBirth <= child_max_age_accepted && curTime.Year()-yearOfBirth >= child_min_age_accepted
+}
+
+func isProposalRateAvailableToConfirm(dao entities.DaoStruct, approverNum, refuserNum int, approveWeight, refuseWeight string) bool {
+	minVoters, _ := strconv.Atoi(dao.MinVoters)
+	numberRate, _ := strconv.ParseInt(dao.MinApprovedRate, 10, 64)
+	var minRate float32 = float32(numberRate / 10000)
+
+	approveWeightNumber, _ := strconv.ParseInt(approveWeight, 10, 64)
+	refuseWeightNumber, _ := strconv.ParseInt(refuseWeight, 10, 64)
+	var totalWeight int64 = approveWeightNumber + refuseWeightNumber
+
+	return approverNum+refuserNum >= minVoters && float32(approveWeightNumber/totalWeight) >= minRate
 }

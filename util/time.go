@@ -16,6 +16,10 @@ func RawDateToTime(rawDate string) time.Time {
 	return parsedTime
 }
 
+func TimeToRawDate(date time.Time) string {
+	return date.Format(dateFormat)
+}
+
 func MilliSecToTime(milliseconds int64) time.Time {
 	return time.UnixMilli(milliseconds)
 }

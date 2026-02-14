@@ -13,6 +13,6 @@ type Manage struct {
 	ChildrenCenters       []string `json:"children_centers"`
 	CenterConfirmStatuses []bool   `json:"center_confirm_statuses"`
 	CreatedCenters        []string `json:"created_centers"`
-	SponsorIds            []string `json:"sponsor_ids"`
-	SponsorNfts           []string `json:"sponsor_nfts"`
+	DonorIds              []string `json:"donor_ids"`
+	DonorNfts             []string `json:"donor_nfts"`
 }

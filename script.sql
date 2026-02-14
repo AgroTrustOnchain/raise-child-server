@@ -47,7 +47,9 @@ CREATE TABLE center_requests (
 CREATE TABLE payments (
     id character varying(100) PRIMARY KEY,
     actor character varying(100) NOT NULL,
-    target character varying(100) NOT NULL,
+    sub character varying(20) NOT NULL,
+    proposal_id character varying(100),
+    donation_id character varying(100),
     is_donate_tx BOOLEAN NOT NULL,
     transaction_id character varying(50) NOT NULL,
     amount BIGINT NOT NULL,
@@ -58,9 +60,32 @@ CREATE TABLE payments (
     message character varying(50) NOT NULL,
     expired_at timestamp without time zone,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_payment_profile FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_payment_proposal FOREIGN KEY (proposal_id) REFERENCES withdraw_proposals(id) ON DELETE CASCADE,
+    CONSTRAINT fk_payment_donation FOREIGN KEY (donation_id) REFERENCES donations(id) ON DELETE CASCADE,
+    CONSTRAINT check_single_detail CHECK (
+        (proposal_id IS NOT NULL AND donation_id IS NULL) OR 
+        (proposal_id IS NULL AND donation_id IS NOT NULL)
+    )
 );
 
+CREATE TABLE withdraw_proposals (
+    id character varying(100) PRIMARY KEY,
+    purpose character varying(20) NOT NULL,
+    proposal_id character varying(100),
+    target character varying(100) NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE donations (
+    id character varying(100) PRIMARY KEY,
+    purpose character varying(20) NOT NULL,
+    target character varying(100) NOT NULL,
+    start_period character varying(20),
+    end_period character varying(20),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE registration_requests (
     id                    character varying(100) PRIMARY KEY,

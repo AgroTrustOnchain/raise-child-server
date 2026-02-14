@@ -24,46 +24,46 @@ import (
 	"github.com/block-vision/sui-go-sdk/utils"
 )
 
-type sponsorService struct {
+type donorService struct {
 	clients   map[string]sui.ISuiAPI
 	errLogger *log.Logger
 }
 
-func InitializeSponsorService(clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.ISponsorService {
-	return &sponsorService{
+func InitializeDonorService(clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IDonorService {
+	return &donorService{
 		clients:   clients,
 		errLogger: errLogger,
 	}
 }
 
-func GenerateSponsorService() (business.ISponsorService, error) {
-	return InitializeSponsorService(_networkAliases, util.GetLogConfig(shared.ERROR_LEVEL)), nil
+func GenerateDonorService() (business.IDonorService, error) {
+	return InitializeDonorService(_networkAliases, util.GetLogConfig(shared.ERROR_LEVEL)), nil
 }
 
 const (
-	sponsor_records_limit int = 10
+	donor_records_limit int = 10
 )
 
-// GetSponsor implements business.ISponsorService.
-func (s *sponsorService) GetSponsor(id string, ctx context.Context) (response.SponsorResponse, error) {
+// GetDonor implements business.IDonorService.
+func (s *donorService) GetDonor(id string, ctx context.Context) (response.DonorResponse, error) {
 	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
-		return response.SponsorResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+		return response.DonorResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
 	var client = s.clients[constant.SuiTestnet]
 
-	var sponsorModule = on_chain.InitializeModuleSponsor()
-	sponsors, err := on_chain.GetOnChainOwnedObjects[entities.Sponsor](on_chain.GetOnChainOwnedObjectsRequest{
+	var donorModule = on_chain.InitializeModuleDonor()
+	donors, err := on_chain.GetOnChainOwnedObjects[entities.Donor](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
 		OwnerAddress: id,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), sponsorModule.GetModule(), sponsorModule.GetSponsorNftStruct()),
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), donorModule.GetModule(), donorModule.GetDonorNftStruct()),
 		ErrLogger:    s.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.SponsorResponse{}, err
+		return response.DonorResponse{}, err
 	}
 
-	var res = sponsors[0].ToSponsorResponse()
+	var res = donors[0].ToDonorResponse()
 	var recordModule = on_chain.InitializeModuleRecord()
 	txs, _ := on_chain.GetOnChainOwnedObjects[entities.Transaction](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
@@ -80,14 +80,14 @@ func (s *sponsorService) GetSponsor(id string, ctx context.Context) (response.Sp
 		res.Contributions = contributions
 	}
 
-	// Set sponsor object ID to user wallet address
+	// Set donor object ID to user wallet address
 	res.ID = id
 
 	return res, nil
 }
 
-// GetSponsors implements business.ISponsorService.
-func (s *sponsorService) GetSponsors(req request.GetSponsorsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+// GetDonors implements business.IDonorService.
+func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
 	var client = s.clients[constant.SuiTestnet]
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
@@ -98,16 +98,16 @@ func (s *sponsorService) GetSponsors(req request.GetSponsorsRequest, ctx context
 		return response.PaginationDataResponse{}, err
 	}
 
-	sponsors, err := on_chain.GetOnChainObjects[entities.Sponsor](on_chain.GetOnChainObjectsRequest{
+	donors, err := on_chain.GetOnChainObjects[entities.Donor](on_chain.GetOnChainObjectsRequest{
 		Client:    client,
-		ObjectIds: manageObj.SponsorNfts,
+		ObjectIds: manageObj.DonorNfts,
 		ErrLogger: s.errLogger,
 	}, ctx)
 	if err != nil {
 		return response.PaginationDataResponse{}, err
 	}
 
-	if sponsors == nil {
+	if donors == nil {
 		return response.PaginationDataResponse{}, nil
 	}
 
@@ -117,42 +117,46 @@ func (s *sponsorService) GetSponsors(req request.GetSponsorsRequest, ctx context
 	}
 
 	var keyword string = util.StanderizeString(req.Keyword)
-	var filteredSponsors []entities.Sponsor
-	for i := len(sponsors) - 1; i >= 0; i++ {
-		var sponsor entities.Sponsor = sponsors[i]
+	var filteredDonors []entities.Donor
+	for i := len(donors) - 1; i >= 0; i++ {
+		var donor entities.Donor = donors[i]
 
 		if req.Gender != "" {
-			if req.Gender != sponsor.Gender {
+			if req.Gender != donor.Gender {
 				continue
 			}
 		}
 
 		if keyword != "" {
-			var firstName string = util.StanderizeString(sponsor.FirstName)
-			var lastName string = util.StanderizeString(sponsor.LastName)
-			var phoneNumber string = util.StanderizeString(sponsor.PhoneNumber)
-			var email string = util.StanderizeString(sponsor.Email)
+			var firstName string = util.StanderizeString(donor.FirstName)
+			var lastName string = util.StanderizeString(donor.LastName)
+			var phoneNumber string = util.StanderizeString(donor.PhoneNumber)
+			var email string = util.StanderizeString(donor.Email)
 			if !strings.Contains(firstName, keyword) && !strings.Contains(lastName, keyword) && !strings.Contains(phoneNumber, keyword) && !strings.Contains(email, keyword) {
 				continue
 			}
 		}
 
-		filteredSponsors = append(filteredSponsors, sponsor)
+		filteredDonors = append(filteredDonors, donor)
 	}
 
-	var skippedRecords int = (page - 1) * sponsor_records_limit
-	if len(filteredSponsors) <= skippedRecords {
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var skippedRecords int = (page - 1) * req.PageSize
+	if len(filteredDonors) <= skippedRecords {
 		return response.PaginationDataResponse{}, err
 	}
 
-	var data []response.SponsorResponse
-	for i := skippedRecords; i < len(filteredSponsors); i++ {
-		data = append(data, filteredSponsors[i].ToSponsorResponse())
+	var data []response.DonorResponse
+	for i := skippedRecords; i < len(filteredDonors); i++ {
+		data = append(data, filteredDonors[i].ToDonorResponse())
 	}
 
 	return response.PaginationDataResponse{
 		Data:       data,
 		Page:       page,
-		TotalPages: int(math.Ceil(float64(len(filteredSponsors)) / float64(sponsor_records_limit))),
+		TotalPages: int(math.Ceil(float64(len(filteredDonors)) / float64(donor_records_limit))),
 	}, nil
 }

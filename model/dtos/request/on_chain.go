@@ -9,6 +9,7 @@ type BuildTransactionRequest struct {
 type ExecuteTransactionRequest struct {
 	TxBytes   string `json:"tx_bytes" validate:"required"`
 	Signature string `json:"signature" validate:"required"`
+	Proposal  string `json:"proposal"`
 }
 
 type MoneyActionRequest struct {

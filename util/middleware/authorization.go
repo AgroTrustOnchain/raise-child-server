@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/block-vision/sui-go-sdk/models"
+	"github.com/block-vision/sui-go-sdk/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,7 +24,7 @@ func Authorize(ctx *gin.Context) {
 
 	var token string = strings.TrimPrefix(authHeader, "Bearer ")
 
-	address, sub, exp, err := security.ExtractDataFromToken(token, util.GetLogConfig(shared.ERROR_LEVEL))
+	address, sub, role, exp, err := security.ExtractDataFromToken(token, util.GetLogConfig(shared.ERROR_LEVEL))
 	if err != nil {
 		util.ProcessResponse(unAuthBodyResponse)
 		ctx.Abort()
@@ -43,7 +45,46 @@ func Authorize(ctx *gin.Context) {
 		return
 	}
 
+	if !utils.IsValidSuiAddress(models.SuiAddress(address)) {
+		util.ProcessResponse(unAuthBodyResponse)
+		ctx.Abort()
+		return
+	}
+
 	ctx.Set("address", address)
 	ctx.Set("sub", sub)
+	ctx.Set("role", role)
+	ctx.Next()
+}
+
+func AdminAuthorize(ctx *gin.Context) {
+	if ctx.Value("role").(string) != "Admin" {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	ctx.Next()
+}
+
+func ManagerRoleAuthorize(ctx *gin.Context) {
+	var role string = ctx.Value("role").(string)
+	if role != "Admin" && role != "Local Leader" {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	ctx.Next()
+}
+
+func StaffRoleAuthorize(ctx *gin.Context) {
+	var role string = ctx.Value("role").(string)
+	if role != "Admin" && role != "Local Leader" && role != "Volunteer" {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
 	ctx.Next()
 }

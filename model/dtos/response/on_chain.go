@@ -22,5 +22,6 @@ type SuiGraphQlObjectResponse struct {
 }
 
 type BuildTransactionResponse struct {
-	TxBytes string `json:"tx_bytes"`
+	TxBytes  string `json:"tx_bytes"`
+	Proposal string `json:"proposal"`
 }

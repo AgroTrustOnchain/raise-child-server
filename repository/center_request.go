@@ -131,7 +131,7 @@ func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequest
 
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       center_request_table,
-		limitAmount: center_request_limit_record,
+		limitAmount: req.PageSize,
 		condition:   queryCondition,
 		page:        req.Page,
 		isGetCount:  false,

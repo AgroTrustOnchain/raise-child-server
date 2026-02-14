@@ -36,8 +36,8 @@ func setupApiRoutes(server *gin.Engine) {
 	// Payment API endpoints
 	api_route.InitializePaymentsRoutes(server)
 
-	// Sponsor API endpoints
-	api_route.InitializeSponsorRoutes(server)
+	// Donor API endpoints
+	api_route.InitializeDonorRoutes(server)
 
 	// Region API endpoints
 	api_route.InitializeRegionRoutes(server)

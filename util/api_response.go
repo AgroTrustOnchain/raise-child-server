@@ -136,7 +136,7 @@ func processSuccessPostReponse(res interface{}, postType string, ctx *gin.Contex
 }
 
 func processRedirectResponse(redirectUrl string, ctx *gin.Context) {
-	ctx.Redirect(http.StatusMovedPermanently, redirectUrl)
+	ctx.Redirect(http.StatusSeeOther, redirectUrl)
 }
 
 func processInformResponse(message interface{}, ctx *gin.Context) {

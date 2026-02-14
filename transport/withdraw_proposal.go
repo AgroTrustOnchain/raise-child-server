@@ -17,7 +17,7 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string  true  "Withdraw Proposal ID"
-// @Success      200      {object}  response.WithDrawProposalResponse
+// @Success      200      {object}  response.WithdrawProposalResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /withdraw-proposals/{id} [get]

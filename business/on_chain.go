@@ -2,13 +2,18 @@ package business
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"raise-child/interfaces/business"
+	i_repository "raise-child/interfaces/repository"
 	"raise-child/model/dtos/request"
 	"raise-child/model/dtos/response"
+	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 
 	"raise-child/constants/env"
@@ -21,8 +26,9 @@ import (
 )
 
 type onChainService struct {
-	clients   map[string]sui.ISuiAPI
-	errLogger *log.Logger
+	withdrawRepo i_repository.IOffChainWithdrawProposalRepository
+	clients      map[string]sui.ISuiAPI
+	errLogger    *log.Logger
 }
 
 // Money actions
@@ -31,29 +37,67 @@ const (
 	donate_action   string = "action"
 )
 
-func InitializeOnChainService(clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IOnChainService {
+func InitializeOnChainService(db *sql.DB, errLogger *log.Logger) business.IOnChainService {
 	return &onChainService{
-		clients:   clients,
-		errLogger: errLogger,
+		withdrawRepo: repository.InitializeOffChainWithdrawProposalRepository(db, errLogger),
+		clients:      _networkAliases,
+		errLogger:    errLogger,
 	}
 }
 
 func GenerateOnChainService() (business.IOnChainService, error) {
-	return InitializeOnChainService(_networkAliases, util.GetLogConfig(shared.ERROR_LEVEL)), nil
+	var errLogger = util.GetLogConfig(shared.ERROR_LEVEL)
+
+	cnn, err := db.ConnectDB(errLogger, db.InitializePostgreSQL())
+	if err != nil {
+		return nil, err
+	}
+
+	return InitializeOnChainService(cnn, errLogger), nil
 }
 
 // ExecuteTransaction implements business.IOnChainService.
 func (o *onChainService) ExecuteTransaction(req request.ExecuteTransactionRequest, ctx context.Context) error {
-	_, err := on_chain.ExecuteTransaction(on_chain.ExecuteTransactionRequest{
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if req.Proposal != "" {
+		proposal, err := o.withdrawRepo.GetOffChainWithdrawProposal(req.Proposal, ctx)
+		if err != nil {
+			return err
+		}
+
+		if proposal.ProposalID != "" {
+			return genericErr
+		}
+	}
+
+	res, err := on_chain.ExecuteTransaction(on_chain.ExecuteTransactionRequest{
 		Client:    o.clients[constant.SuiTestnet],
 		TxBytes:   req.TxBytes,
 		Signature: []string{req.Signature},
 		ErrLogger: o.errLogger,
 	}, ctx)
+	if err != nil {
+		return err
+	}
 
-	// todo: save transction record to db
+	if req.Proposal != "" {
+		var events = res.Events
+		if events == nil || len(events) == 0 {
+			return genericErr
+		}
 
-	return err
+		var module = on_chain.InitializeModulePool()
+		var eventType string = fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), module.GetModule(), module.GetWithdrawProposalEventEmittedStruct())
+		for _, event := range events {
+			if event.Type == eventType {
+				if onChainProposal, ok := event.ParsedJson["id"].(string); ok {
+					return o.withdrawRepo.SetOnChainProposalIdAfterExecuteTx(req.Proposal, onChainProposal, ctx)
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // BuildMoneyTransaction implements business.IOnChainService.

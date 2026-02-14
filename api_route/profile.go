@@ -22,5 +22,5 @@ func InitializeProfileRoutes(server *gin.Engine) {
 
 	// Auth group
 	var authGroup = server.Group(contextPath, middleware.Authorize)
-	authGroup.POST("/:id", middleware.RateLimitMiddleware(middleware.InitalizeRateLimiter(rate.Every(time.Minute/2), 3)), transport.UploadProfile)
+	authGroup.POST("/:id", middleware.RateLimitMiddleware(middleware.InitializeRateLimiter(rate.Every(time.Minute/2), 3)), transport.UploadProfile)
 }

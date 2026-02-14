@@ -26,6 +26,7 @@ type IModuleManage interface {
 	GetModule() string
 	ToUpdatePublisherNftArguments(args UpdatePublisherNftArguments) []interface{}
 	ToMintCapArguments(args MintCapArguments) []interface{}
+	GetAdminNftStruct() string
 	GetManageObjectStruct() string
 	GetAdminCapStruct() string
 	GetUpdateAdminInfoCapStruct() string
@@ -46,6 +47,11 @@ type moduleManage struct{}
 
 func InitializeModuleManage() IModuleManage {
 	return &moduleManage{}
+}
+
+// GetAdminNftStruct implements IModuleManage.
+func (m *moduleManage) GetAdminNftStruct() string {
+	return sui.ADMIN_NFT_STRUCT
 }
 
 // GetManageObjectStruct implements IModuleManage.

@@ -28,10 +28,13 @@ func InitializeChildRoutes(server *gin.Engine) {
 	var contextPath string = "children"
 
 	// Rate limits
-	var listLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/2), 10)
-	var detailLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/5), 20)
-	var uploadLimit = middleware.InitalizeRateLimiter(rate.Every(time.Minute/30), 30)
-	var metadataLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/1), 10)
+	var listLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/2), 10)
+	var detailLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/5), 20)
+	var uploadLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/30), 30)
+	var metadataLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/1), 10)
+	var donateLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/4), 7)
+	var proposalLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/3), 5)
+	var voteLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/1), 5)
 
 	// Normal group
 	var norGroup = server.Group(contextPath)
@@ -43,4 +46,16 @@ func InitializeChildRoutes(server *gin.Engine) {
 	authGroup.PUT("/metadata/string/:id", middleware.RateLimitMiddleware(metadataLimit), transport.AddChildStringMetadata)
 	authGroup.PUT("/metadata/number/:id", middleware.RateLimitMiddleware(metadataLimit), transport.AddChildNumberMetadata)
 	authGroup.POST("", middleware.RateLimitMiddleware(uploadLimit), transport.UploadChild)
+	authGroup.POST("/books-need/:id/support", middleware.RateLimitMiddleware(donateLimit), transport.SupportBooksNeed)
+	authGroup.POST("/meal-need/:id/support", middleware.RateLimitMiddleware(donateLimit), transport.SupportMealNeed)
+	authGroup.POST("/special-need/:id/support", middleware.RateLimitMiddleware(donateLimit), transport.SupportSpecialNeed)
+	authGroup.POST("/special-need/proposal/:id/vote", middleware.RateLimitMiddleware(voteLimit), transport.VoteSpecialNeedProposal)
+
+	// Manager group
+	var managerGroup = server.Group(contextPath, middleware.Authorize, middleware.ManagerRoleAuthorize)
+	managerGroup.POST("/books-need/withdraw-proposal", middleware.RateLimitMiddleware(proposalLimit), transport.CreateBooksNeedWithdrawProposal)
+	managerGroup.POST("/meal-need/withdraw-proposal", middleware.RateLimitMiddleware(proposalLimit), transport.CreateMealNeedWithdrawProposal)
+	managerGroup.POST("/special-need/withdraw-proposal", middleware.RateLimitMiddleware(proposalLimit), transport.CreateSpecialNeedWithdrawProposal)
+	managerGroup.POST("/special-need/proposal", middleware.RateLimitMiddleware(proposalLimit), transport.CreateSpecialNeedProposal)
+	managerGroup.POST("/special-need/proposal/:id/confirm", middleware.RateLimitMiddleware(proposalLimit), transport.ConfirmSpecialNeedProposal)
 }

@@ -13,10 +13,10 @@ func InitializeCenterRequestRoute(server *gin.Engine) {
 	var contextPath string = "centers"
 
 	// Rate limits
-	var listLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/2), 15)
-	var detailLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/5), 20)
-	var createLimit = middleware.InitalizeRateLimiter(rate.Every(time.Minute/5), 5)
-	var voteLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/1), 5)
+	var listLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/2), 15)
+	var detailLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/5), 20)
+	var createLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/5), 5)
+	var voteLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/1), 5)
 
 	// Normal group
 	var norGroup = server.Group(contextPath)

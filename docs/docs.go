@@ -515,6 +515,11 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "region",
                         "in": "query"
@@ -850,6 +855,11 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "region",
                         "in": "query"
@@ -1174,6 +1184,11 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "region",
                         "in": "query"
@@ -1243,6 +1258,239 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/children/books-need/withdraw-proposal": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for creating a new withdraw proposal from child's books need on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Create books need withdraw proposal",
+                "parameters": [
+                    {
+                        "description": "Create Books Need Withdraw Proposal Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateNormalNeedWithdrawProposalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/children/books-need/{id}/support": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for supporting books need for a child on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Support books need for a child",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Books Need ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.UrlAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/children/meal-need/withdraw-proposal": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for creating a new withdraw proposal from child's meal need on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Create meal need withdraw proposal",
+                "parameters": [
+                    {
+                        "description": "Create Meal Need Withdraw Proposal Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateNormalNeedWithdrawProposalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/children/meal-need/{id}/support": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for supporting meal need for a child on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Support meal need for a child",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Meal Need ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Support Child Meal Need Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SupportMealNeadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.UrlAPIResponse"
                         }
                     },
                     "400": {
@@ -1380,6 +1628,303 @@ const docTemplate = `{
                 }
             }
         },
+        "/children/special-need/proposal": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for creating a new special need proposal for a child on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Create special need proposal",
+                "parameters": [
+                    {
+                        "description": "Create Special Need Campaign Withdraw Proposal Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateSpecialNeedProposalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/children/special-need/proposal/{id}/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for confirming a special need proposal for a child if accepted to create a new campaign on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Confirm a special need proposal",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Special Need Proposal ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/children/special-need/proposal/{id}/vote": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for voting a special need proposal of a child on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Vote a special need proposal",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Special Need Proposal ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Voting Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.VoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/children/special-need/withdraw-proposal": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for creating a new withdraw proposal from child's special need campaign on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Create special need campaign withdraw proposal",
+                "parameters": [
+                    {
+                        "description": "Create Special Need Campaign Withdraw Proposal Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateSpecialNeedWithdrawProposalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/children/special-need/{id}/support": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for supporting special need campaign of a child on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Support special need campaign of a child",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Campaign ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Support Child Special Need Campaign Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SupportSpecialNeedRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.UrlAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/children/{id}": {
             "get": {
                 "description": "Retrieves child information by its unique ID",
@@ -1407,6 +1952,107 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/response.ChildResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/donors": {
+            "get": {
+                "description": "Retrieves a list of donors based on filter criteria",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "donor"
+                ],
+                "summary": "List donors",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "gender",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/donors/{id}": {
+            "get": {
+                "description": "Retrieves donor information by unique ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "donor"
+                ],
+                "summary": "Get donor details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Donor ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.DonorResponse"
                         }
                     },
                     "400": {
@@ -1515,6 +2161,11 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
                         "in": "query"
                     },
                     {
@@ -1690,6 +2341,62 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/payments/auth-callback/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Handles the transaction callback/webhook from the payment provider to update transaction status by ID and build on-chain transaction.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Process payment callback with authorization",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Payment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Captured Image Blob ID",
+                        "name": "imageBlobId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/payments/callback/{id}": {
             "get": {
                 "description": "Handles the transaction callback/webhook from the payment provider to update transaction status by ID and build on-chain transaction.",
@@ -1765,9 +2472,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Note: Redirect user to transaction checkout url",
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.UrlAPIResponse"
                         }
                     },
                     "400": {
@@ -1915,6 +2622,11 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
                         "in": "query"
                     },
                     {
@@ -2223,102 +2935,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/sponsors": {
-            "get": {
-                "description": "Retrieves a list of sponsors based on filter criteria",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sponsor"
-                ],
-                "summary": "List sponsors",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "gender",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.PaginationDataResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid data. Please try again.",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "There is something wrong in the system during the process. Please try again later.",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageAPIResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/sponsors/{id}": {
-            "get": {
-                "description": "Retrieves sponsor information by unique ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sponsor"
-                ],
-                "summary": "Get sponsor details",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Sponsor ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.SponsorResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid data. Please try again.",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "There is something wrong in the system during the process. Please try again later.",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageAPIResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/staffs": {
             "get": {
                 "description": "Retrieves a list of staffs based on filter criteria",
@@ -2346,6 +2962,11 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
                         "in": "query"
                     },
                     {
@@ -2600,6 +3221,11 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "sort_criteria",
                         "in": "query"
@@ -2713,7 +3339,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.WithDrawProposalResponse"
+                            "$ref": "#/definitions/response.WithdrawProposalResponse"
                         }
                     },
                     "400": {
@@ -3252,11 +3878,11 @@ const docTemplate = `{
             "required": [
                 "carrier",
                 "category",
-                "child_id",
                 "description",
                 "gift_image_blob_id",
                 "gift_value",
                 "message",
+                "recipient",
                 "tracking_code"
             ],
             "properties": {
@@ -3264,9 +3890,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "category": {
-                    "type": "string"
-                },
-                "child_id": {
                     "type": "string"
                 },
                 "description": {
@@ -3282,7 +3905,21 @@ const docTemplate = `{
                 "message": {
                     "type": "string"
                 },
+                "recipient": {
+                    "type": "string"
+                },
                 "tracking_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CreateNormalNeedWithdrawProposalRequest": {
+            "type": "object",
+            "required": [
+                "need_id"
+            ],
+            "properties": {
+                "need_id": {
                     "type": "string"
                 }
             }
@@ -3306,6 +3943,45 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "register_role": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CreateSpecialNeedProposalRequest": {
+            "type": "object",
+            "required": [
+                "child_id",
+                "description",
+                "target"
+            ],
+            "properties": {
+                "child_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "integer"
+                }
+            }
+        },
+        "request.CreateSpecialNeedWithdrawProposalRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "campaign_id",
+                "description"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "minimum": 2000
+                },
+                "campaign_id": {
+                    "type": "string"
+                },
+                "description": {
                     "type": "string"
                 }
             }
@@ -3356,6 +4032,9 @@ const docTemplate = `{
                 "tx_bytes"
             ],
             "properties": {
+                "proposal": {
+                    "type": "string"
+                },
                 "signature": {
                     "type": "string"
                 },
@@ -3404,6 +4083,31 @@ const docTemplate = `{
                 },
                 "sender": {
                     "type": "string"
+                }
+            }
+        },
+        "request.SupportMealNeadRequest": {
+            "type": "object",
+            "required": [
+                "months"
+            ],
+            "properties": {
+                "months": {
+                    "type": "integer",
+                    "maximum": 12,
+                    "minimum": 1
+                }
+            }
+        },
+        "request.SupportSpecialNeedRequest": {
+            "type": "object",
+            "required": [
+                "amount"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "minimum": 2000
                 }
             }
         },
@@ -3584,6 +4288,9 @@ const docTemplate = `{
         "response.BuildTransactionResponse": {
             "type": "object",
             "properties": {
+                "proposal": {
+                    "type": "string"
+                },
                 "tx_bytes": {
                     "type": "string"
                 }
@@ -3594,6 +4301,12 @@ const docTemplate = `{
             "properties": {
                 "avatar_blob_id": {
                     "type": "string"
+                },
+                "books_needs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "date_of_birth": {
                     "type": "string"
@@ -3614,6 +4327,12 @@ const docTemplate = `{
                 "gender": {
                     "type": "string"
                 },
+                "gifts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "id": {
                     "type": "string"
                 },
@@ -3629,8 +4348,23 @@ const docTemplate = `{
                 "last_name": {
                     "type": "string"
                 },
+                "meal_need": {
+                    "type": "string"
+                },
                 "region": {
                     "type": "string"
+                },
+                "special_need_campaigns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "special_need_proposals": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "updated_at": {
                     "type": "string"
@@ -3642,6 +4376,47 @@ const docTemplate = `{
                     }
                 },
                 "uploaded_at": {
+                    "type": "string"
+                },
+                "uploaded_by": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.DonorResponse": {
+            "type": "object",
+            "properties": {
+                "contributions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TransactionResponse"
+                    }
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "total_donation": {
+                    "type": "integer"
+                },
+                "url": {
                     "type": "string"
                 }
             }
@@ -3656,9 +4431,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "category": {
-                    "type": "string"
-                },
-                "child_id": {
                     "type": "string"
                 },
                 "confirm_recieved_by": {
@@ -3679,7 +4451,13 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "is_for_child": {
+                    "type": "boolean"
+                },
                 "message": {
+                    "type": "string"
+                },
+                "recipient": {
                     "type": "string"
                 },
                 "sender": {
@@ -3756,44 +4534,6 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
-                }
-            }
-        },
-        "response.SponsorResponse": {
-            "type": "object",
-            "properties": {
-                "contributions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.TransactionResponse"
-                    }
-                },
-                "email": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "phone_number": {
-                    "type": "string"
-                },
-                "total_donation": {
-                    "type": "integer"
-                },
-                "url": {
-                    "type": "string"
                 }
             }
         },
@@ -3928,7 +4668,15 @@ const docTemplate = `{
                 }
             }
         },
-        "response.WithDrawProposalResponse": {
+        "response.UrlAPIResponse": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.WithdrawProposalResponse": {
             "type": "object",
             "properties": {
                 "approve_weight": {

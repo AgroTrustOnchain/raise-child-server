@@ -154,22 +154,47 @@ func (g *giftService) ConfirmReceiveGift(id string, req request.ConfirmReceiveGi
 		return response.BuildTransactionResponse{}, genericRightErr
 	}
 
-	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+	var function string
+	var region string
+	var recipient string
+	var giftModule = on_chain.InitializeModuleGift()
+	var getObjReq = on_chain.GetOnChainObjectRequest{
 		Client:    client,
-		ObjectId:  gift.ChildID,
+		ObjectId:  gift.Recipient,
 		ErrLogger: g.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
 	}
 
-	if child == nil {
-		return response.BuildTransactionResponse{}, genericErr
+	if gift.IsForChild {
+		child, err := on_chain.GetOnChainObject[entities.Child](getObjReq, ctx)
+		if err != nil {
+			return response.BuildTransactionResponse{}, err
+		}
+
+		if child == nil {
+			return response.BuildTransactionResponse{}, genericErr
+		}
+
+		function = giftModule.GetFunctionConfirmReceiveChildGift()
+		region = child.Region
+		recipient = child.ID.ID
+	} else {
+		center, err := on_chain.GetOnChainObject[entities.Center](getObjReq, ctx)
+		if err != nil {
+			return response.BuildTransactionResponse{}, err
+		}
+
+		if center == nil {
+			return response.BuildTransactionResponse{}, genericErr
+		}
+
+		function = giftModule.GetFunctionConfirmReceiveCenterGift()
+		region = center.Region
+		recipient = center.ID.ID
 	}
 
 	var staffId string
 	for _, role := range roles {
-		if role.Region == child.Region {
+		if role.Region == region {
 			staffId = role.ID.ID
 			break
 		}
@@ -179,16 +204,15 @@ func (g *giftService) ConfirmReceiveGift(id string, req request.ConfirmReceiveGi
 		return response.BuildTransactionResponse{}, genericRightErr
 	}
 
-	var giftModule = on_chain.InitializeModuleGift()
 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
 		Client:    client,
 		Sender:    sender,
 		Module:    giftModule.GetModule(),
-		Function:  giftModule.GetFunctionConfirmReceiveGift(),
+		Function:  function,
 		ErrLogger: g.errLogger,
 		Arguments: giftModule.ToConfirmReceiveGiftArguments(on_chain.ConfirmReceiveGiftArguments{
 			GiftID:      id,
-			ChildID:     child.ID.ID,
+			Recipient:   recipient,
 			StaffID:     staffId,
 			ImageBlobID: req.DeliveredImageBlobID,
 		}),
@@ -209,7 +233,7 @@ func (g *giftService) CreateGift(req request.CreateGiftRequest, ctx context.Cont
 		return response.BuildTransactionResponse{}, genericRightErr
 	}
 
-	if !utils.IsValidSuiAddress(models.SuiAddress(req.ChildID)) {
+	if !utils.IsValidSuiAddress(models.SuiAddress(req.Recipient)) {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
@@ -239,11 +263,11 @@ func (g *giftService) CreateGift(req request.CreateGiftRequest, ctx context.Cont
 
 	// todo: AI validate other fields
 	var client = g.clients[constant.SuiTestnet]
-	var sponsorModule = on_chain.InitializeModuleSponsor()
-	nfts, err := on_chain.GetOnChainOwnedObjects[entities.Sponsor](on_chain.GetOnChainOwnedObjectsRequest{
+	var donorModule = on_chain.InitializeModuleDonor()
+	nfts, err := on_chain.GetOnChainOwnedObjects[entities.Donor](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
 		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), sponsorModule.GetModule(), sponsorModule.GetSponsorNftStruct()),
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), donorModule.GetModule(), donorModule.GetDonorNftStruct()),
 		ErrLogger:    g.errLogger,
 	}, ctx)
 	if err != nil {
@@ -252,21 +276,40 @@ func (g *giftService) CreateGift(req request.CreateGiftRequest, ctx context.Cont
 
 	var nftId string
 	if nfts == nil || len(nfts) == 0 {
-		nftId = os.Getenv(env.PUB_SPONSOR_NFT_ID)
+		nftId = os.Getenv(env.PUB_DONOR_NFT_ID)
 	} else {
 		nftId = nfts[0].ID.ID
 	}
 
 	var giftModule = on_chain.InitializeModuleGift()
+	var function string
+	var getRecipientObjReq = on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  req.Recipient,
+		ErrLogger: g.errLogger,
+	}
+
+	if child, _ := on_chain.GetOnChainObject[entities.Child](getRecipientObjReq, ctx); child != nil {
+		function = giftModule.GetFunctionCreateGiftForChild()
+	} else {
+		if center, _ := on_chain.GetOnChainObject[entities.Center](getRecipientObjReq, ctx); center != nil {
+			function = giftModule.GetFunctionCreateGiftForCenter()
+		}
+	}
+
+	if function == "" {
+		return response.BuildTransactionResponse{}, genericErr
+	}
+
 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
 		Client:    client,
 		Sender:    sender,
 		Module:    giftModule.GetModule(),
-		Function:  giftModule.GetFunctionCreateGift(),
+		Function:  function,
 		ErrLogger: g.errLogger,
 		Arguments: giftModule.ToCreateGiftArguments(on_chain.CreateGiftArguments{
-			SponsorID:       nftId,
-			ChildID:         req.ChildID,
+			DonorID:         nftId,
+			Recipient:       req.Recipient,
 			TrackingCode:    req.TrackingCode,
 			Carrier:         req.Carrier,
 			GiftImageBlobID: req.GiftImageBlobID,
@@ -353,7 +396,11 @@ func (g *giftService) GetGiftsOfChild(id string, req request.GetGiftsRequest, ct
 		page = 1
 	}
 
-	var skippedRecords int = (page - 1) * gift_limit_record
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var skippedRecords int = (page - 1) * req.PageSize
 	if len(filteredGifts) <= skippedRecords {
 		return response.PaginationDataResponse{}, nil
 	}

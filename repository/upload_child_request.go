@@ -145,7 +145,7 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       upload_child_request_table,
-		limitAmount: upload_child_request_limit_record,
+		limitAmount: req.PageSize,
 		condition:   queryCondition,
 		page:        req.Page,
 		isGetCount:  false,

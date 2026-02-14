@@ -7,7 +7,7 @@ import (
 )
 
 type IWithdrawProposalService interface {
-	GetWithdrawProposal(id string, ctx context.Context) (response.WithDrawProposalResponse, error)
+	GetWithdrawProposal(id string, ctx context.Context) (response.WithdrawProposalResponse, error)
 	GetWithdrawProposals(req request.GetWithdrawProposalsRequest, ctx context.Context) (response.PaginationDataResponse, error)
 	CreateWithdrawProposal(req request.CreateWithdrawProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error)
 	VoteWithdrawProposal(id string, req request.VoteRequest, ctx context.Context) (response.BuildTransactionResponse, error)

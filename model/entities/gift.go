@@ -9,7 +9,8 @@ import (
 type Gift struct {
 	ID                   ID     `json:"id"`
 	Sender               string `json:"sender"`
-	ChildID              string `json:"child_id"`
+	Recipient            string `json:"recipient"`
+	IsForChild           bool   `json:"is_for_child"`
 	TrackingCode         string `json:"tracking_code"`
 	Carrier              string `json:"carrier"`
 	GiftImageBlobID      string `json:"gift_image_blob_id"`
@@ -37,7 +38,8 @@ func (g Gift) ToGiftResponse() response.GiftResponse {
 	return response.GiftResponse{
 		ID:                   g.ID.ID,
 		Sender:               g.Sender,
-		ChildID:              g.ChildID,
+		Recipient:            g.Recipient,
+		IsForChild:           g.IsForChild,
 		TrackingCode:         g.TrackingCode,
 		Carrier:              g.Carrier,
 		GiftImageBlobID:      g.GiftImageBlobID,

@@ -20,5 +20,5 @@ import (
 func InitializeOnChainRoutes(server *gin.Engine) {
 	var contextPath string = "tx"
 	var authGroup = server.Group(contextPath, middleware.Authorize)
-	authGroup.POST("/execute", middleware.RateLimitMiddleware(middleware.InitalizeRateLimiter(rate.Every(time.Second/5), 20)), transport.ExecuteTransaction)
+	authGroup.POST("/execute", middleware.RateLimitMiddleware(middleware.InitializeRateLimiter(rate.Every(time.Second/5), 20)), transport.ExecuteTransaction)
 }

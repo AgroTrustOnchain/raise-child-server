@@ -37,6 +37,10 @@ type centerRequestService struct {
 }
 
 const (
+	default_page_size int = 10
+)
+
+var (
 	min_region_staffs int = 5
 )
 
@@ -267,6 +271,10 @@ func (c *centerRequestService) GetRequest(id string, ctx context.Context) (*enti
 func (c *centerRequestService) GetRequests(req request.GetCenterRequests, ctx context.Context) (response.PaginationDataResponse, error) {
 	if req.Page < 1 {
 		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
 	}
 
 	data, pages, err := c.centerRequestRepo.GetRegistrationRequests(req, ctx)

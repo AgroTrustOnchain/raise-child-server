@@ -30,6 +30,6 @@ func InitializeAdminRoute(server *gin.Engine) {
 
 	// Normal group
 	var norGroup = server.Group(contextPath)
-	var listLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/2), 20)
+	var listLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/2), 20)
 	norGroup.GET("", middleware.RateLimitMiddleware(listLimit), transport.GetAdmins)
 }

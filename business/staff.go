@@ -164,7 +164,11 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 		})
 	}
 
-	var skippedRecords int = (page - 1) * child_records_limit
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var skippedRecords int = (page - 1) * req.PageSize
 	if len(filteredStaffs) <= skippedRecords {
 		return response.PaginationDataResponse{}, err
 	}

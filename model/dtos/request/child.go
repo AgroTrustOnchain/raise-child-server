@@ -6,6 +6,7 @@ type GetChildrenRequest struct {
 	YearOfBirth *int   `json:"year_of_birth"`
 	SortOrder   string `json:"sort_order"`
 	Gender      string `json:"gender"`
+	PageSize    int    `json:"page_size"`
 	Page        int    `json:"page"`
 }
 
@@ -28,3 +29,37 @@ type AddChildNumberMetadaRequest struct {
 	Key   string `json:"key" validate:"required"`
 	Value int    `json:"value" validate:"required"`
 }
+
+// childs/books-need/{id}/support
+
+// childs/meal-need/{id}/support
+type SupportMealNeadRequest struct {
+	Months int `json:"months" validate:"required,min=1,max=12"`
+}
+
+// childs/special-need/{id}/support
+type SupportSpecialNeedRequest struct {
+	Amount int64 `json:"amount" validate:"required,min=2000"`
+}
+
+// childs/books-need/withdraw-proposal
+// childs/meal-need/withdraw-proposal
+type CreateNormalNeedWithdrawProposalRequest struct {
+	NeedID string `json:"need_id" validate:"required"`
+}
+
+// childs/special-need/withdraw-proposal
+type CreateSpecialNeedWithdrawProposalRequest struct {
+	CampaignID  string `json:"campaign_id" validate:"required"`
+	Amount      int64  `json:"amount" validate:"required,min=2000"`
+	Description string `json:"description" validate:"required"`
+}
+
+// childs/special-need/proposal
+type CreateSpecialNeedProposalRequest struct { // For create special need campaign
+	ChildID     string `json:"child_id" validate:"required"`
+	Target      int64  `json:"target" validate:"required"`
+	Description string `json:"description" validate:"required"`
+}
+
+// childs/special-need/proposal/{id}/confirm

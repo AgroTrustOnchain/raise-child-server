@@ -18,7 +18,7 @@ func InitializeBankProfileRoutes(server *gin.Engine) {
 
 	// Auth group
 	var authGroup = server.Group(contextPath, middleware.Authorize)
-	var rateLimit = middleware.InitalizeRateLimiter(rate.Every(time.Minute/5), 5)
+	var rateLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/5), 5)
 	authGroup.POST("", middleware.RateLimitMiddleware(rateLimit), transport.CreateBankProfile)
 	authGroup.PUT("/:id", middleware.RateLimitMiddleware(rateLimit), transport.UpdateBankProfile)
 }

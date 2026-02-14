@@ -242,7 +242,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       registraion_request_table,
-		limitAmount: registraion_request_limit_record,
+		limitAmount: req.PageSize,
 		condition:   queryCondition,
 		page:        req.Page,
 		isGetCount:  false,

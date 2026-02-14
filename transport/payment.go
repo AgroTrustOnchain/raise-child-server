@@ -18,7 +18,7 @@ import (
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.DonateRequest  true  "Donation Details"
-// @Success      200      {string}  "Note: Redirect user to transaction checkout url"
+// @Success      200      {object}  response.UrlAPIResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -43,7 +43,7 @@ func Donate(ctx *gin.Context) {
 		Data2:    res,
 		ErrMsg:   err,
 		Context:  ctx,
-		PostType: action_type.REDIRECT,
+		PostType: action_type.NON_POST,
 	})
 }
 
@@ -65,13 +65,44 @@ func CallbackTransaction(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.CallbackTx(ctx.Param("id"), ctx)
+	res, err := service.Callback(ctx.Param("id"), ctx)
 
 	util.ProcessResponse(response.APIResponse{
 		Data1:    res,
 		Data2:    res,
 		ErrMsg:   err,
 		Context:  ctx,
-		PostType: action_type.NON_POST,
+		PostType: action_type.REDIRECT,
+	})
+}
+
+// CallbackWithAuthTransaction godoc
+// @Summary      Process payment callback with authorization
+// @Description  Handles the transaction callback/webhook from the payment provider to update transaction status by ID and build on-chain transaction.
+// @Tags         payment
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string                true  "Payment ID"
+// @Param        imageBlobId   query      string                true  "Captured Image Blob ID"
+// @Success      200  {object}  response.BuildTransactionResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /payments/auth-callback/{id} [get]
+func CallbackWithAuthTransaction(ctx *gin.Context) {
+	service, err := business.GeneratePaymentService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.CallbackWithAuth(ctx.Param("id"), ctx.Query("imageBlobId"), ctx)
+
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.REDIRECT,
 	})
 }

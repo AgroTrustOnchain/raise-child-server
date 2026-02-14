@@ -7,6 +7,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"log"
+	"os"
+	"raise-child/constants/env"
 	"raise-child/constants/noti"
 	"raise-child/constants/shared"
 	"raise-child/interfaces/business"
@@ -19,6 +21,7 @@ import (
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 	"raise-child/util/security"
+	"slices"
 	"strings"
 	"time"
 
@@ -57,7 +60,28 @@ func (a *authService) LoginV2(req request.LoginRequestV2, ctx context.Context) (
 	on_chain.FaucetTestnetBalance(a.clients[constant.SuiTestnet], address, a.errLogger, ctx)
 
 	var sub string = strings.TrimSpace(req.Sub)
-	token, _, err := security.GenerateActionToken(address, sub, a.errLogger)
+	var client = a.clients[constant.SuiTestnet]
+	var role string
+	manageObj, _ := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.PACKAGE_ID),
+		ErrLogger: a.errLogger,
+	}, ctx)
+	if manageObj != nil {
+		if slices.Contains(manageObj.AdminIds, address) {
+			role = admin_role
+		} else if slices.Contains(manageObj.LocalLeaderIds, address) {
+			role = local_leader_role
+		} else if slices.Contains(manageObj.VolunteerIds, address) {
+			role = volunteer_role
+		} else if slices.Contains(manageObj.DonorIds, address) {
+			role = donor_role
+		} else {
+			role = user_role
+		}
+	}
+
+	token, _, err := security.GenerateActionToken(address, sub, role, a.errLogger)
 	if err != nil {
 		return response.LoginResponse{}, err
 	}
@@ -153,7 +177,7 @@ func (a *authService) Login(req request.LoginRequest, ctx context.Context) (resp
 		return response.LoginResponse{}, genericErr
 	}
 
-	token, exp, err := security.GenerateActionToken(req.Address, matchedNonce, a.errLogger)
+	token, exp, err := security.GenerateActionToken(req.Address, matchedNonce, "", a.errLogger)
 	if err != nil {
 		return response.LoginResponse{}, internalErr
 	}

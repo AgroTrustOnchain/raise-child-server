@@ -7,6 +7,7 @@ type GetCenterRequests struct {
 	IsClosed             *bool  `json:"is_closed"`
 	IsAvailableToConfirm *bool  `json:"is_available_to_confirm"`
 	SortOrder            string `json:"sort_order"`
+	PageSize             int    `json:"page_size"`
 	Page                 int    `json:"page"`
 }
 

@@ -9,6 +9,7 @@ type GetWithdrawProposalsRequest struct {
 	IsClosed     *bool  `json:"is_closed"`
 	SortCriteria string `json:"sort_criteria"`
 	SortOrder    string `json:"sort_order"`
+	PageSize     int    `json:"page_size"`
 	Page         int    `json:"page"`
 }
 

@@ -5,7 +5,8 @@ import "time"
 type GiftResponse struct {
 	ID                   string    `json:"id"`
 	Sender               string    `json:"sender"`
-	ChildID              string    `json:"child_id"`
+	Recipient            string    `json:"recipient"`
+	IsForChild           bool      `json:"is_for_child"`
 	TrackingCode         string    `json:"tracking_code"`
 	Carrier              string    `json:"carrier"`
 	GiftImageBlobID      string    `json:"gift_image_blob_id"`

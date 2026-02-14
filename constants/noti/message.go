@@ -59,6 +59,20 @@ const (
 	PROFILE_EMPTY_MESSAGE string = "Your profile is empty. Please fill it with your personal information."
 
 	LEADER_NOT_UPLOAD_BANK_PROFILE_MESSAGE string = "Leader has not uploaded bank profile yet."
+
+	WITHDRAW_PROPOSAL_IN_PROCESS_MESSAGE string = "This withdraw proposal is in process."
+
+	SPECIAL_NEED_PROPOSAL_CONFIRMED_MESSAGE string = "This special need proposal has been confirmed."
+
+	PROPOSAL_FAIL_CONDITION_TO_CONFIRM_MESSAGE string = "This proposal fails the required condition to get confirmation."
+
+	CURRENT_BUDGET_NOT_ENOUGH_MESSAGE string = "This campaign current budget is not enough."
+
+	NEED_SUPPORTED_MESSAGE string = "This need has been supported."
+
+	MEAL_NEED_SUPPORT_DURATION_OUT_RANGE_MESSAGE string = "The meal need support range is out of support range. Please choose a smaller duration."
+
+	SUPPORT_SURPASS_CAMPAIGN_TARGET_MESSAGE string = "The donation is surpassed the campaign target."
 )
 
 const (

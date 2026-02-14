@@ -217,6 +217,10 @@ func (u *uploadChildRequestService) GetUploadChildRequests(req request.GetUpload
 		req.Page = 1
 	}
 
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
 	data, pages, err := u.uploadChildRequestRepo.GetUploadChildRequests(req, ctx)
 
 	return response.PaginationDataResponse{

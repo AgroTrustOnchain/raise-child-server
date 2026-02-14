@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-type Sponsor struct {
+type Donor struct {
 	ID            ID     `json:"id"`
 	Owner         string `json:"owner"`
 	FirstName     string `json:"first_name"`
@@ -18,14 +18,14 @@ type Sponsor struct {
 	Url           string `json:"url"`
 }
 
-func (s Sponsor) ToSponsorResponse() response.SponsorResponse {
+func (s Donor) ToDonorResponse() response.DonorResponse {
 	if s.ID.ID == "" {
-		return response.SponsorResponse{}
+		return response.DonorResponse{}
 	}
 
 	totalDonation, _ := strconv.ParseInt(s.TotalDonation, 10, 64)
 
-	return response.SponsorResponse{
+	return response.DonorResponse{
 		ID:            s.Owner,
 		FirstName:     s.FirstName,
 		LastName:      s.LastName,

@@ -5,11 +5,12 @@ type GetGiftsRequest struct {
 	Status    string `json:"status"`
 	Category  string `json:"category"`
 	SortOrder string `json:"sort_order"`
+	PageSize  int    `json:"page_size"`
 	Page      int    `json:"page"`
 }
 
 type CreateGiftRequest struct {
-	ChildID         string `json:"child_id" validate:"required"`
+	Recipient       string `json:"recipient" validate:"required"`
 	TrackingCode    string `json:"tracking_code" validate:"required"`
 	Carrier         string `json:"carrier" validate:"required"`
 	GiftImageBlobID string `json:"gift_image_blob_id" validate:"required"`

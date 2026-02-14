@@ -9,24 +9,24 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// func InitializeSponsorRoutes(server *gin.Engine) {
-// 	var contextPath string = "sponsors"
+// func InitializeDonorRoutes(server *gin.Engine) {
+// 	var contextPath string = "donors"
 
 // 	// Normal group
 // 	var norGroup = server.Group(contextPath)
-// 	norGroup.GET("", transport.GetSponsors)
-// 	norGroup.GET("/:id", transport.GetSponsor)
+// 	norGroup.GET("", transport.GetDonors)
+// 	norGroup.GET("/:id", transport.GetDonor)
 // }
 
-func InitializeSponsorRoutes(server *gin.Engine) {
-	var contextPath string = "sponsors"
+func InitializeDonorRoutes(server *gin.Engine) {
+	var contextPath string = "donors"
 
 	// Rate limits
-	var listLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/2), 20)
-	var detailLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/5), 30)
+	var listLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/2), 20)
+	var detailLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/5), 30)
 
 	// Normal group
 	var norGroup = server.Group(contextPath)
-	norGroup.GET("", middleware.RateLimitMiddleware(listLimit), transport.GetSponsors)
-	norGroup.GET("/:id", middleware.RateLimitMiddleware(detailLimit), transport.GetSponsor)
+	norGroup.GET("", middleware.RateLimitMiddleware(listLimit), transport.GetDonors)
+	norGroup.GET("/:id", middleware.RateLimitMiddleware(detailLimit), transport.GetDonor)
 }

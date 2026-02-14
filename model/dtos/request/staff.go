@@ -7,5 +7,6 @@ type GetStaffsRequest struct {
 	Gender      string `json:"gender"`
 	YearOfBirth *int   `json:"year_of_birth"`
 	SortOrder   string `json:"sort_order"`
+	PageSize    int    `json:"page_size"`
 	Page        int    `json:"page"`
 }

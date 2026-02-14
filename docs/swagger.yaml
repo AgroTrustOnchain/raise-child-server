@@ -232,8 +232,6 @@ definitions:
         type: string
       category:
         type: string
-      child_id:
-        type: string
       description:
         type: string
       gift_image_blob_id:
@@ -243,17 +241,26 @@ definitions:
         type: integer
       message:
         type: string
+      recipient:
+        type: string
       tracking_code:
         type: string
     required:
     - carrier
     - category
-    - child_id
     - description
     - gift_image_blob_id
     - gift_value
     - message
+    - recipient
     - tracking_code
+    type: object
+  request.CreateNormalNeedWithdrawProposalRequest:
+    properties:
+      need_id:
+        type: string
+    required:
+    - need_id
     type: object
   request.CreateRegistrationRequest:
     properties:
@@ -270,6 +277,33 @@ definitions:
     - identity_card_blob_id
     - region
     - register_role
+    type: object
+  request.CreateSpecialNeedProposalRequest:
+    properties:
+      child_id:
+        type: string
+      description:
+        type: string
+      target:
+        type: integer
+    required:
+    - child_id
+    - description
+    - target
+    type: object
+  request.CreateSpecialNeedWithdrawProposalRequest:
+    properties:
+      amount:
+        minimum: 2000
+        type: integer
+      campaign_id:
+        type: string
+      description:
+        type: string
+    required:
+    - amount
+    - campaign_id
+    - description
     type: object
   request.CreateWithdrawProposalRequest:
     properties:
@@ -300,6 +334,8 @@ definitions:
     type: object
   request.ExecuteTransactionRequest:
     properties:
+      proposal:
+        type: string
       signature:
         type: string
       tx_bytes:
@@ -337,6 +373,23 @@ definitions:
     - action_type
     - amoun
     - sender
+    type: object
+  request.SupportMealNeadRequest:
+    properties:
+      months:
+        maximum: 12
+        minimum: 1
+        type: integer
+    required:
+    - months
+    type: object
+  request.SupportSpecialNeedRequest:
+    properties:
+      amount:
+        minimum: 2000
+        type: integer
+    required:
+    - amount
     type: object
   request.UpdateBankProfileRequest:
     properties:
@@ -461,6 +514,8 @@ definitions:
     type: object
   response.BuildTransactionResponse:
     properties:
+      proposal:
+        type: string
       tx_bytes:
         type: string
     type: object
@@ -468,6 +523,10 @@ definitions:
     properties:
       avatar_blob_id:
         type: string
+      books_needs:
+        items:
+          type: string
+        type: array
       date_of_birth:
         type: string
       dynamic_fields:
@@ -481,6 +540,10 @@ definitions:
         type: string
       gender:
         type: string
+      gifts:
+        items:
+          type: string
+        type: array
       id:
         type: string
       identity_code:
@@ -491,8 +554,18 @@ definitions:
         type: array
       last_name:
         type: string
+      meal_need:
+        type: string
       region:
         type: string
+      special_need_campaigns:
+        items:
+          type: string
+        type: array
+      special_need_proposals:
+        items:
+          type: string
+        type: array
       updated_at:
         type: string
       upload_image_periods:
@@ -500,6 +573,33 @@ definitions:
           type: string
         type: array
       uploaded_at:
+        type: string
+      uploaded_by:
+        type: string
+    type: object
+  response.DonorResponse:
+    properties:
+      contributions:
+        items:
+          $ref: '#/definitions/response.TransactionResponse'
+        type: array
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      name:
+        type: string
+      phone_number:
+        type: string
+      total_donation:
+        type: integer
+      url:
         type: string
     type: object
   response.GiftResponse:
@@ -509,8 +609,6 @@ definitions:
       carrier:
         type: string
       category:
-        type: string
-      child_id:
         type: string
       confirm_recieved_by:
         type: string
@@ -524,7 +622,11 @@ definitions:
         type: string
       id:
         type: string
+      is_for_child:
+        type: boolean
       message:
+        type: string
+      recipient:
         type: string
       sender:
         type: string
@@ -575,31 +677,6 @@ definitions:
         items:
           type: string
         type: array
-    type: object
-  response.SponsorResponse:
-    properties:
-      contributions:
-        items:
-          $ref: '#/definitions/response.TransactionResponse'
-        type: array
-      email:
-        type: string
-      first_name:
-        type: string
-      gender:
-        type: string
-      id:
-        type: string
-      last_name:
-        type: string
-      name:
-        type: string
-      phone_number:
-        type: string
-      total_donation:
-        type: integer
-      url:
-        type: string
     type: object
   response.StaffNftResponse:
     properties:
@@ -688,7 +765,12 @@ definitions:
       pool_name:
         type: string
     type: object
-  response.WithDrawProposalResponse:
+  response.UrlAPIResponse:
+    properties:
+      url:
+        type: string
+    type: object
+  response.WithdrawProposalResponse:
     properties:
       approve_weight:
         type: integer
@@ -1071,6 +1153,9 @@ paths:
         name: page
         type: integer
       - in: query
+        name: page_size
+        type: integer
+      - in: query
         name: region
         type: string
       - in: query
@@ -1295,6 +1380,9 @@ paths:
         name: page
         type: integer
       - in: query
+        name: page_size
+        type: integer
+      - in: query
         name: region
         type: string
       - in: query
@@ -1514,6 +1602,9 @@ paths:
         name: page
         type: integer
       - in: query
+        name: page_size
+        type: integer
+      - in: query
         name: region
         type: string
       - in: query
@@ -1608,6 +1699,162 @@ paths:
       summary: Get child details
       tags:
       - children
+  /children/books-need/{id}/support:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for supporting books need for
+        a child on-chain
+      parameters:
+      - description: Books Need ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.UrlAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Support books need for a child
+      tags:
+      - children
+  /children/books-need/withdraw-proposal:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for creating a new withdraw proposal
+        from child's books need on-chain
+      parameters:
+      - description: Create Books Need Withdraw Proposal Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateNormalNeedWithdrawProposalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create books need withdraw proposal
+      tags:
+      - children
+  /children/meal-need/{id}/support:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for supporting meal need for
+        a child on-chain
+      parameters:
+      - description: Meal Need ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Support Child Meal Need Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.SupportMealNeadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.UrlAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Support meal need for a child
+      tags:
+      - children
+  /children/meal-need/withdraw-proposal:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for creating a new withdraw proposal
+        from child's meal need on-chain
+      parameters:
+      - description: Create Meal Need Withdraw Proposal Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateNormalNeedWithdrawProposalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create meal need withdraw proposal
+      tags:
+      - children
   /children/metadata/number/{id}:
     put:
       consumes:
@@ -1684,6 +1931,272 @@ paths:
       summary: Add a new string metadata to a child object
       tags:
       - children
+  /children/special-need/{id}/support:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for supporting special need campaign
+        of a child on-chain
+      parameters:
+      - description: Campaign ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Support Child Special Need Campaign Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.SupportSpecialNeedRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.UrlAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Support special need campaign of a child
+      tags:
+      - children
+  /children/special-need/proposal:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for creating a new special need
+        proposal for a child on-chain
+      parameters:
+      - description: Create Special Need Campaign Withdraw Proposal Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateSpecialNeedProposalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create special need proposal
+      tags:
+      - children
+  /children/special-need/proposal/{id}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for confirming a special need
+        proposal for a child if accepted to create a new campaign on-chain
+      parameters:
+      - description: Special Need Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm a special need proposal
+      tags:
+      - children
+  /children/special-need/proposal/{id}/vote:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for voting a special need proposal
+        of a child on-chain
+      parameters:
+      - description: Special Need Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Voting Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.VoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Vote a special need proposal
+      tags:
+      - children
+  /children/special-need/withdraw-proposal:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for creating a new withdraw proposal
+        from child's special need campaign on-chain
+      parameters:
+      - description: Create Special Need Campaign Withdraw Proposal Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateSpecialNeedWithdrawProposalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create special need campaign withdraw proposal
+      tags:
+      - children
+  /donors:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of donors based on filter criteria
+      parameters:
+      - in: query
+        name: gender
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List donors
+      tags:
+      - donor
+  /donors/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves donor information by unique ID
+      parameters:
+      - description: Donor ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.DonorResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get donor details
+      tags:
+      - donor
   /gifts:
     post:
       consumes:
@@ -1814,6 +2327,9 @@ paths:
         name: page
         type: integer
       - in: query
+        name: page_size
+        type: integer
+      - in: query
         name: sort_order
         type: string
       - in: query
@@ -1862,6 +2378,44 @@ paths:
       summary: Execute an on-chain transaction
       tags:
       - mints
+  /payments/auth-callback/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Handles the transaction callback/webhook from the payment provider
+        to update transaction status by ID and build on-chain transaction.
+      parameters:
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Captured Image Blob ID
+        in: query
+        name: imageBlobId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Process payment callback with authorization
+      tags:
+      - payment
   /payments/callback/{id}:
     get:
       consumes:
@@ -1910,9 +2464,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 'Note: Redirect user to transaction checkout url'
+          description: OK
           schema:
-            type: string
+            $ref: '#/definitions/response.UrlAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2008,6 +2562,9 @@ paths:
         type: string
       - in: query
         name: page
+        type: integer
+      - in: query
+        name: page_size
         type: integer
       - in: query
         name: region
@@ -2220,70 +2777,6 @@ paths:
       summary: Get registration requests by a wallet
       tags:
       - registration
-  /sponsors:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a list of sponsors based on filter criteria
-      parameters:
-      - in: query
-        name: gender
-        type: string
-      - in: query
-        name: keyword
-        type: string
-      - in: query
-        name: page
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.PaginationDataResponse'
-        "400":
-          description: Invalid data. Please try again.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-        "500":
-          description: There is something wrong in the system during the process.
-            Please try again later.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-      summary: List sponsors
-      tags:
-      - sponsor
-  /sponsors/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves sponsor information by unique ID
-      parameters:
-      - description: Sponsor ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.SponsorResponse'
-        "400":
-          description: Invalid data. Please try again.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-        "500":
-          description: There is something wrong in the system during the process.
-            Please try again later.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-      summary: Get sponsor details
-      tags:
-      - sponsor
   /staffs:
     get:
       consumes:
@@ -2298,6 +2791,9 @@ paths:
         type: string
       - in: query
         name: page
+        type: integer
+      - in: query
+        name: page_size
         type: integer
       - in: query
         name: region
@@ -2465,6 +2961,9 @@ paths:
         name: page
         type: integer
       - in: query
+        name: page_size
+        type: integer
+      - in: query
         name: sort_criteria
         type: string
       - in: query
@@ -2542,7 +3041,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.WithDrawProposalResponse'
+            $ref: '#/definitions/response.WithdrawProposalResponse'
         "400":
           description: Invalid data. Please try again.
           schema:

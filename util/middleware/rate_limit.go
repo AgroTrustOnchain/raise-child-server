@@ -15,7 +15,7 @@ type rateLimiter struct {
 	b   int
 }
 
-func InitalizeRateLimiter(r rate.Limit, burst int) *rateLimiter {
+func InitializeRateLimiter(r rate.Limit, burst int) *rateLimiter {
 	return &rateLimiter{
 		ips: make(map[string]*rate.Limiter),
 		r:   r,
@@ -38,8 +38,8 @@ func (i *rateLimiter) getLimiter(address string) *rate.Limiter {
 
 func RateLimitMiddleware(limiter *rateLimiter) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var identifier string = ctx.Value("address").(string)
-		if identifier == "" {
+		identifier, ok := ctx.Value("address").(string)
+		if !ok || identifier == "" {
 			identifier = ctx.ClientIP()
 		}
 

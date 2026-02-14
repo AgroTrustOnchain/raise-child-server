@@ -37,6 +37,7 @@ import (
 type withdrawProposalService struct {
 	paymentRepo     i_repository.IPaymentRepository
 	bankProfileRepo i_repository.IBankProfileRepository
+	withdrawRepo    i_repository.IOffChainWithdrawProposalRepository
 	clients         map[string]sui.ISuiAPI
 	errLogger       *log.Logger
 }
@@ -45,6 +46,7 @@ func InitializeWithdrawProposalService(db *sql.DB, errLogger *log.Logger) busine
 	return &withdrawProposalService{
 		paymentRepo:     repository.InitializePaymentRepository(db, errLogger),
 		bankProfileRepo: repository.InitializeBankProfileRepository(db, errLogger),
+		withdrawRepo:    repository.InitializeOffChainWithdrawProposalRepository(db, errLogger),
 		clients:         _networkAliases,
 		errLogger:       errLogger,
 	}
@@ -115,60 +117,18 @@ func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithd
 			return response.BuildTransactionResponse{}, internalErr
 		}
 
-		var startIdx int
-		for i, region := range manageObj.LocalRegions {
-			if region == localPool.Region {
-				startIdx = i
-				break
-			}
-		}
-
-		leaders, err := on_chain.GetOnChainObjects[entities.StaffNft](on_chain.GetOnChainObjectsRequest{
-			Client:    client,
-			ObjectIds: manageObj.LocalLeaderNfts[startIdx:],
-			ErrLogger: w.errLogger,
-		}, ctx)
-		if err != nil {
-			return response.BuildTransactionResponse{}, err
-		}
-
-		var isLeaderUploadBank bool = false
-		var isLeaderOfRegion bool = false
-		for _, leader := range leaders {
-			if isLeaderUploadBank {
-				if isLeader {
-					if isLeaderOfRegion {
-						break
-					}
-				} else {
-					break
-				}
-			}
-
-			// Any leaders of that region has uploaded bank profile
-			if leader.Region == localPool.Region {
-				if leader.Owner == sender {
-					isLeaderOfRegion = true
-				}
-
-				bankProfile, err := w.bankProfileRepo.GetBankProfileByOwner(leader.Owner, ctx)
-				if err != nil {
-					return response.BuildTransactionResponse{}, err
-				}
-
-				if bankProfile != nil {
-					isLeaderUploadBank = true
-				}
-			}
-		}
-
 		if isLeader {
-			if !isLeaderOfRegion { // Not leader of requested pool reion
+			if !slices.Contains(localPool.Mods, sender) {
 				return response.BuildTransactionResponse{}, genericRightErr
 			}
 		}
 
-		if !isLeaderUploadBank {
+		bankProfile, err := w.bankProfileRepo.GetBankProfileByOwner(sender, ctx)
+		if err != nil {
+			return response.BuildTransactionResponse{}, err
+		}
+
+		if bankProfile == nil {
 			return response.BuildTransactionResponse{}, errors.New(noti.LEADER_NOT_UPLOAD_BANK_PROFILE_MESSAGE)
 		}
 
@@ -232,10 +192,20 @@ func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithd
 			ClosedAt:        util.ToMilliseconds(util.GetRequestDuration()),
 		}),
 	}, ctx)
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
+	}
 
+	var proposalId string = util.GenerateId()
 	return response.BuildTransactionResponse{
-		TxBytes: txBytes,
-	}, err
+			TxBytes:  txBytes,
+			Proposal: proposalId,
+		}, w.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
+			ID:        proposalId,
+			Purpose:   "Withdraw",
+			Target:    req.PoolID,
+			CreatedAt: time.Now(),
+		}, ctx)
 }
 
 // ConfirmWithdrawProposal implements business.IWithdrawProposalService.
@@ -248,21 +218,35 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 	}
 
 	var client = w.clients[constant.SuiTestnet]
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
-	manageObj, _ := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
-		ErrLogger: w.errLogger,
-	}, ctx)
-	if manageObj == nil {
-		return nil, internalErr
+	var manageModule = on_chain.InitializeModuleManage()
+	if nfts, err := on_chain.GetOnChainOwnedObjects[entities.AdminNft](on_chain.GetOnChainOwnedObjectsRequest{
+		Client:       client,
+		OwnerAddress: sender,
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manageModule.GetModule(), manageModule.GetAdminNftStruct()),
+		ErrLogger:    w.errLogger,
+	}, ctx); err != nil {
+		return nil, err
+	} else {
+		if nfts == nil || len(nfts) == 0 {
+			return nil, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+		}
 	}
 
-	if !slices.Contains(manageObj.AdminIds, sender) {
-		return nil, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	}
+	// var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	// manageObj, _ := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+	// 	Client:    client,
+	// 	ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+	// 	ErrLogger: w.errLogger,
+	// }, ctx)
+	// if manageObj == nil {
+	// 	return nil, internalErr
+	// }
 
-	proposal, _ := on_chain.GetOnChainObject[entities.WithDrawProposal](on_chain.GetOnChainObjectRequest{
+	// if !slices.Contains(manageObj.AdminIds, sender) {
+	// 	return nil, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	// }
+
+	proposal, _ := on_chain.GetOnChainObject[entities.WithdrawProposal](on_chain.GetOnChainObjectRequest{
 		Client:    client,
 		ObjectId:  id,
 		ErrLogger: w.errLogger,
@@ -290,15 +274,60 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 		return nil, errors.New(noti.WITHDRAW_PROPOSAL_FAIL_CONDITION_MESSAGE)
 	}
 
-	var profileOwner string
-	for i := 0; i < len(manageObj.LocalRegions); i++ {
-		if proposal.PoolName == manageObj.LocalRegions[i] {
-			profileOwner = manageObj.LocalLeaderIds[i]
-			break
-		}
+	offChainProposal, err := w.withdrawRepo.GetOffChainWithdrawProposalByProposal(id, ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	bankProfile, err := w.bankProfileRepo.GetBankProfileByOwner(profileOwner, ctx)
+	isProcessed, err := w.paymentRepo.IsWithdrawalPaymentInProcess(offChainProposal.ID, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Withdraw Proposal is being executed or been success
+	if isProcessed {
+		return nil, errors.New(noti.WITHDRAW_PROPOSAL_IN_PROCESS_MESSAGE)
+	}
+
+	// pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+	// 	Client:    client,
+	// 	ObjectId:  os.Getenv(env.POOL_ID),
+	// 	ErrLogger: w.errLogger,
+	// }, ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+	// 	Client:    client,
+	// 	ObjectIds: pool.LocalPools,
+	// 	ErrLogger: w.errLogger,
+	// }, ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// var mods []string
+	// for _, localPool := range localPools {
+	// 	if localPool.Region == proposal.PoolName {
+	// 		mods = localPool.Mods
+	// 		break
+	// 	}
+	// }
+	// var profileOwner string
+	// for i := 0; i < len(manageObj.LocalRegions); i++ {
+	// 	if proposal.PoolName == manageObj.LocalRegions[i] {
+	// 		profileOwner = manageObj.LocalLeaderIds[i]
+	// 		break
+	// 	}
+	// }
+
+	// bankProfile, err := w.bankProfileRepo.GetBankProfileByOwner(profileOwner, ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	bankProfile, err := w.bankProfileRepo.GetBankProfileByOwner(proposal.Creator, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -350,10 +379,16 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 		res["description"] = proposal.Description
 	}
 
+	detail, err := w.withdrawRepo.GetOffChainWithdrawProposalByProposal(id, ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return res, w.paymentRepo.CreatePayment(entities.Payment{
 		ID:            paymentId,
 		Actor:         sender,
-		Target:        proposal.ID.ID,
+		Sub:           ctx.Value("sub").(string),
+		ProposalID:    &detail.ID,
 		IsDonateTx:    false,
 		TransactionId: fmt.Sprint(orderCode),
 		Amount:        withdrawAmount,
@@ -391,7 +426,7 @@ func (w *withdrawProposalService) ConfirmMainPoolWithdrawProposal(id string, cap
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
 
-	proposal, _ := on_chain.GetOnChainObject[entities.WithDrawProposal](on_chain.GetOnChainObjectRequest{
+	proposal, _ := on_chain.GetOnChainObject[entities.WithdrawProposal](on_chain.GetOnChainObjectRequest{
 		Client:    client,
 		ObjectId:  id,
 		ErrLogger: w.errLogger,
@@ -449,19 +484,19 @@ func (w *withdrawProposalService) ConfirmMainPoolWithdrawProposal(id string, cap
 }
 
 // GetWithdrawProposal implements business.IWithdrawProposalService.
-func (w *withdrawProposalService) GetWithdrawProposal(id string, ctx context.Context) (response.WithDrawProposalResponse, error) {
+func (w *withdrawProposalService) GetWithdrawProposal(id string, ctx context.Context) (response.WithdrawProposalResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
-		return response.WithDrawProposalResponse{}, genericErr
+		return response.WithdrawProposalResponse{}, genericErr
 	}
 
-	res, _ := on_chain.GetOnChainObject[entities.WithDrawProposal](on_chain.GetOnChainObjectRequest{
+	res, _ := on_chain.GetOnChainObject[entities.WithdrawProposal](on_chain.GetOnChainObjectRequest{
 		Client:    w.clients[constant.SuiTestnet],
 		ObjectId:  id,
 		ErrLogger: w.errLogger,
 	}, ctx)
 
-	return res.ToWithDrawProposalResponse(), genericErr
+	return res.ToWithdrawProposalResponse(), genericErr
 }
 
 // GetWithdrawProposals implements business.IWithdrawProposalService.
@@ -497,19 +532,19 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 		return response.PaginationDataResponse{}, nil
 	}
 
-	proposals, _ := on_chain.GetOnChainObjects[entities.WithDrawProposal](on_chain.GetOnChainObjectsRequest{
+	proposals, _ := on_chain.GetOnChainObjects[entities.WithdrawProposal](on_chain.GetOnChainObjectsRequest{
 		Client:    client,
-		ObjectIds: pool.WithDrawProposals,
+		ObjectIds: pool.WithdrawProposals,
 		ErrLogger: w.errLogger,
 	}, ctx)
 	if proposals == nil || len(proposals) == 0 {
 		return response.PaginationDataResponse{}, nil
 	}
 
-	var filteredProposals []entities.WithDrawProposal
+	var filteredProposals []entities.WithdrawProposal
 	var curTime time.Time = time.Now()
 	var keyword string = util.StanderizeString(req.Keyword)
-	for i := len(pool.WithDrawProposals) - 1; i >= 0; i-- {
+	for i := len(pool.WithdrawProposals) - 1; i >= 0; i-- {
 		var proposal = proposals[i]
 		if creator != "" {
 			if proposal.Creator != creator { // Not matched
@@ -597,14 +632,18 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 		page = 1
 	}
 
-	var skippedRecords int = (page - 1) * withdraw_proposal_records_limit
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var skippedRecords int = (page - 1) * req.PageSize
 	if len(filteredProposals) <= skippedRecords {
 		return response.PaginationDataResponse{}, nil
 	}
 
-	var data []response.WithDrawProposalResponse
+	var data []response.WithdrawProposalResponse
 	for i := skippedRecords; i < len(filteredProposals); i++ {
-		data = append(data, filteredProposals[i].ToMinimumWithDrawProposalResponse())
+		data = append(data, filteredProposals[i].ToMinimumWithdrawProposalResponse())
 	}
 
 	return response.PaginationDataResponse{
@@ -625,7 +664,7 @@ func (w *withdrawProposalService) VoteWithdrawProposal(id string, req request.Vo
 
 	// todo: add admin nft and get nft of wallet to check
 	var client = w.clients[constant.SuiTestnet]
-	proposal, _ := on_chain.GetOnChainObject[entities.WithDrawProposal](on_chain.GetOnChainObjectRequest{
+	proposal, _ := on_chain.GetOnChainObject[entities.WithdrawProposal](on_chain.GetOnChainObjectRequest{
 		Client:    client,
 		ObjectId:  id,
 		ErrLogger: w.errLogger,
@@ -634,7 +673,7 @@ func (w *withdrawProposalService) VoteWithdrawProposal(id string, req request.Vo
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
-	if !proposal.ToWithDrawProposalResponse().ClosedAt.After(time.Now()) {
+	if !proposal.ToWithdrawProposalResponse().ClosedAt.After(time.Now()) {
 		return response.BuildTransactionResponse{}, errors.New(noti.WITHDRAW_PROPOSAL_CLOSED_MESSAGE)
 	}
 
@@ -642,11 +681,11 @@ func (w *withdrawProposalService) VoteWithdrawProposal(id string, req request.Vo
 		return response.BuildTransactionResponse{}, errors.New(noti.ALREADY_VOTE_MESSAGE)
 	}
 
-	var sponsorModule = on_chain.InitializeModuleSponsor()
-	nfts, _ := on_chain.GetOnChainOwnedObjects[entities.Sponsor](on_chain.GetOnChainOwnedObjectsRequest{
+	var donorModule = on_chain.InitializeModuleDonor()
+	nfts, _ := on_chain.GetOnChainOwnedObjects[entities.Donor](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
 		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), sponsorModule.GetModule(), sponsorModule.GetSponsorNftStruct()),
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), donorModule.GetModule(), donorModule.GetDonorNftStruct()),
 		ErrLogger:    w.errLogger,
 	}, ctx)
 	if nfts == nil || len(nfts) == 0 {
@@ -667,7 +706,7 @@ func (w *withdrawProposalService) VoteWithdrawProposal(id string, req request.Vo
 		ErrLogger: w.errLogger,
 		Arguments: poolModule.ToVoteWithdrawProposalArguments(on_chain.VoteWithdrawProposalArguments{
 			ProposalId:   id,
-			SponsorId:    nfts[0].ID.ID,
+			DonorId:      nfts[0].ID.ID,
 			IsApprove:    req.IsVoteYes,
 			RefuseReason: refuseReason,
 		}),

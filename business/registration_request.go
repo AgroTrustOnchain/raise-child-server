@@ -33,6 +33,8 @@ const (
 	admin_role        string = "Admin"
 	local_leader_role string = "Local Leader"
 	volunteer_role    string = "Volunteer"
+	donor_role        string = "Donor"
+	user_role         string = "User"
 )
 
 const (
@@ -315,6 +317,10 @@ func (r *registrationRequestService) GetRegistrationRequest(id string, ctx conte
 func (r *registrationRequestService) GetRegistrationRequests(req request.GetRegistrationRequests, ctx context.Context) (response.PaginationDataResponse, error) {
 	if req.Page < 1 {
 		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
 	}
 
 	data, pages, err := r.registrationRequestRepo.GetRegistrationRequests(req, ctx)

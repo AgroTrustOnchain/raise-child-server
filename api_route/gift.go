@@ -13,9 +13,9 @@ func InitializeGiftRoute(server *gin.Engine) {
 	var contextPath string = "gifts"
 
 	// Rate limits
-	var viewLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/5), 20)
-	var createLimit = middleware.InitalizeRateLimiter(rate.Every(time.Minute/1), 3)
-	var confirmLimit = middleware.InitalizeRateLimiter(rate.Every(time.Minute/5), 2)
+	var viewLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/5), 20)
+	var createLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/1), 3)
+	var confirmLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/5), 2)
 
 	// Normal group
 	var norGroup = server.Group(contextPath)
@@ -25,5 +25,5 @@ func InitializeGiftRoute(server *gin.Engine) {
 	// Auth group
 	var authGroup = server.Group(contextPath, middleware.Authorize)
 	authGroup.POST("", middleware.RateLimitMiddleware(createLimit), transport.CreateGift)
-	authGroup.POST("/:id/confirm", middleware.RateLimitMiddleware(confirmLimit), transport.ConfirmReceiveGift)
+	authGroup.POST("/:id/confirm", middleware.StaffRoleAuthorize, middleware.RateLimitMiddleware(confirmLimit), transport.ConfirmReceiveGift)
 }

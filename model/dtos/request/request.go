@@ -46,6 +46,7 @@ type GetAdminRegistrationRequets struct {
 	IsClosed  *bool  `json:"is_closed"`
 	IsConfirm *bool  `json:"is_confirm"`
 	SortOrder string `json:"sort_order"`
+	PageSize  int    `json:"page_size"`
 	Page      int    `json:"page"`
 }
 
@@ -90,6 +91,7 @@ type GetUploadChildRequests struct {
 	Status    string `json:"status"`
 	IsClosed  *bool  `json:"is_closed"`
 	SortOrder string `json:"sort_order"`
+	PageSize  int    `json:"page_size"`
 	Page      int    `json:"page"`
 }
 

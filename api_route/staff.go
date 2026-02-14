@@ -22,8 +22,8 @@ func InitializeStaffRoute(server *gin.Engine) {
 	var contextPath string = "staffs"
 
 	// Rate limits
-	var listLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/2), 20)
-	var detailLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/5), 30)
+	var listLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/2), 20)
+	var detailLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/5), 30)
 
 	// Normal group
 	var norGroup = server.Group(contextPath)

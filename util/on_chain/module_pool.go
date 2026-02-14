@@ -7,6 +7,7 @@ import (
 )
 
 type DonateToPoolArguments struct {
+	DonorID     string
 	Amount      int64
 	FirstName   string
 	LastName    string
@@ -31,7 +32,7 @@ type CreateWithdrawProposalArguments struct {
 
 type VoteWithdrawProposalArguments struct {
 	ProposalId   string
-	SponsorId    string
+	DonorId      string
 	IsApprove    bool
 	RefuseReason string
 }
@@ -41,6 +42,11 @@ type WithdrawFromPoolArguments struct {
 	WithdrawProposalId string
 }
 
+type EditWithdrawDaoRateArguements struct {
+	MinRate   int64
+	MinVoters int
+}
+
 type IModulePool interface {
 	GetModule() string
 	ToDonateToPoolArguments(args DonateToPoolArguments) []interface{}
@@ -48,17 +54,25 @@ type IModulePool interface {
 	ToCreateWithdrawProposalArguments(args CreateWithdrawProposalArguments) []interface{}
 	ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguments) []interface{}
 	ToWithdrawFromPoolArguments(args WithdrawFromPoolArguments) []interface{}
+	ToEditWithdrawDaoRateArguements(args EditWithdrawDaoRateArguements) []interface{}
+	GetWithdrawProposalEventEmittedStruct() string
 	GetFunctionDonateToPool() string
 	GetFunctionDonateToLocalPool() string
 	GetFunctionWithdrawFromPool() string
 	GetFunctionCreateWithdrawProposal() string
 	GetFunctionVoteWithdrawProposal() string
+	GetFunctionEditWithdrawDaoRate() string
 }
 
 type modulePool struct{}
 
 func InitializeModulePool() IModulePool {
 	return &modulePool{}
+}
+
+// GetFunctionEditWithdrawDaoRate implements IModulePool.
+func (m *modulePool) GetFunctionEditWithdrawDaoRate() string {
+	return sui.EDIT_WITHDRAW_DAO_RATE_FUNCTION
 }
 
 // GetFunctionDonateToLocalPool implements IModulePool.
@@ -74,6 +88,21 @@ func (m *modulePool) GetFunctionCreateWithdrawProposal() string {
 // GetFunctionVoteWithdrawProposal implements IModulePool.
 func (m *modulePool) GetFunctionVoteWithdrawProposal() string {
 	return sui.VOTE_WITHDRAW_PROPOSAL_FUNCTION
+}
+
+// GetWithdrawProposalEventEmittedStruct implements IModulePool.
+func (m *modulePool) GetWithdrawProposalEventEmittedStruct() string {
+	return sui.WITHDRAW_PROPOSAL_EVENT
+}
+
+// ToEditWithdrawDaoRateArguements implements IModulePool.
+func (m *modulePool) ToEditWithdrawDaoRateArguements(args EditWithdrawDaoRateArguements) []interface{} {
+	return []interface{}{
+		os.Getenv(env.ADMIN_CAP_ID_1),
+		os.Getenv(env.POOL_WITHDRAW_DAO_OBJECT_ID),
+		args.MinRate,
+		args.MinVoters,
+	}
 }
 
 // ToWithdrawFromPoolArguments implements IModulePool.
@@ -107,7 +136,7 @@ func (m *modulePool) ToCreateWithdrawProposalArguments(args CreateWithdrawPropos
 func (m *modulePool) ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguments) []interface{} {
 	return []interface{}{
 		args.ProposalId,
-		args.SponsorId,
+		args.DonorId,
 		os.Getenv(env.POOL_WITHDRAW_DAO_OBJECT_ID),
 		args.IsApprove,
 		args.RefuseReason,
@@ -121,7 +150,7 @@ func (m *modulePool) ToDonateToLocalPoolArguments(args DonateToLocalPoolArgument
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
 		args.LocalPoolId,
-		os.Getenv(env.TREASURY_CAP),
+		args.DonorID,
 		args.Amount,
 		args.FirstName,
 		args.LastName,
@@ -138,7 +167,7 @@ func (m *modulePool) ToDonateToPoolArguments(args DonateToPoolArguments) []inter
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
-		os.Getenv(env.TREASURY_CAP),
+		args.DonorID,
 		args.Amount,
 		args.FirstName,
 		args.LastName,

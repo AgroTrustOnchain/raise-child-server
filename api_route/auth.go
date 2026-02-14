@@ -13,8 +13,8 @@ func InitializeAuthHandlerRoutes(server *gin.Engine) {
 	var contextPath string = "auth"
 
 	var norGroup = server.Group(contextPath)
-	var loginLimit = middleware.InitalizeRateLimiter(rate.Every(time.Minute/10), 10)
-	var commonLimit = middleware.InitalizeRateLimiter(rate.Every(time.Second/2), 10)
+	var loginLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/10), 10)
+	var commonLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/2), 10)
 	norGroup.POST("/login", middleware.RateLimitMiddleware(loginLimit), transport.Login)
 	norGroup.GET("/salt/:id", middleware.RateLimitMiddleware(commonLimit), transport.GetSalt)
 

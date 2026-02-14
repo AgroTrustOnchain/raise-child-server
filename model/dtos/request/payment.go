@@ -6,6 +6,7 @@ type GetPaymentsRequest struct {
 	Actor      string `json:"actor"`
 	FilterProp string `json:"filter_prop"`
 	SortOrder  string `json:"sort_order"`
+	PageSize   int    `json:"page_size"`
 	Page       int    `json:"page"`
 }
 
