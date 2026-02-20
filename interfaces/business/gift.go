@@ -13,3 +13,5 @@ type IGiftService interface {
 	ConfirmReceiveGift(id string, req request.ConfirmReceiveGiftRequest, ctx context.Context) (response.BuildTransactionResponse, error)
 	CancelGift(id string, req request.CancelGiftRequest, ctx context.Context) (response.BuildTransactionResponse, error)
 }
+
+// Last uc: UC-26

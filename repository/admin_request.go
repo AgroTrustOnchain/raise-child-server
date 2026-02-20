@@ -42,7 +42,7 @@ func (a *adminRequestRepo) CreateRegistrationRequest(req entities.AdminRegistrat
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.ADMIN_REQUEST_REPOSITORY) + "CreateRegistrationRequest - "
 
-	if _, err := a.db.Exec(query, req.ID, req.IdentityCode, req.IdentityCardBlobID,
+	if _, err := a.db.ExecContext(ctx, query, req.ID, req.IdentityCode, req.IdentityCardBlobID,
 		req.AvatarBlobID, req.FirstName, req.LastName, req.Gender,
 		req.DateOfBirth, req.PhoneNumber, req.Email, req.Approvers, req.Refusers,
 		req.RefuseReasons, req.Status, req.IsAvailableToConfirm, req.IsConfirmRegister,
@@ -125,7 +125,7 @@ func (a *adminRequestRepo) GetRegistrationRequests(req request.GetAdminRegistrat
 		isGetCount:  false,
 	})
 
-	rows, err := a.db.Query(query)
+	rows, err := a.db.QueryContext(ctx, query)
 	if err != nil {
 		a.errLogger.Println(errLogMsg + err.Error())
 		return nil, 0, internalErr
@@ -160,7 +160,7 @@ func (a *adminRequestRepo) GetRequest(id string, ctx context.Context) (*entities
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.ADMIN_REQUEST_REPOSITORY) + "GetRequest - "
 
 	var res entities.AdminRegistrationRequest
-	if err := a.db.QueryRow(query, id).Scan(
+	if err := a.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.IdentityCode, &res.IdentityCardBlobID,
 		&res.AvatarBlobID, &res.FirstName, &res.LastName, &res.Gender,
 		&res.DateOfBirth, &res.PhoneNumber, &res.Email, &res.Approvers, &res.Refusers,
@@ -184,7 +184,7 @@ func (a *adminRequestRepo) GetWalletRegistrationRequests(id string, ctx context.
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.ADMIN_REQUEST_REPOSITORY) + "GetWalletRegistrationRequests - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	rows, err := a.db.Query(query, id)
+	rows, err := a.db.QueryContext(ctx, query, id)
 	if err != nil {
 		a.errLogger.Println(errLogMsg + err.Error())
 		return nil, internalErr
@@ -219,7 +219,7 @@ func (a *adminRequestRepo) UpdateRegistrationRequest(req entities.AdminRegistrat
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.ADMIN_REQUEST_REPOSITORY) + "UpdateRegistrationRequest - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	res, err := a.db.Exec(query, req.Approvers, req.Refusers, req.RefuseReasons, req.Status, req.IsConfirmRegister,
+	res, err := a.db.ExecContext(ctx, query, req.Approvers, req.Refusers, req.RefuseReasons, req.Status, req.IsConfirmRegister,
 		req.IsAvailableToConfirm, req.UpdatedAt, req.AvatarBlobID, req.ID)
 	if err != nil {
 		a.errLogger.Println(errLogMsg + err.Error())

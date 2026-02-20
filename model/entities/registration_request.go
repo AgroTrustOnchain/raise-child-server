@@ -39,6 +39,7 @@ type LocalLeaderRegistrationRequest struct {
 
 type RegistrationRequest struct {
 	ID                   string    `json:"id"`
+	Sub                  string    `json:"sub"`
 	RegisterRole         string    `json:"register_role"`
 	IdentityCode         string    `json:"identity_code"`
 	IdentityCardBlobID   string    `json:"identity_card_blob_id"`
@@ -62,9 +63,9 @@ type RegistrationRequest struct {
 	ClosedAt             time.Time `json:"closed_at"`
 }
 
-// Newest form
 type RegistrationForm struct {
 	ID                   string    `json:"id"`
+	Sub                  string    `json:"sub"`
 	RegisterRole         string    `json:"register_role"`
 	IdentityCode         string    `json:"identity_code"`
 	IdentityCardBlobID   string    `json:"identity_card_blob_id"`

@@ -9,6 +9,7 @@ import (
 
 type CenterRequest struct {
 	ID                   string    `json:"id"`
+	Sub                  string    `json:"sub"`
 	Region               string    `json:"region"`
 	Address              string    `json:"address"`
 	PhoneNumber          string    `json:"phone_number"`

@@ -36,16 +36,16 @@ func InitializeUploadChildRequestRepo(db *sql.DB, errLogger *log.Logger) reposit
 // CreateUploadChildRequest implements repository.IUploadChildRequestRepository.
 func (u *uploadChildRepo) CreateUploadChildRequest(req entities.UploadChildRequest, ctx context.Context) error {
 	var query string = "INSERT INTO " + upload_child_request_table +
-		" (id, identity_code, avatar_blob_id, " +
+		" (id, sub, identity_code, avatar_blob_id, " +
 		"region, first_name, last_name, gender, date_of_birth, " +
 		"approvers, refusers, refuse_reasons, status, is_confirm_upload, " +
 		"created_by, created_at, updated_at, closed_at, is_closed) " +
 		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, " +
-		"$11, $12, $13, $14, $15, $16, $17)"
+		"$11, $12, $13, $14, $15, $16, $17, $18)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "CreateUploadChildRequest - "
 
-	if _, err := u.db.Exec(query, req.ID, req.IdentityCode, req.AvatarBlobId,
+	if _, err := u.db.ExecContext(ctx, query, req.ID, req.Sub, req.IdentityCode, req.AvatarBlobId,
 		req.Region, req.FirstName, req.LastName, req.Gender, req.DateOfBirth,
 		pq.Array(req.Approvers), pq.Array(req.Refusers), pq.Array(req.RefuseReasons), req.Status, req.IsConfirmUpload,
 		req.CreatedBy, req.CreatedAt, req.UpdatedAt, req.ClosedAt); err != nil {
@@ -63,8 +63,8 @@ func (u *uploadChildRepo) GetUploadChildRequest(id string, ctx context.Context) 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "GetUploadChildRequest - "
 
 	var res entities.UploadChildRequest
-	if err := u.db.QueryRow(query, id).Scan(
-		&res.ID, &res.IdentityCode, &res.AvatarBlobId,
+	if err := u.db.QueryRowContext(ctx, query, id).Scan(
+		&res.ID, &res.Sub, &res.IdentityCode, &res.AvatarBlobId,
 		&res.Region, &res.FirstName, &res.LastName, &res.Gender, &res.DateOfBirth,
 		pq.Array(&res.Approvers), pq.Array(&res.Refusers), pq.Array(&res.RefuseReasons), &res.Status, &res.IsConfirmUpload,
 		&res.CreatedBy, &res.CreatedAt, &res.UpdatedAt, &res.ClosedAt); err != nil {
@@ -151,7 +151,7 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 		isGetCount:  false,
 	})
 
-	rows, err := u.db.Query(query)
+	rows, err := u.db.QueryContext(ctx, query)
 	if err != nil {
 		u.errLogger.Println(errLogMsg + err.Error())
 		return nil, 0, internalErr
@@ -161,7 +161,7 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 	for rows.Next() {
 		var x entities.UploadChildRequest
 		if err := rows.Scan(
-			&x.ID, &x.IdentityCode, &x.AvatarBlobId,
+			&x.ID, &x.Sub, &x.IdentityCode, &x.AvatarBlobId,
 			&x.Region, &x.FirstName, &x.LastName, &x.Gender, &x.DateOfBirth,
 			pq.Array(&x.Approvers), pq.Array(&x.Refusers), pq.Array(&x.RefuseReasons), &x.Status, &x.IsConfirmUpload,
 			&x.CreatedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt); err != nil {
@@ -193,7 +193,7 @@ func (u *uploadChildRepo) GetWalletUploadChildRequests(id string, page int, ctx 
 		isGetCount:  false,
 	})
 
-	rows, err := u.db.Query(query)
+	rows, err := u.db.QueryContext(ctx, query)
 	if err != nil {
 		u.errLogger.Println(errLogMsg + err.Error())
 		return nil, 0, internalErr
@@ -203,7 +203,7 @@ func (u *uploadChildRepo) GetWalletUploadChildRequests(id string, page int, ctx 
 	for rows.Next() {
 		var x entities.UploadChildRequest
 		if err := rows.Scan(
-			&x.ID, &x.IdentityCode, &x.AvatarBlobId,
+			&x.ID, &x.Sub, &x.IdentityCode, &x.AvatarBlobId,
 			&x.Region, &x.FirstName, &x.LastName, &x.Gender, &x.DateOfBirth,
 			pq.Array(&x.Approvers), pq.Array(&x.Refusers), pq.Array(&x.RefuseReasons), &x.Status, &x.IsConfirmUpload,
 			&x.CreatedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt); err != nil {
@@ -226,7 +226,7 @@ func (u *uploadChildRepo) IsChildRequested(identityCode string, ctx context.Cont
 	var query string = "SELECT * FROM " + upload_child_request_table + " WHERE identity_code = $1 AND (status = 'Pending' OR status = 'Approved') LIMIT 1"
 
 	var id string
-	if err := u.db.QueryRow(query).Scan(&id); err != nil {
+	if err := u.db.QueryRowContext(ctx, query).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
 		}
@@ -248,7 +248,7 @@ func (u *uploadChildRepo) UpdateUploadChildRequest(req entities.UploadChildReque
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "UpdateUploadChildRequest - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	res, err := u.db.Exec(query, req.Region, req.FirstName, req.LastName, req.Gender,
+	res, err := u.db.ExecContext(ctx, query, req.Region, req.FirstName, req.LastName, req.Gender,
 		req.DateOfBirth, pq.Array(req.Approvers), pq.Array(req.Refusers), pq.Array(req.RefuseReasons),
 		req.Status, req.IsConfirmUpload, req.UpdatedAt, req.ID)
 	if err != nil {
@@ -275,7 +275,7 @@ func (u *uploadChildRepo) GetPendingRequests(ctx context.Context) ([]entities.Ba
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "GetPendingRequests - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	rows, err := u.db.Query(query)
+	rows, err := u.db.QueryContext(ctx, query)
 	if err != nil {
 		u.errLogger.Println(errLogMsg + err.Error())
 		return nil, nil, internalErr
@@ -312,7 +312,7 @@ func (u *uploadChildRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord, 
 		}
 	}
 
-	if _, err := u.db.Exec(query, time.Now()); err != nil {
+	if _, err := u.db.ExecContext(ctx, query, time.Now()); err != nil {
 		u.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "SetApprovedStatuses - " + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
@@ -330,7 +330,7 @@ func (u *uploadChildRepo) SetRefusedStatuses(reqs []entities.BackgroundRecord, c
 		}
 	}
 
-	if _, err := u.db.Exec(query, time.Now()); err != nil {
+	if _, err := u.db.ExecContext(ctx, query, time.Now()); err != nil {
 		u.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "SetRefusedStatuses - " + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
 	}

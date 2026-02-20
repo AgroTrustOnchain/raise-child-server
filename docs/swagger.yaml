@@ -20,6 +20,8 @@ definitions:
         type: string
       payos_client_id:
         type: string
+      sub:
+        type: string
       updated_at:
         type: string
     type: object
@@ -61,6 +63,8 @@ definitions:
         type: string
       status:
         description: e.g. "Pending", "Approved", "Refused"
+        type: string
+      sub:
         type: string
       updated_at:
         type: string
@@ -118,6 +122,8 @@ definitions:
       status:
         description: e.g. "Pending", "Approved", "Refused"
         type: string
+      sub:
+        type: string
       updated_at:
         type: string
     type: object
@@ -163,6 +169,8 @@ definitions:
         type: string
       status:
         description: e.g. "Pending", "Approved", "Refused"
+        type: string
+      sub:
         type: string
       updated_at:
         type: string
@@ -334,11 +342,17 @@ definitions:
     type: object
   request.ExecuteTransactionRequest:
     properties:
-      proposal:
+      center_req:
+        type: string
+      proposal_id:
+        type: string
+      registration_req:
         type: string
       signature:
         type: string
       tx_bytes:
+        type: string
+      upload_child_req:
         type: string
     required:
     - signature
@@ -514,9 +528,15 @@ definitions:
     type: object
   response.BuildTransactionResponse:
     properties:
-      proposal:
+      center_req:
+        type: string
+      proposal_id:
+        type: string
+      registration_req:
         type: string
       tx_bytes:
+        type: string
+      upload_child_req:
         type: string
     type: object
   response.ChildResponse:
@@ -2378,6 +2398,44 @@ paths:
       summary: Execute an on-chain transaction
       tags:
       - mints
+  /notis/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of notifications from a user based on filter criteria
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - description: Wallet Address
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: List notifications of a user
+      tags:
+      - notification
   /payments/auth-callback/{id}:
     get:
       consumes:

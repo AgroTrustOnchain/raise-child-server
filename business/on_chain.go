@@ -15,6 +15,7 @@ import (
 	"raise-child/util"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
+	"time"
 
 	"raise-child/constants/env"
 	"raise-child/constants/noti"
@@ -26,9 +27,19 @@ import (
 )
 
 type onChainService struct {
-	withdrawRepo i_repository.IOffChainWithdrawProposalRepository
-	clients      map[string]sui.ISuiAPI
-	errLogger    *log.Logger
+	withdrawRepo      i_repository.IOffChainWithdrawProposalRepository
+	centerRepo        i_repository.ICenterRequestRepository
+	uploadChildRepo   i_repository.IUploadChildRequestRepository
+	registrationRepo  i_repository.IRegistrationRequestRepository
+	volunteerNotiRepo i_repository.IVolunteerNotiRepository
+	leaderNotiRepo    i_repository.ILeaderNotiRepository
+	clients           map[string]sui.ISuiAPI
+	errLogger         *log.Logger
+}
+
+// GetCurrentWalletNotis implements business.INotiService.
+func (o *onChainService) GetCurrentWalletNotis(wallet string, req request.GetNotisRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	panic("unimplemented")
 }
 
 // Money actions
@@ -39,9 +50,14 @@ const (
 
 func InitializeOnChainService(db *sql.DB, errLogger *log.Logger) business.IOnChainService {
 	return &onChainService{
-		withdrawRepo: repository.InitializeOffChainWithdrawProposalRepository(db, errLogger),
-		clients:      _networkAliases,
-		errLogger:    errLogger,
+		withdrawRepo:      repository.InitializeOffChainWithdrawProposalRepository(db, errLogger),
+		centerRepo:        repository.InitializeCenterRequestRepository(db, errLogger),
+		uploadChildRepo:   repository.InitializeUploadChildRequestRepo(db, errLogger),
+		registrationRepo:  repository.InitializeRegistrationRequestRepo(db, errLogger),
+		volunteerNotiRepo: repository.InitializeVolunteerNotiRepository(db, errLogger),
+		leaderNotiRepo:    repository.InitializeLeaderNotiRepository(db, errLogger),
+		clients:           _networkAliases,
+		errLogger:         errLogger,
 	}
 }
 
@@ -59,8 +75,9 @@ func GenerateOnChainService() (business.IOnChainService, error) {
 // ExecuteTransaction implements business.IOnChainService.
 func (o *onChainService) ExecuteTransaction(req request.ExecuteTransactionRequest, ctx context.Context) error {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if req.Proposal != "" {
-		proposal, err := o.withdrawRepo.GetOffChainWithdrawProposal(req.Proposal, ctx)
+	var curTime time.Time = time.Now()
+	if req.ProposalID != "" {
+		proposal, err := o.withdrawRepo.GetOffChainWithdrawProposal(req.ProposalID, ctx)
 		if err != nil {
 			return err
 		}
@@ -80,7 +97,7 @@ func (o *onChainService) ExecuteTransaction(req request.ExecuteTransactionReques
 		return err
 	}
 
-	if req.Proposal != "" {
+	if req.ProposalID != "" {
 		var events = res.Events
 		if events == nil || len(events) == 0 {
 			return genericErr
@@ -91,9 +108,58 @@ func (o *onChainService) ExecuteTransaction(req request.ExecuteTransactionReques
 		for _, event := range events {
 			if event.Type == eventType {
 				if onChainProposal, ok := event.ParsedJson["id"].(string); ok {
-					return o.withdrawRepo.SetOnChainProposalIdAfterExecuteTx(req.Proposal, onChainProposal, ctx)
+					o.withdrawRepo.SetOnChainProposalIdAfterExecuteTx(req.ProposalID, onChainProposal, ctx)
+					break
 				}
 			}
+		}
+	} else if req.CenterReq != "" {
+		req, err := o.centerRepo.GetRequest(req.CenterReq, ctx)
+		if err != nil {
+			return err
+		}
+
+		if req.IsConfirmRegister {
+			return genericErr
+		}
+
+		req.IsConfirmRegister = true
+		req.UpdatedAt = curTime
+
+		o.centerRepo.UpdateRegistrationRequest(*req, ctx)
+	} else if req.UploadChildReq != "" {
+		req, err := o.uploadChildRepo.GetUploadChildRequest(req.UploadChildReq, ctx)
+		if err != nil {
+			return err
+		}
+
+		if req.IsConfirmUpload {
+			return genericErr
+		}
+
+		req.IsConfirmUpload = true
+		req.UpdatedAt = curTime
+
+		o.uploadChildRepo.UpdateUploadChildRequest(*req, ctx)
+	} else if req.RegistraionReq != "" {
+		req, err := o.registrationRepo.GetRegistrationRequest(req.RegistraionReq, ctx)
+		if err != nil {
+			return err
+		}
+
+		if req.IsConfirmRegister {
+			return genericErr
+		}
+
+		req.IsConfirmRegister = true
+		req.UpdatedAt = curTime
+
+		o.registrationRepo.UpdateRegistrationRequest(*req, ctx)
+
+		if req.RegisterRole == volunteer_role {
+			o.volunteerNotiRepo.AssignVolunteer(req.CreatedBy, req.Region, ctx)
+		} else if req.RegisterRole == local_leader_role {
+			o.leaderNotiRepo.AssignLeader(req.CreatedBy, req.Region, ctx)
 		}
 	}
 

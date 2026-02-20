@@ -37,7 +37,7 @@ func (t *transactionRepo) CreateTransaction(tx entities.Transaction, ctx context
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TX_REPOSITORY) + "CreateTransaction - "
 
-	if _, err := t.db.Exec(query, tx.ID, tx.ActorAddress, tx.ActionType,
+	if _, err := t.db.ExecContext(ctx, query, tx.ID, tx.ActorAddress, tx.ActionType,
 		tx.Amount, tx.Message, tx.CoinType, tx.CreatedAt); err != nil {
 
 		t.errLogger.Println(errLogMsg + err.Error())
@@ -71,7 +71,7 @@ func (t *transactionRepo) GetTransactionById(id string, ctx context.Context) (*e
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TX_REPOSITORY) + "GetTransactionById - "
 
 	var res entities.Transaction
-	if err := t.db.QueryRow(query, id).Scan(
+	if err := t.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.ActorAddress, &res.ActionType, &res.Amount,
 		&res.Message, &res.CoinType, &res.CreatedAt); err != nil {
 

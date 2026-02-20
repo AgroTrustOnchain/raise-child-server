@@ -29,13 +29,13 @@ func InitializeBankProfileRepository(db *sql.DB, errLogger *log.Logger) reposito
 // CreateBankProfile implements repository.IBankProfileRepository.
 func (b *bankProfileRepo) CreateBankProfile(bp entities.BankProfile, ctx context.Context) error {
 	var query string = "INSERT INTO " + bank_profile_table +
-		" (id, owner, bank_org, bank_code, owner_name, " +
+		" (id, sub, owner, bank_org, bank_code, owner_name, " +
 		"payos_client_id, payos_api_key, payos_check_sum_key, " +
 		"created_at, updated_at) " +
-		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.BANK_PROFILE_REPOSITORY) + "CreatePayment - "
 
-	if _, err := b.db.Exec(query, bp.ID, bp.Owner, bp.BankOrg, bp.BankCode, bp.OwnerName,
+	if _, err := b.db.ExecContext(ctx, query, bp.ID, bp.Sub, bp.Owner, bp.BankOrg, bp.BankCode, bp.OwnerName,
 		bp.PayosClientID, bp.PayosApiKey, bp.PayosCheckSumKey,
 		bp.CreatedAt, bp.UpdatedAt); err != nil {
 
@@ -52,8 +52,8 @@ func (b *bankProfileRepo) GetBankProfileById(id string, ctx context.Context) (*e
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.BANK_PROFILE_REPOSITORY) + "GetPaymentById - "
 
 	var res entities.BankProfile
-	if err := b.db.QueryRow(query, id).Scan(
-		&res.ID, &res.Owner, &res.BankOrg, &res.BankCode, &res.OwnerName,
+	if err := b.db.QueryRowContext(ctx, query, id).Scan(
+		&res.ID, &res.Sub, &res.Owner, &res.BankOrg, &res.BankCode, &res.OwnerName,
 		&res.PayosClientID, &res.PayosApiKey, &res.PayosCheckSumKey,
 		&res.CreatedAt, &res.UpdatedAt); err != nil {
 
@@ -74,8 +74,8 @@ func (b *bankProfileRepo) GetBankProfileByOwner(owner string, ctx context.Contex
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.BANK_PROFILE_REPOSITORY) + "GetPaymentById - "
 
 	var res entities.BankProfile
-	if err := b.db.QueryRow(query, owner).Scan(
-		&res.ID, &res.Owner, &res.BankOrg, &res.BankCode, &res.OwnerName,
+	if err := b.db.QueryRowContext(ctx, query, owner).Scan(
+		&res.ID, &res.Sub, &res.Owner, &res.BankOrg, &res.BankCode, &res.OwnerName,
 		&res.PayosClientID, &res.PayosApiKey, &res.PayosCheckSumKey,
 		&res.CreatedAt, &res.UpdatedAt); err != nil {
 
@@ -95,7 +95,7 @@ func (b *bankProfileRepo) UpdateBankProfile(bp entities.BankProfile, ctx context
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.BANK_PROFILE_REPOSITORY) + "UpdatePayment - "
 	var query string = "UPDATE " + bank_profile_table + " SET bank_org = $1, bank_code = $2, owner_name = $3, payos_client_id = $4, payos_api_key = $5, payos_check_sum_key = $6, updated_at = $7 WHERE id = $8"
 
-	res, err := b.db.Exec(query, bp.BankOrg, bp.BankCode, bp.OwnerName, bp.PayosClientID, bp.PayosApiKey, bp.PayosCheckSumKey, bp.UpdatedAt, bp.ID)
+	res, err := b.db.ExecContext(ctx, query, bp.BankOrg, bp.BankCode, bp.OwnerName, bp.PayosClientID, bp.PayosApiKey, bp.PayosCheckSumKey, bp.UpdatedAt, bp.ID)
 
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
@@ -115,4 +115,19 @@ func (b *bankProfileRepo) UpdateBankProfile(bp entities.BankProfile, ctx context
 	}
 
 	return nil
+}
+
+// IsBankWithSubExist implements repository.IBankProfileRepository.
+func (b *bankProfileRepo) IsBankWithSubExist(sub string, ctx context.Context) (bool, error) {
+	var query string = "SELECT id FROM " + bank_profile_table + " WHERE sub = $1 LIMIT 1"
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.BANK_PROFILE_REPOSITORY) + "IsBankWithSubExist - "
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+
+	var id string
+	if err := b.db.QueryRowContext(ctx, query, sub).Scan(&id); err != nil {
+		b.errLogger.Println(errLogMsg + err.Error())
+		return false, internalErr
+	}
+
+	return id != "", nil
 }

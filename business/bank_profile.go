@@ -99,16 +99,32 @@ func (b *bankProfileService) CreateBankProfile(req request.CreateBankProfileRequ
 		return nil, errors.New(noti.BANK_PROFILE_EXISTED_MESSAGE)
 	}
 
+	var payosClientId string = strings.TrimSpace(req.PayosClientID)
+	if payosClientId != "" {
+		payosClientId = util.Encrypt(payosClientId)
+	}
+
+	var payosApiKey string = strings.TrimSpace(req.PayosApiKey)
+	if payosApiKey != "" {
+		payosApiKey = util.Encrypt(payosApiKey)
+	}
+
+	var payosCheckSumKey string = strings.TrimSpace(req.PayosCheckSumKey)
+	if payosCheckSumKey != "" {
+		payosCheckSumKey = util.Encrypt(payosCheckSumKey)
+	}
+
 	var curTime time.Time = time.Now()
 	var bankProfile = entities.BankProfile{
 		ID:               util.GenerateId(),
+		Sub:              ctx.Value("sub").(string),
 		Owner:            sender,
 		BankOrg:          strings.TrimSpace(req.BankOrg),
 		BankCode:         strings.TrimSpace(req.BankCode),
 		OwnerName:        strings.TrimSpace(req.OwnerName),
-		PayosClientID:    strings.TrimSpace(req.PayosClientID),
-		PayosApiKey:      strings.TrimSpace(req.PayosApiKey),
-		PayosCheckSumKey: strings.TrimSpace(req.PayosCheckSumKey),
+		PayosClientID:    payosClientId,
+		PayosApiKey:      payosApiKey,
+		PayosCheckSumKey: payosCheckSumKey,
 		CreatedAt:        curTime,
 		UpdatedAt:        curTime,
 	}

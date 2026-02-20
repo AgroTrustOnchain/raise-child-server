@@ -37,6 +37,8 @@ const (
 
 	NOT_ARRPOVED_REQUEST_WARN_MSG string = "This request has been not approved yet."
 
+	NUMBER_NEGATIVE_WARN_MSG string = ""
+
 	TOO_MANY_REQUESTS_WARN_MSG string = "Too many requests."
 )
 

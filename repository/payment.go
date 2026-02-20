@@ -37,10 +37,10 @@ func (p *paymentRepo) CreatePayment(payment entities.Payment, ctx context.Contex
 		" (id, actor, sub, proposal_id, donation_id, is_donate_tx, transaction_id, " +
 		"amount, currency, status, method, cancel_reason, " +
 		"message, expired_at, created_at, updated_at) " +
-		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "CreatePayment - "
 
-	if _, err := p.db.Exec(query, payment.ID, payment.Actor, payment.Sub, payment.ProposalID, payment.DonationID, payment.IsDonateTx, payment.TransactionId,
+	if _, err := p.db.ExecContext(ctx, query, payment.ID, payment.Sub, payment.Actor, payment.Sub, payment.ProposalID, payment.DonationID, payment.IsDonateTx, payment.TransactionId,
 		payment.Amount, payment.Currency, payment.Status, payment.Method, payment.CancelReason,
 		payment.Message, payment.ExpiredAt, payment.CreatedAt, payment.UpdatedAt); err != nil {
 
@@ -57,7 +57,7 @@ func (p *paymentRepo) GetPaymentById(id string, ctx context.Context) (*entities.
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "GetPaymentById - "
 
 	var res entities.Payment
-	if err := p.db.QueryRow(query, id).Scan(
+	if err := p.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.Actor, &res.Sub, &res.ProposalID, &res.DonationID, &res.IsDonateTx, &res.TransactionId,
 		&res.Amount, &res.Currency, &res.Status, &res.Method, &res.CancelReason,
 		&res.Message, &res.ExpiredAt, &res.CreatedAt, &res.UpdatedAt); err != nil {
@@ -126,7 +126,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 		isGetCount:  false,
 	})
 
-	rows, err := p.db.Query(query)
+	rows, err := p.db.QueryContext(ctx, query)
 	if err != nil {
 		p.errLogger.Println(errLogMsg + err.Error())
 		return nil, 0, internalErr
@@ -141,7 +141,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 			&x.Message, &x.ExpiredAt, &x.CreatedAt, &x.UpdatedAt); err != nil {
 
 			p.errLogger.Println(errLogMsg + err.Error())
-			return nil, 0, errors.New(noti.INTERNALL_ERR_MSG)
+			return nil, 0, internalErr
 		}
 
 		res = append(res, x)
@@ -159,7 +159,7 @@ func (p *paymentRepo) UpdatePayment(payment entities.Payment, ctx context.Contex
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "UpdatePayment - "
 	var query string = "UPDATE " + payment_table + " SET status = $1, method = $2, cancel_reason = $3, updated_at = $4 WHERE id = $5"
 
-	res, err := p.db.Exec(query, payment.Status, payment.Method, payment.CancelReason, payment.UpdatedAt, payment.ID)
+	res, err := p.db.ExecContext(ctx, query, payment.Status, payment.Method, payment.CancelReason, payment.UpdatedAt, payment.ID)
 
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
@@ -187,7 +187,7 @@ func (p *paymentRepo) IsWithdrawalPaymentInProcess(id string, ctx context.Contex
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "IsWithdrawalPaymentInProcess - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	rows, err := p.db.Query(query)
+	rows, err := p.db.QueryContext(ctx, query)
 	if err != nil {
 		p.errLogger.Println(errLogMsg + err.Error())
 		return false, internalErr

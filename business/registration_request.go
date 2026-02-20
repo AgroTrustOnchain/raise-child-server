@@ -281,6 +281,7 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 	var curTime time.Time = time.Now()
 	var request = entities.RegistrationRequest{
 		ID:                   util.GenerateId(),
+		Sub:                  ctx.Value("sub").(string),
 		RegisterRole:         role,
 		IdentityCode:         util.StanderizeString(profile.IdentityCode),
 		IdentityCardBlobID:   strings.TrimSpace(req.IdentityCardBlobID),

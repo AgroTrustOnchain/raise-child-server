@@ -198,8 +198,8 @@ func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithd
 
 	var proposalId string = util.GenerateId()
 	return response.BuildTransactionResponse{
-			TxBytes:  txBytes,
-			Proposal: proposalId,
+			TxBytes:    txBytes,
+			ProposalId: proposalId,
 		}, w.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
 			ID:        proposalId,
 			Purpose:   "Withdraw",
@@ -342,7 +342,7 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 	var res map[string]interface{} = make(map[string]interface{})
 	var isPayosAvailable bool = bankProfile.PayosApiKey != "" && bankProfile.PayosCheckSumKey != "" && bankProfile.PayosClientID != ""
 	if isPayosAvailable {
-		if err := payos.Key(bankProfile.PayosClientID, bankProfile.PayosApiKey, bankProfile.PayosCheckSumKey); err != nil {
+		if err := payos.Key(util.Decrypt(bankProfile.PayosClientID), util.Decrypt(bankProfile.PayosApiKey), util.Decrypt(bankProfile.PayosCheckSumKey)); err != nil {
 			w.errLogger.Println(fmt.Sprintf(noti.PAYMENT_INIT_ENV_ERR_MSG, "payos") + err.Error())
 			isPayosAvailable = false
 		} else {

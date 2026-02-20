@@ -25,6 +25,7 @@ type CreateCenterArguments struct {
 	Address     string
 	PhoneNumber string
 	ImageBlobID string
+	Leaders     []string
 }
 
 type SupportChildBooksNeedArguments struct {
@@ -210,9 +211,9 @@ func (m *moduleChild) ToCreateChildSpecialNeedWithdrawProposalArguments(args Cre
 		args.LocalPool,
 		args.CampaignID,
 		args.ChildID,
-		args.WithdrawAmount,
+		uint64(args.WithdrawAmount),
 		args.Description,
-		args.ClosedAt,
+		uint64(args.ClosedAt),
 		sui.CLOCK_OBJECT_ID,
 	}
 }
@@ -226,7 +227,7 @@ func (m *moduleChild) ToSupportChildSpeicalNeedArguments(args SupportChildSpeica
 		args.ChildID,
 		args.LocalPool,
 		args.DonorNft,
-		args.Amount,
+		uint64(args.Amount),
 		args.FirstName,
 		args.LastName,
 		args.Gender,
@@ -256,7 +257,7 @@ func (m *moduleChild) ToCreateChildNormalNeedWithdrawProposalArguments(args Crea
 		args.NeedID,
 		args.ChildID,
 		args.Description,
-		args.ClosedAt,
+		uint64(args.ClosedAt),
 		sui.CLOCK_OBJECT_ID,
 	}
 }
@@ -267,9 +268,9 @@ func (m *moduleChild) ToCreateChildSpecialNeedProposalArguments(args CreateChild
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		args.ChildID,
 		args.LocalPool,
-		args.Target,
+		uint64(args.Target),
 		args.Description,
-		args.ClosedAt,
+		uint64(args.ClosedAt),
 		sui.CLOCK_OBJECT_ID,
 	}
 }
@@ -283,7 +284,7 @@ func (m *moduleChild) ToSupportChildBooksNeedArguments(args SupportChildBooksNee
 		args.LocalPool,
 		args.ChildID,
 		args.DonorNft,
-		args.Amount,
+		uint64(args.Amount),
 		args.FirstName,
 		args.LastName,
 		args.Gender,
@@ -303,7 +304,7 @@ func (m *moduleChild) ToSupportChildMealNeedArguments(args SupportChildMealNeedA
 		args.LocalPool,
 		args.ChildID,
 		args.DonorNft,
-		args.Amount,
+		uint64(args.Amount),
 		args.StartPeriod,
 		args.EndPeriod,
 		args.FirstName,
@@ -355,6 +356,7 @@ func (m *moduleChild) ToCreateCenterArguments(args CreateCenterArguments) []inte
 		args.Address,
 		args.PhoneNumber,
 		args.ImageBlobID,
+		args.Leaders,
 		sui.CLOCK_OBJECT_ID,
 	}
 }

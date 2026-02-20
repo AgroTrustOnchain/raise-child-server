@@ -43,7 +43,7 @@ func (v *localLeaderRequestRepo) CreateRegistrationRequest(req entities.LocalLea
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_REQUEST_REPOSITORY) + "CreateRegistrationRequest - "
 
-	if _, err := v.db.Exec(query, req.ID, req.IdentityCode, req.IdentityCardBlobID, req.Region,
+	if _, err := v.db.ExecContext(ctx, query, req.ID, req.IdentityCode, req.IdentityCardBlobID, req.Region,
 		req.AvatarBlobID, req.FirstName, req.LastName, req.Gender,
 		req.DateOfBirth, req.PhoneNumber, req.Email, req.Approvers, req.Refusers,
 		req.RefuseReasons, req.Status, req.IsAvailableToConfirm, req.IsConfirmRegister,
@@ -127,7 +127,7 @@ func (v *localLeaderRequestRepo) GetRegistrationRequests(req request.GetNormalSt
 		isGetCount:  false,
 	})
 
-	rows, err := v.db.Query(query)
+	rows, err := v.db.QueryContext(ctx, query)
 	if err != nil {
 		v.errLogger.Println(errLogMsg + err.Error())
 		return nil, 0, internalErr
@@ -163,7 +163,7 @@ func (v *localLeaderRequestRepo) GetRequest(id string, ctx context.Context) (*en
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_REQUEST_REPOSITORY) + "GetRequest - "
 
 	var res entities.LocalLeaderRegistrationRequest
-	if err := v.db.QueryRow(query, id).Scan(
+	if err := v.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.IdentityCode, &res.IdentityCardBlobID, &res.Region,
 		&res.AvatarBlobID, &res.FirstName, &res.LastName, &res.Gender,
 		&res.DateOfBirth, &res.PhoneNumber, &res.Email, &res.Approvers, &res.Refusers,
@@ -188,7 +188,7 @@ func (v *localLeaderRequestRepo) GetWalletRegistrationRequests(id string, ctx co
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_REQUEST_REPOSITORY) + "GetWalletRegistrationRequests - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	rows, err := v.db.Query(query, id)
+	rows, err := v.db.QueryContext(ctx, query, id)
 	if err != nil {
 		v.errLogger.Println(errLogMsg + err.Error())
 		return nil, internalErr
@@ -225,7 +225,7 @@ func (v *localLeaderRequestRepo) UpdateRegistrationRequest(req entities.LocalLea
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_REQUEST_REPOSITORY) + "UpdateRegistrationRequest - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	res, err := v.db.Exec(query, req.Approvers, req.Refusers, req.RefuseReasons, req.Status, req.IsConfirmRegister,
+	res, err := v.db.ExecContext(ctx, query, req.Approvers, req.Refusers, req.RefuseReasons, req.Status, req.IsConfirmRegister,
 		req.IsAvailableToConfirm, req.UpdatedAt, req.AvatarBlobID, req.Region,
 		req.CenterAddress, req.CenterPhoneNumber, req.CenterImageBlobID, req.ID)
 	if err != nil {

@@ -60,6 +60,9 @@ func setupApiRoutes(server *gin.Engine) {
 	// Gift API endpoints
 	api_route.InitializeGiftRoute(server)
 
+	// Noti API endpoints
+	api_route.InitializeNotiRoute(server)
+
 	// Default route to Swagger documentation
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusMovedPermanently, "/swagger/index.html#")

@@ -92,25 +92,35 @@ func (c *centerRequestService) ConfirmRequest(id string, ctx context.Context) (r
 	}
 
 	var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
-	var isDenied bool = false
+	//var isDenied bool = false
 
-	if rate >= approve_rate_limit {
-		req.Status = request_approved_status
-		req.IsConfirmRegister = true
-		if req.IsAvailableToConfirm {
-			req.IsConfirmRegister = true
-		}
-	} else {
+	// if rate >= approve_rate_limit {
+	// 	req.Status = request_approved_status
+	// 	req.IsConfirmRegister = true
+	// 	if req.IsAvailableToConfirm {
+	// 		req.IsConfirmRegister = true
+	// 	}
+	// } else {
+	// 	req.Status = request_refused_status
+	// 	isDenied = true
+	// }
+
+	// req.UpdatedAt = time.Now()
+	// if err := c.centerRequestRepo.UpdateRegistrationRequest(*req, ctx); err != nil {
+	// 	return response.BuildTransactionResponse{}, err
+	// }
+
+	// if isDenied {
+	// 	return response.BuildTransactionResponse{}, nil
+	// }
+
+	if rate < approve_rate_limit {
 		req.Status = request_refused_status
-		isDenied = true
-	}
+		req.UpdatedAt = time.Now()
+		if err := c.centerRequestRepo.UpdateRegistrationRequest(*req, ctx); err != nil {
+			return response.BuildTransactionResponse{}, err
+		}
 
-	req.UpdatedAt = time.Now()
-	if err := c.centerRequestRepo.UpdateRegistrationRequest(*req, ctx); err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
-
-	if isDenied {
 		return response.BuildTransactionResponse{}, nil
 	}
 
@@ -134,6 +144,39 @@ func (c *centerRequestService) ConfirmRequest(id string, ctx context.Context) (r
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
+	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.PACKAGE_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
+	}
+
+	var startIdx int
+	for i, region := range manageObj.LocalRegions {
+		if region == req.Region {
+			startIdx = i
+			break
+		}
+	}
+
+	leaders, err := on_chain.GetOnChainObjects[entities.StaffNft](on_chain.GetOnChainObjectsRequest{
+		Client:    client,
+		ObjectIds: manageObj.LocalLeaderNfts[startIdx:],
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
+	}
+
+	var leaderAddresses []string
+	for i, leader := range leaders {
+		if leader.Region == req.Region {
+			leaderAddresses = append(leaderAddresses, manageObj.LocalLeaderIds[startIdx+i])
+		}
+	}
+
 	var childModule = on_chain.InitializeModuleChild()
 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
 		Client:    client,
@@ -147,6 +190,7 @@ func (c *centerRequestService) ConfirmRequest(id string, ctx context.Context) (r
 			Address:     req.Address,
 			PhoneNumber: req.PhoneNumber,
 			ImageBlobID: req.ImageBlobID,
+			Leaders:     leaderAddresses,
 		}),
 	}, ctx)
 
@@ -244,6 +288,7 @@ func (c *centerRequestService) CreateRequest(req request.CreateCenterRequest, ct
 	var curTime time.Time = time.Now()
 	var request = entities.CenterRequest{
 		ID:          util.GenerateId(),
+		Sub:         ctx.Value("sub").(string),
 		Region:      req.Region,
 		Address:     address,
 		PhoneNumber: phoneNumber,
@@ -367,4 +412,32 @@ func (c *centerRequestService) VoteRequest(id string, req request.VoteRequest, c
 	request.UpdatedAt = time.Now()
 
 	return c.centerRequestRepo.UpdateRegistrationRequest(*request, ctx)
+}
+
+// EditStaffNumbersToRequestCenter implements business.ICenterRequestService.
+func (c *centerRequestService) EditStaffNumbersToRequestCenter(req request.EditStaffNumbersToCenterRequest, ctx context.Context) error {
+	var module = on_chain.InitializeModuleManage()
+	caps, err := on_chain.GetOnChainOwnedObjects[entities.Cap](on_chain.GetOnChainOwnedObjectsRequest{
+		Client:       c.clients[constant.SuiTestnet],
+		OwnerAddress: ctx.Value("address").(string),
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), module.GetModule(), module.GetAdminCapStruct()),
+		ErrLogger:    c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if caps == nil || len(caps) == 0 {
+		return errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	}
+
+	if req.MinStaffNumber != nil {
+		if *req.MinStaffNumber > 0 {
+			min_region_staffs = *req.MinStaffNumber
+		} else {
+
+		}
+	}
+
+	return nil
 }

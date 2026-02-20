@@ -100,7 +100,7 @@ func (m *modulePool) ToEditWithdrawDaoRateArguements(args EditWithdrawDaoRateArg
 	return []interface{}{
 		os.Getenv(env.ADMIN_CAP_ID_1),
 		os.Getenv(env.POOL_WITHDRAW_DAO_OBJECT_ID),
-		args.MinRate,
+		uint64(args.MinRate),
 		args.MinVoters,
 	}
 }
@@ -124,10 +124,10 @@ func (m *modulePool) ToCreateWithdrawProposalArguments(args CreateWithdrawPropos
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
 		args.LocalPoolId,
-		args.WithdrawAmount,
+		uint64(args.WithdrawAmount),
 		args.Description,
 		args.IsFromLocalPool,
-		args.ClosedAt,
+		uint64(args.ClosedAt),
 		sui.CLOCK_OBJECT_ID,
 	}
 }

@@ -7,9 +7,12 @@ type BuildTransactionRequest struct {
 }
 
 type ExecuteTransactionRequest struct {
-	TxBytes   string `json:"tx_bytes" validate:"required"`
-	Signature string `json:"signature" validate:"required"`
-	Proposal  string `json:"proposal"`
+	TxBytes        string `json:"tx_bytes" validate:"required"`
+	Signature      string `json:"signature" validate:"required"`
+	ProposalID     string `json:"proposal_id"`
+	CenterReq      string `json:"center_req"`
+	UploadChildReq string `json:"upload_child_req"`
+	RegistraionReq string `json:"registration_req"`
 }
 
 type MoneyActionRequest struct {

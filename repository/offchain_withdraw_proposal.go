@@ -36,7 +36,7 @@ func (o *offChainWithdrawProposalRepo) CreateOffChainWithdrawProposal(donation e
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.OFFCHAIN_WITHDRAW_PROPOSAL_REPOSITORY) + "CreateOffChainWithdrawProposal - "
 
-	if _, err := o.db.Exec(query, donation.ID, donation.Purpose, donation.ProposalID, donation.Target, donation.CreatedAt); err != nil {
+	if _, err := o.db.ExecContext(ctx, query, donation.ID, donation.Purpose, donation.ProposalID, donation.Target, donation.CreatedAt); err != nil {
 
 		o.errLogger.Println(errLogMsg + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
@@ -51,7 +51,7 @@ func (o *offChainWithdrawProposalRepo) GetOffChainWithdrawProposal(id string, ct
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.OFFCHAIN_WITHDRAW_PROPOSAL_REPOSITORY) + "GetOffChainWithdrawProposal - "
 
 	var res entities.OffChainWithdrawProposal
-	if err := o.db.QueryRow(query, id).Scan(
+	if err := o.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.Purpose, &res.ProposalID, &res.Target, &res.CreatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
@@ -71,7 +71,7 @@ func (o *offChainWithdrawProposalRepo) GetOffChainWithdrawProposalByProposal(id 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.OFFCHAIN_WITHDRAW_PROPOSAL_REPOSITORY) + "GetOffChainWithdrawProposalByProposal - "
 
 	var res entities.OffChainWithdrawProposal
-	if err := o.db.QueryRow(query, id).Scan(
+	if err := o.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.Purpose, &res.ProposalID, &res.Target, &res.CreatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
@@ -91,7 +91,7 @@ func (o *offChainWithdrawProposalRepo) SetOnChainProposalIdAfterExecuteTx(id str
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.OFFCHAIN_WITHDRAW_PROPOSAL_REPOSITORY) + "SetOnChainProposalIdAfterExecuteTx - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	res, err := o.db.Exec(query, proposalId, id)
+	res, err := o.db.ExecContext(ctx, query, proposalId, id)
 	if err != nil {
 		o.errLogger.Println(errLogMsg + err.Error())
 		return internalErr

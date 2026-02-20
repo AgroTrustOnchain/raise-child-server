@@ -2341,6 +2341,65 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/notis/user/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of notifications from a user based on filter criteria",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notification"
+                ],
+                "summary": "List notifications of a user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Wallet Address",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/payments/auth-callback/{id}": {
             "get": {
                 "security": [
@@ -3573,6 +3632,9 @@ const docTemplate = `{
                 "payos_client_id": {
                     "type": "string"
                 },
+                "sub": {
+                    "type": "string"
+                },
                 "updated_at": {
                     "type": "string"
                 }
@@ -3632,6 +3694,9 @@ const docTemplate = `{
                 },
                 "status": {
                     "description": "e.g. \"Pending\", \"Approved\", \"Refused\"",
+                    "type": "string"
+                },
+                "sub": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -3716,6 +3781,9 @@ const docTemplate = `{
                     "description": "e.g. \"Pending\", \"Approved\", \"Refused\"",
                     "type": "string"
                 },
+                "sub": {
+                    "type": "string"
+                },
                 "updated_at": {
                     "type": "string"
                 }
@@ -3789,6 +3857,9 @@ const docTemplate = `{
                 },
                 "status": {
                     "description": "e.g. \"Pending\", \"Approved\", \"Refused\"",
+                    "type": "string"
+                },
+                "sub": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -4032,13 +4103,22 @@ const docTemplate = `{
                 "tx_bytes"
             ],
             "properties": {
-                "proposal": {
+                "center_req": {
+                    "type": "string"
+                },
+                "proposal_id": {
+                    "type": "string"
+                },
+                "registration_req": {
                     "type": "string"
                 },
                 "signature": {
                     "type": "string"
                 },
                 "tx_bytes": {
+                    "type": "string"
+                },
+                "upload_child_req": {
                     "type": "string"
                 }
             }
@@ -4288,10 +4368,19 @@ const docTemplate = `{
         "response.BuildTransactionResponse": {
             "type": "object",
             "properties": {
-                "proposal": {
+                "center_req": {
+                    "type": "string"
+                },
+                "proposal_id": {
+                    "type": "string"
+                },
+                "registration_req": {
                     "type": "string"
                 },
                 "tx_bytes": {
+                    "type": "string"
+                },
+                "upload_child_req": {
                     "type": "string"
                 }
             }

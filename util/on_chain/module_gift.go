@@ -119,7 +119,7 @@ func (m *moduleGift) ToCreateGiftArguments(args CreateGiftArguments) []interface
 		args.Carrier,
 		args.GiftImageBlobID,
 		args.Category,
-		args.Amount,
+		uint64(args.Amount),
 		args.FirstName,
 		args.LastName,
 		args.Gender,

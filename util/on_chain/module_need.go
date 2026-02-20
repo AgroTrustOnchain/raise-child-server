@@ -58,7 +58,7 @@ func (m *moduleNeed) ToEditSpecialNeedProposalDaoArguments(args EditSpecialNeedP
 	return []interface{}{
 		os.Getenv(env.ADMIN_CAP_ID_1),
 		os.Getenv(env.SPECIAL_NEED_DAO_ID),
-		args.MinRate,
+		uint64(args.MinRate),
 		args.MinVoters,
 	}
 }

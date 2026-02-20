@@ -17,3 +17,7 @@ type CreateCenterRequest struct {
 	PhoneNumber string `json:"phone_number" validate:"required"`
 	ImageBlobID string `json:"image_blob_id" validate:"required"`
 }
+
+type EditStaffNumbersToCenterRequest struct {
+	MinStaffNumber *int `json:"min_staff_number"`
+}

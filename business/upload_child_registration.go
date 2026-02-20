@@ -185,6 +185,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 	var curTime time.Time = time.Now()
 	var request = entities.UploadChildRequest{
 		ID:           util.GenerateId(),
+		Sub:          ctx.Value("sub").(string),
 		IdentityCode: identityCode,
 		AvatarBlobId: strings.TrimSpace(req.AvatarBlobId),
 		Region:       region,

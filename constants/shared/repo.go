@@ -14,5 +14,7 @@ const (
 	UPLOAD_CHILD_REQUEST_REPOSITORY       string = "Upload Child Request Repository"
 	OFFCHAIN_DONATION_REPOSITORY          string = "Off-Chain Donation Repository"
 	OFFCHAIN_WITHDRAW_PROPOSAL_REPOSITORY string = "Off-Chain Withdraw Proposal Repository"
+	VOLUNTEER_NOTI_REPOSITORY             string = "Volunteer Noti Repository"
+	LEADER_NOTI_REPOSITORY                string = "Leader Noti Repository"
 	TX_REPOSITORY                         string = "Transaction Repository"
 )

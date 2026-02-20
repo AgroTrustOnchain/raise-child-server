@@ -32,7 +32,7 @@ func (p *profileRepo) IsPersonalInfoExist(identityCode string, phoneNumber strin
 	var query string = "SELECT id FROM " + profile_table + " WHERE LOWER(email) = LOWER(" + email + ") OR phone_number = " + phoneNumber + " OR identity_code = " + identityCode + " LIMIT 1"
 
 	var id string
-	if err := p.db.QueryRow(query).Scan(&id); err != nil {
+	if err := p.db.QueryRowContext(ctx, query).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
 		}
@@ -50,7 +50,7 @@ func (p *profileRepo) IsEmailRegistered(email string, ctx context.Context) (bool
 	var query string = "SELECT id FROM " + profile_table + " WHERE LOWER(email) = LOWER(" + email + ") LIMIT 1"
 
 	var id string
-	if err := p.db.QueryRow(query).Scan(&id); err != nil {
+	if err := p.db.QueryRowContext(ctx, query).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
 		}
@@ -68,7 +68,7 @@ func (p *profileRepo) IsPhoneNumberRegistered(phoneNumber string, ctx context.Co
 	var query string = "SELECT id FROM " + profile_table + " WHERE phone_number = " + phoneNumber + " LIMIT 1"
 
 	var id string
-	if err := p.db.QueryRow(query).Scan(&id); err != nil {
+	if err := p.db.QueryRowContext(ctx, query).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
 		}
@@ -86,7 +86,7 @@ func (p *profileRepo) UploadProfile(pfl entities.Profile, ctx context.Context) e
 	var query string = "UPDATE " + profile_table + " SET identity_code = $1, first_name = $2, last_name = $3, gender = $4, date_of_birth = $5, phone_number = $6, email = $7, updated_at = $8 WHERE id = $9"
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	res, err := p.db.Exec(query, pfl.IdentityCode, pfl.FirstName, pfl.LastName,
+	res, err := p.db.ExecContext(ctx, query, pfl.IdentityCode, pfl.FirstName, pfl.LastName,
 		pfl.Gender, pfl.DateOfBirth, pfl.PhoneNumber, pfl.Email, pfl.UpdatedAt, pfl.ID)
 	if err != nil {
 		p.errLogger.Println(errLogMsg + err.Error())
@@ -112,7 +112,7 @@ func (p *profileRepo) Login(id string, token string, ctx context.Context) error 
 	var query string = "UPDATE " + profile_table + " SET token = $1, updated_at = $2 WHERE id = $3"
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	res, err := p.db.Exec(query, token, time.Now(), id)
+	res, err := p.db.ExecContext(ctx, query, token, time.Now(), id)
 	if err != nil {
 		p.errLogger.Println(errLogMsg + err.Error())
 		return internalErr
@@ -137,7 +137,7 @@ func (p *profileRepo) Logout(id string, ctx context.Context) error {
 	var query string = "UPDATE " + profile_table + " SET token = '', updated_at = $1 WHERE id = $2"
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	res, err := p.db.Exec(query, time.Now(), id)
+	res, err := p.db.ExecContext(ctx, query, time.Now(), id)
 	if err != nil {
 		p.errLogger.Println(errLogMsg + err.Error())
 		return internalErr
@@ -163,7 +163,7 @@ func (p *profileRepo) CreateProfile(pfl entities.Profile, ctx context.Context) e
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "CreateProfile - "
 
-	if _, err := p.db.Exec(query, pfl.ID, pfl.Salt, pfl.CreatedAt, pfl.UpdatedAt); err != nil {
+	if _, err := p.db.ExecContext(ctx, query, pfl.ID, pfl.Salt, pfl.CreatedAt, pfl.UpdatedAt); err != nil {
 
 		p.errLogger.Println(errLogMsg + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
@@ -178,7 +178,7 @@ func (p *profileRepo) GetProfile(id string, ctx context.Context) (*entities.Prof
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "GetProfile - "
 
 	var res entities.Profile
-	if err := p.db.QueryRow(query, id).Scan(
+	if err := p.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.Salt, &res.IdentityCode, &res.FirstName, &res.LastName,
 		&res.Gender, res.DateOfBirth, &res.PhoneNumber, &res.Email,
 		&res.Token, &res.UpdatedAt, &res.CreatedAt); err != nil {
@@ -200,7 +200,7 @@ func (p *profileRepo) GetFirstProfile(ctx context.Context) (*entities.Profile, e
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "GetFirstProfile - "
 
 	var res entities.Profile
-	if err := p.db.QueryRow(query).Scan(
+	if err := p.db.QueryRowContext(ctx, query).Scan(
 		&res.ID, &res.Salt, &res.IdentityCode, &res.FirstName, &res.LastName,
 		&res.Gender, res.DateOfBirth, &res.PhoneNumber, &res.Email,
 		&res.Token, &res.UpdatedAt, &res.CreatedAt); err != nil {

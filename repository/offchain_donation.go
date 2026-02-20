@@ -36,7 +36,7 @@ func (o *offChainDonationRepo) CreateDonation(donation entities.OffChainDonation
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.OFFCHAIN_DONATION_REPOSITORY) + "CreateDonation - "
 
-	if _, err := o.db.Exec(query, donation.ID, donation.Purpose, donation.Target, donation.StartPeriod, donation.EndPeriod, donation.CreatedAt); err != nil {
+	if _, err := o.db.ExecContext(ctx, query, donation.ID, donation.Purpose, donation.Target, donation.StartPeriod, donation.EndPeriod, donation.CreatedAt); err != nil {
 
 		o.errLogger.Println(errLogMsg + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
@@ -51,7 +51,7 @@ func (o *offChainDonationRepo) GetDonation(id string, ctx context.Context) (*ent
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.OFFCHAIN_DONATION_REPOSITORY) + "GetDonation - "
 
 	var res entities.OffChainDonation
-	if err := o.db.QueryRow(query, id).Scan(
+	if err := o.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.Purpose, &res.Target, &res.StartPeriod, &res.EndPeriod, &res.CreatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
