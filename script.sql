@@ -48,6 +48,29 @@ CREATE TABLE center_requests (
     CONSTRAINT fk_center_profile FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
+CREATE TABLE meal_support_durations (
+    id character varying(100) PRIMARY KEY,
+    start_period character varying(10) NOT NULL,
+    end_period character varying(10) NOT NULL
+);
+
+CREATE TABLE donations (
+    id character varying(100) PRIMARY KEY,
+    purpose character varying(20) NOT NULL,
+    target character varying(100) NOT NULL,
+    meal_duration_id character varying(100) UNIQUE,
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT fk_donation_duration FOREIGN KEY (meal_duration_id) REFERENCES meal_support_durations(id) ON DELETE CASCADE
+);
+
+CREATE TABLE withdraw_proposals (
+    id character varying(100) PRIMARY KEY,
+    purpose character varying(20) NOT NULL,
+    proposal_id character varying(100) UNIQUE NOT NULL,
+    target character varying(100) NOT NULL,
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
 CREATE TABLE payments (
     id character varying(100) PRIMARY KEY,
     actor character varying(100) NOT NULL,
@@ -73,29 +96,6 @@ CREATE TABLE payments (
         (proposal_id IS NULL AND donation_id IS NOT NULL)
     )
 );
-
-CREATE TABLE withdraw_proposals (
-    id character varying(100) PRIMARY KEY,
-    purpose character varying(20) NOT NULL,
-    proposal_id character varying(100) UNIQUE NOT NULL,
-    target character varying(100) NOT NULL,
-    created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
-
-CREATE TABLE donations (
-    id character varying(100) PRIMARY KEY,
-    purpose character varying(20) NOT NULL,
-    target character varying(100) NOT NULL,
-    meal_duration_id character varying(100) UNIQUE,
-    created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT fk_donation_duration FOREIGN KEY (meal_duration_id) REFERENCES meal_support_durations(id) ON DELETE CASCADE
-);
-
-CREATE TABLE meal_support_durations (
-    id character varying(100) PRIMARY KEY,
-    start_period character varying(10) NOT NULL,
-    end_period character varying(10) NOT NULL
-)
 
 CREATE TABLE registration_requests (
     id                    character varying(100) PRIMARY KEY,
@@ -170,6 +170,16 @@ CREATE TABLE leader_notis (
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
+-- Index for performance on common lookups
+CREATE INDEX idx_registration_status ON registration_requests(status);
+CREATE INDEX idx_registration_email ON registration_requests(email);
+CREATE INDEX idx_center_status ON center_requests(status);
+
+
+
+-- UPDATE users 
+-- SET tags = array_append(tags, 'new-login') 
+-- WHERE id = 42;
 
 
 -- CREATE TABLE registration_requests (
@@ -191,14 +201,3 @@ CREATE TABLE leader_notis (
 --     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP,
 --     closed_at timestamptz
 -- );
-
--- Index for performance on common lookups
-CREATE INDEX idx_registration_status ON registration_requests(status);
-CREATE INDEX idx_registration_email ON registration_requests(email);
-CREATE INDEX idx_center_status ON center_requests(status);
-
-
-
--- UPDATE users 
--- SET tags = array_append(tags, 'new-login') 
--- WHERE id = 42;

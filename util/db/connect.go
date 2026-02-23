@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"time"
 
 	_ "github.com/lib/pq"
 
@@ -24,6 +25,11 @@ func ConnectDB(logger *log.Logger, server ISQLServer) (*sql.DB, error) {
 		logger.Println(noti.DB_CONNECTION_ERR_MSG + err.Error())
 		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
+
+	cnn.SetMaxOpenConns(10)
+	cnn.SetMaxIdleConns(5)
+	cnn.SetConnMaxLifetime(2 * time.Minute)
+	cnn.SetConnMaxIdleTime(30 * time.Second)
 
 	_cnn = cnn
 
