@@ -74,7 +74,7 @@ func (p *paymentRepo) GetPaymentById(id string, ctx context.Context) (*entities.
 }
 
 // GetPayments implements repository.IPaymentRepository.
-func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Context) (*[]entities.Payment, int, error) {
+func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Context) ([]entities.Payment, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "GetPayments - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
@@ -151,7 +151,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 	var totalRecords int
 	p.db.QueryRow(generateCountTotalRecordsQuery(payment_table, queryCondition)).Scan(&totalRecords)
 
-	return &res, caculateTotalPages(totalRecords, payment_limit_record), nil
+	return res, caculateTotalPages(totalRecords, payment_limit_record), nil
 }
 
 // UpdatePayment implements repository.IPaymentRepository.
