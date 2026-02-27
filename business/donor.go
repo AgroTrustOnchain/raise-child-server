@@ -156,6 +156,7 @@ func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Conte
 
 	return response.PaginationDataResponse{
 		Data:       data,
+		Amount:     len(data),
 		Page:       page,
 		TotalPages: int(math.Ceil(float64(len(filteredDonors)) / float64(donor_records_limit))),
 	}, nil

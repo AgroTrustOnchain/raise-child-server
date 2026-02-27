@@ -151,7 +151,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 	var totalRecords int
 	p.db.QueryRow(generateCountTotalRecordsQuery(payment_table, queryCondition)).Scan(&totalRecords)
 
-	return res, caculateTotalPages(totalRecords, payment_limit_record), nil
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // UpdatePayment implements repository.IPaymentRepository.

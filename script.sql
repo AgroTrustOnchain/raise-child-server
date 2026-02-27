@@ -146,6 +146,17 @@ CREATE TABLE upload_child_requests (
     CONSTRAINT fk_upload_child_profile FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
+CREATE TABLE supported_region_proposals (
+    id character varying(100) PRIMARY KEY,
+    sub character varying(20) NOT NULL,
+    region character varying(30) NOT NULL UNIQUE,
+    content TEXT NOT NULL,
+    created_by character varying(100) NOT NULL,
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT fk_region_profile FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE
+);
+
 CREATE TABLE volunteer_notis (
     id character varying(100) PRIMARY KEY,
     child_id character varying(100) NOT NULL,

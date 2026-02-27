@@ -19,6 +19,7 @@ import (
 	"raise-child/util"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
+	"slices"
 	"strings"
 	"time"
 
@@ -42,6 +43,14 @@ func InitializeBankProfileService(db *sql.DB, errLogger *log.Logger) business.IB
 	}
 }
 
+func initializeBankProfileService(bankProfileRepo i_repository.IBankProfileRepository, clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IBankProfileService {
+	return &bankProfileService{
+		bankProfileRepo: bankProfileRepo,
+		clients:         clients,
+		errLogger:       errLogger,
+	}
+}
+
 func GenerateBankProfileService() (business.IBankProfileService, error) {
 	var errLogger = util.GetLogConfig(shared.ERROR_LEVEL)
 
@@ -50,7 +59,8 @@ func GenerateBankProfileService() (business.IBankProfileService, error) {
 		return nil, err
 	}
 
-	return InitializeBankProfileService(cnn, errLogger), nil
+	//return InitializeBankProfileService(cnn, errLogger), nil
+	return initializeBankProfileService(repository.InitializeBankProfileRepository(cnn, errLogger), _networkAliases, errLogger), nil
 }
 
 // CreateBankProfile implements business.IBankProfileService.
@@ -58,7 +68,7 @@ func (b *bankProfileService) CreateBankProfile(req request.CreateBankProfileRequ
 	var genereicErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 
 	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
+	if !util.IsValidSuiAddressStrict(sender) {
 		return nil, genereicErr
 	}
 
@@ -134,11 +144,65 @@ func (b *bankProfileService) CreateBankProfile(req request.CreateBankProfileRequ
 
 // GetBankProfile implements business.IBankProfileService.
 func (b *bankProfileService) GetBankProfile(id string, ctx context.Context) (response.BankProfileResponse, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	res, err := b.bankProfileRepo.GetBankProfileById(id, ctx)
+	if err != nil {
+		return response.BankProfileResponse{}, err
+	}
+
+	if res == nil {
+		return response.BankProfileResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	var address string = ctx.Value("address").(string)
+	if res.Sub != ctx.Value("sub").(string) || res.Owner != address {
+		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+			Client:    b.clients[constant.SuiTestnet],
+			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+			ErrLogger: b.errLogger,
+		}, ctx)
+		if err != nil {
+			return response.BankProfileResponse{}, err
+		}
+
+		if !slices.Contains(manageObj.AdminIds, address) {
+			return response.BankProfileResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+		}
+	}
+
+	return res.ToBankProfileResponse(), err
+}
+
+// GetBankProfileByOwner implements business.IBankProfileService.
+func (b *bankProfileService) GetBankProfileByOwner(id string, ctx context.Context) (response.BankProfileResponse, error) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.BankProfileResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
 	res, err := b.bankProfileRepo.GetBankProfileByOwner(id, ctx)
+	if err != nil {
+		return response.BankProfileResponse{}, err
+	}
+
+	if res == nil {
+		return response.BankProfileResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	var address string = ctx.Value("address").(string)
+	if res.Sub != ctx.Value("sub").(string) || res.Owner != address || id != address {
+		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+			Client:    b.clients[constant.SuiTestnet],
+			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+			ErrLogger: b.errLogger,
+		}, ctx)
+		if err != nil {
+			return response.BankProfileResponse{}, err
+		}
+
+		if !slices.Contains(manageObj.AdminIds, address) {
+			return response.BankProfileResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+		}
+	}
+
 	return res.ToBankProfileResponse(), err
 }
 

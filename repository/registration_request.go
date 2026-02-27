@@ -286,7 +286,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 	var totalRecords int
 	r.db.QueryRow(generateCountTotalRecordsQuery(registraion_request_table, queryCondition)).Scan(&totalRecords)
 
-	return res, caculateTotalPages(totalRecords, registraion_request_limit_record), nil
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // GetWalletRegistrationRequests implements repository.IRegistrationRequestRepository.

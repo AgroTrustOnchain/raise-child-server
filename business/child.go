@@ -197,6 +197,7 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 
 	return response.PaginationDataResponse{
 		Data:       data,
+		Amount:     len(data),
 		Page:       page,
 		TotalPages: int(math.Ceil(float64(len(filteredChildren)) / float64(child_records_limit))),
 	}, nil

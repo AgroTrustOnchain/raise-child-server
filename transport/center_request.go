@@ -50,7 +50,7 @@ func GetCenterRequests(ctx *gin.Context) {
 // @Tags         center
 // @Accept       json
 // @Produce      json
-// @Param        id       path      string  true  "User Wallet Address" default(0x...)
+// @Param        id       path      string  true  "User Wallet Address"
 // @Success      200      {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."

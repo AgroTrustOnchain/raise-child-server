@@ -73,6 +73,8 @@ const (
 	MEAL_NEED_SUPPORT_DURATION_OUT_RANGE_MESSAGE string = "The meal need support range is out of support range. Please choose a smaller duration."
 
 	SUPPORT_SURPASS_CAMPAIGN_TARGET_MESSAGE string = "The donation is surpassed the campaign target."
+
+	SUPPORRT_REGION_REQUEST_MESSAGE string = "This to-supported region is requested with proposal."
 )
 
 const (

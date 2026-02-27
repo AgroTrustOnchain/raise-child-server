@@ -325,9 +325,16 @@ func (r *registrationRequestService) GetRegistrationRequests(req request.GetRegi
 	}
 
 	data, pages, err := r.registrationRequestRepo.GetRegistrationRequests(req, ctx)
+	var amount int
+	if data == nil || len(data) == 0 {
+		amount = 0
+	} else {
+		amount = len(data)
+	}
 
 	return response.PaginationDataResponse{
 		Data:       data,
+		Amount:     amount,
 		Page:       req.Page,
 		TotalPages: pages,
 	}, err

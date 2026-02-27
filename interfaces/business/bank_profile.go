@@ -9,6 +9,7 @@ import (
 
 type IBankProfileService interface {
 	GetBankProfile(id string, ctx context.Context) (response.BankProfileResponse, error)
+	GetBankProfileByOwner(id string, ctx context.Context) (response.BankProfileResponse, error)
 	CreateBankProfile(req request.CreateBankProfileRequest, ctx context.Context) (*entities.BankProfile, error)
 	UpdateBankProfile(id string, req request.UpdateBankProfileRequest, ctx context.Context) (*entities.BankProfile, error)
 }

@@ -216,6 +216,10 @@ func (a *adminRequestService) GetRequests(req request.GetAdminRegistrationRequet
 		req.Page = 1
 	}
 
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
 	data, pages, err := a.adminRequestRepo.GetRegistrationRequests(req, ctx)
 
 	return response.PaginationDataResponse{

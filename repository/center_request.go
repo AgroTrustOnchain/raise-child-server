@@ -175,7 +175,7 @@ func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequest
 	var totalRecords int
 	c.db.QueryRow(generateCountTotalRecordsQuery(center_request_table, queryCondition)).Scan(&totalRecords)
 
-	return res, caculateTotalPages(totalRecords, center_request_limit_record), nil
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // GetRequest implements repository.ICenterRequestRepository.

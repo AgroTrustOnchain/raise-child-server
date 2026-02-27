@@ -176,7 +176,7 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 	var totalRecords int
 	u.db.QueryRow(generateCountTotalRecordsQuery(upload_child_request_table, queryCondition)).Scan(&totalRecords)
 
-	return res, caculateTotalPages(totalRecords, upload_child_request_limit_record), nil
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // GetWalletUploadChildRequests implements repository.IUploadChildRequestRepository.

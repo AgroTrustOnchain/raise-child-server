@@ -127,6 +127,23 @@ definitions:
       updated_at:
         type: string
     type: object
+  entities.SupportedRegionProposal:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      id:
+        type: string
+      region:
+        type: string
+      sub:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   entities.UploadChildRequest:
     properties:
       approvers:
@@ -312,6 +329,16 @@ definitions:
     - amount
     - campaign_id
     - description
+    type: object
+  request.CreateSupportedRegionProposalsRequest:
+    properties:
+      content:
+        type: string
+      region:
+        type: string
+    required:
+    - content
+    - region
     type: object
   request.CreateWithdrawProposalRequest:
     properties:
@@ -666,6 +693,8 @@ definitions:
     type: object
   response.PaginationDataResponse:
     properties:
+      amount:
+        type: integer
       data: {}
       page:
         type: integer
@@ -858,6 +887,9 @@ paths:
         type: string
       - in: query
         name: page
+        type: integer
+      - in: query
+        name: page_size
         type: integer
       - in: query
         name: sort_criteria
@@ -1086,10 +1118,9 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve detailed bank profile information using the bank's owner
-        wallet
+      description: Retrieve detailed bank profile information by its unique id
       parameters:
-      - description: Wallet address
+      - description: Bank Profile ID
         in: path
         name: id
         required: true
@@ -1110,7 +1141,7 @@ paths:
             Please try again later.
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
-      summary: Get bank profile owned by a wallet
+      summary: Get bank profile by specific id
       tags:
       - banks
     put:
@@ -1152,6 +1183,37 @@ paths:
       security:
       - BearerAuth: []
       summary: Update an existing bank profile
+      tags:
+      - banks
+  /banks/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed bank profile information using the bank's owner
+        wallet
+      parameters:
+      - description: Wallet address
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BankProfileResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get bank profile owned by a wallet
       tags:
       - banks
   /centers:
@@ -1356,8 +1418,7 @@ paths:
       description: Retrieve specific center requests associated with a unique wallet
         address
       parameters:
-      - default: 0x...
-        description: User Wallet Address
+      - description: User Wallet Address
         in: path
         name: id
         required: true
@@ -2589,7 +2650,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieves a list of all available regions.
+      description: Retrieves a list of all available regions
       produces:
       - application/json
       responses:
@@ -2597,7 +2658,169 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.RegionsResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
       summary: Get list of regions
+      tags:
+      - regions
+  /regions/supported-proposal:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of supported region proposals based on filter
+        criteria
+      parameters:
+      - in: query
+        name: created_by
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get list of supported region proposals
+      tags:
+      - regions
+    post:
+      consumes:
+      - application/json
+      description: Submit a new supported region proposal.
+      parameters:
+      - description: Supported Region Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateSupportedRegionProposalsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.SupportedRegionProposal'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new supported region proposal
+      tags:
+      - regions
+  /regions/supported-proposal/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a supported region proposal detailed information
+      parameters:
+      - description: Supported Region Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.SupportedRegionProposal'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get a supported region proposal detail
+      tags:
+      - regions
+  /regions/supported-proposal/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of supported region proposals based on filter
+        criteria from a user
+      parameters:
+      - description: User Wallet Address
+        in: path
+        name: id
+        required: true
+        type: string
+      - in: query
+        name: created_by
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get list of supported region proposals from a user
       tags:
       - regions
   /registrations:

@@ -6,5 +6,6 @@ type GetAdminsRequest struct {
 	YearOfBirth  *int   `json:"year_of_birth"`
 	SortCriteria string `json:"sort_criteria"`
 	SortOrder    string `json:"sort_order"`
+	PageSize     int    `json:"page_size"`
 	Page         int    `json:"page"`
 }

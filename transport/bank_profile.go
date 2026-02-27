@@ -10,13 +10,41 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetBankProfile godoc
+// GetBankProfileByOwner godoc
 // @Summary      Get bank profile owned by a wallet
 // @Description  Retrieve detailed bank profile information using the bank's owner wallet
 // @Tags         banks
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string  true  "Wallet address"
+// @Success      200  {object}  response.BankProfileResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /banks/user/{id} [get]
+func GetBankProfileByOwner(ctx *gin.Context) {
+	service, err := business.GenerateBankProfileService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.GetBankProfileByOwner(ctx.Param("id"), ctx)
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
+
+// GetBankProfile godoc
+// @Summary      Get bank profile by specific id
+// @Description  Retrieve detailed bank profile information by its unique id
+// @Tags         banks
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Bank Profile ID"
 // @Success      200  {object}  response.BankProfileResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."

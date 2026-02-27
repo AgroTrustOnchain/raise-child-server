@@ -16,5 +16,6 @@ const (
 	OFFCHAIN_WITHDRAW_PROPOSAL_REPOSITORY string = "Off-Chain Withdraw Proposal Repository"
 	VOLUNTEER_NOTI_REPOSITORY             string = "Volunteer Noti Repository"
 	LEADER_NOTI_REPOSITORY                string = "Leader Noti Repository"
+	SUPPORTED_REGION_PROPOSAL             string = "Supported Region Proposal Repository"
 	TX_REPOSITORY                         string = "Transaction Repository"
 )

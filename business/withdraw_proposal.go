@@ -648,6 +648,7 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 
 	return response.PaginationDataResponse{
 		Data:       data,
+		Amount:     len(data),
 		Page:       page,
 		TotalPages: int(math.Ceil(float64(len(filteredProposals)) / float64(withdraw_proposal_records_limit))),
 	}, nil

@@ -44,6 +44,14 @@ func InitializeAdminService(db *sql.DB, errLogger *log.Logger) business.IAdminSe
 	}
 }
 
+func initializeAdminServiceV2(profileRepo i_repository.IProfileRepository, clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IAdminService {
+	return &adminService{
+		profileRepo: profileRepo,
+		clients:     clients,
+		errLogger:   errLogger,
+	}
+}
+
 func GenerateAdminService() (business.IAdminService, error) {
 	var errLogger = util.GetLogConfig(shared.ERROR_LEVEL)
 
@@ -52,7 +60,12 @@ func GenerateAdminService() (business.IAdminService, error) {
 		return nil, err
 	}
 
-	return InitializeAdminService(cnn, errLogger), nil
+	//return InitializeAdminService(cnn, errLogger), nil
+
+	return initializeAdminServiceV2(
+		repository.InitializeProfileRepository(cnn, errLogger),
+		_networkAliases,
+		errLogger), nil
 }
 
 const (
@@ -67,6 +80,11 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
 		ErrLogger: a.errLogger,
 	}, ctx)
+	// manageObj, err := on_chain.GetManageObject(on_chain.GetOnChainObjectRequest{
+	// 	Client:    client,
+	// 	ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+	// 	ErrLogger: a.errLogger,
+	// }, ctx)
 	if err != nil {
 		return response.PaginationDataResponse{}, err
 	}
@@ -76,13 +94,19 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 		ObjectIds: manageObj.AdminNfts,
 		ErrLogger: a.errLogger,
 	}, ctx)
+
+	// admins, err := on_chain.GetAdminNftObjects(on_chain.GetOnChainObjectsRequest{
+	// 	Client:    client,
+	// 	ObjectIds: manageObj.AdminNfts,
+	// 	ErrLogger: a.errLogger,
+	// }, ctx)
 	if err != nil {
 		return response.PaginationDataResponse{}, err
 	}
 
 	var keyword string = util.StanderizeString(req.Keyword)
 	var filteredAdmins []entities.AdminNft
-	for i := len(admins) - 1; i >= 0; i++ {
+	for i := len(admins) - 1; i >= 0; i-- {
 		var admin entities.AdminNft = admins[i]
 
 		if keyword != "" {
@@ -146,6 +170,7 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 
 	return response.PaginationDataResponse{
 		Data:       data,
+		Amount:     len(data),
 		Page:       page,
 		TotalPages: int(math.Ceil(float64(len(filteredAdmins)) / float64(admin_records_limit))),
 	}, nil
