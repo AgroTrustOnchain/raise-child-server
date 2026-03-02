@@ -8,6 +8,8 @@ func StanderizeSortOrder(order string) string {
 		res = "DESC"
 	case "asc":
 		res = "ASC"
+	default:
+		res = "DESC"
 	}
 
 	return res

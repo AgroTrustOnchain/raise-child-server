@@ -15,8 +15,10 @@ import (
 	"raise-child/model/dtos/response"
 	"raise-child/model/entities"
 	"raise-child/util"
+	"raise-child/util/cache"
 	on_chain "raise-child/util/on_chain"
 	"strings"
+	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
 	"github.com/block-vision/sui-go-sdk/models"
@@ -25,14 +27,16 @@ import (
 )
 
 type donorService struct {
-	clients   map[string]sui.ISuiAPI
-	errLogger *log.Logger
+	redisCache cache.IRedisCache
+	clients    map[string]sui.ISuiAPI
+	errLogger  *log.Logger
 }
 
 func InitializeDonorService(clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IDonorService {
 	return &donorService{
-		clients:   clients,
-		errLogger: errLogger,
+		redisCache: cache.InitializeRedisCache(),
+		clients:    clients,
+		errLogger:  errLogger,
 	}
 }
 
@@ -88,6 +92,21 @@ func (s *donorService) GetDonor(id string, ctx context.Context) (response.DonorR
 
 // GetDonors implements business.IDonorService.
 func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	req.Keyword = util.StanderizeString(req.Keyword)
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var res response.PaginationDataResponse
+	var redisKey string = s.getGetDonorsRedisKey(req)
+	if s.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
 	var client = s.clients[constant.SuiTestnet]
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
@@ -111,12 +130,6 @@ func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Conte
 		return response.PaginationDataResponse{}, nil
 	}
 
-	var page int = req.Page
-	if page < 1 {
-		page = 1
-	}
-
-	var keyword string = util.StanderizeString(req.Keyword)
 	var filteredDonors []entities.Donor
 	for i := len(donors) - 1; i >= 0; i++ {
 		var donor entities.Donor = donors[i]
@@ -127,12 +140,12 @@ func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Conte
 			}
 		}
 
-		if keyword != "" {
+		if req.Keyword != "" {
 			var firstName string = util.StanderizeString(donor.FirstName)
 			var lastName string = util.StanderizeString(donor.LastName)
 			var phoneNumber string = util.StanderizeString(donor.PhoneNumber)
 			var email string = util.StanderizeString(donor.Email)
-			if !strings.Contains(firstName, keyword) && !strings.Contains(lastName, keyword) && !strings.Contains(phoneNumber, keyword) && !strings.Contains(email, keyword) {
+			if !strings.Contains(firstName, req.Keyword) && !strings.Contains(lastName, req.Keyword) && !strings.Contains(phoneNumber, req.Keyword) && !strings.Contains(email, req.Keyword) {
 				continue
 			}
 		}
@@ -140,11 +153,7 @@ func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Conte
 		filteredDonors = append(filteredDonors, donor)
 	}
 
-	if req.PageSize < 1 {
-		req.PageSize = default_page_size
-	}
-
-	var skippedRecords int = (page - 1) * req.PageSize
+	var skippedRecords int = (req.Page - 1) * req.PageSize
 	if len(filteredDonors) <= skippedRecords {
 		return response.PaginationDataResponse{}, err
 	}
@@ -154,10 +163,28 @@ func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Conte
 		data = append(data, filteredDonors[i].ToDonorResponse())
 	}
 
-	return response.PaginationDataResponse{
+	res = response.PaginationDataResponse{
 		Data:       data,
 		Amount:     len(data),
-		Page:       page,
-		TotalPages: int(math.Ceil(float64(len(filteredDonors)) / float64(donor_records_limit))),
-	}, nil
+		Page:       req.Page,
+		TotalPages: int(math.Ceil(float64(len(filteredDonors)) / float64(req.PageSize))),
+	}
+
+	s.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, nil
+}
+
+func (s *donorService) getGetDonorsRedisKey(req request.GetDonorsRequest) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var gender string = "empty"
+	if req.Gender != "" {
+		gender = req.Gender
+	}
+
+	return fmt.Sprintf("donor:kw:%s:g:%s:s:%d:p:%d", keyword, gender, req.PageSize, req.Page)
 }

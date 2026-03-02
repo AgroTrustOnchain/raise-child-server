@@ -15,7 +15,7 @@ CREATE TABLE profiles (
 
 CREATE TABLE bank_profiles (
     id character varying(100) PRIMARY KEY,
-    sub character varying(100) NOT NULL UNIQUE,
+    profile_id character varying(100) NOT NULL UNIQUE,
     owner character varying(100) NOT NULL,
     bank_org character varying(20) NOT NULL,
     bank_code character varying(20) NOT NULL,
@@ -25,12 +25,12 @@ CREATE TABLE bank_profiles (
     payos_check_sum_key TEXT,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT fk_bank_profile FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE
+    CONSTRAINT fk_bank_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
 CREATE TABLE center_requests (
     id character varying(100) PRIMARY KEY,
-    sub character varying(100) NOT NULL,
+    profile_id character varying(100) NOT NULL,
     region character varying(30) NOT NULL,
     address character varying(80) NOT NULL,
     phone_number character varying(20) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE center_requests (
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     closed_at timestamptz NOT NULL,
-    CONSTRAINT fk_center_profile FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE
+    CONSTRAINT fk_center_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
 CREATE TABLE meal_support_durations (
@@ -74,7 +74,7 @@ CREATE TABLE withdraw_proposals (
 CREATE TABLE payments (
     id character varying(100) PRIMARY KEY,
     actor character varying(100) NOT NULL,
-    sub character varying(20) NOT NULL,
+    profile_id character varying(20) NOT NULL,
     proposal_id character varying(100),
     donation_id character varying(100),
     is_donate_tx BOOLEAN NOT NULL,
@@ -88,7 +88,7 @@ CREATE TABLE payments (
     expired_at timestamptz NOT NULL,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT fk_payment_profile FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_payment_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE,
     CONSTRAINT fk_payment_proposal FOREIGN KEY (proposal_id) REFERENCES withdraw_proposals(id) ON DELETE CASCADE,
     CONSTRAINT fk_payment_donation FOREIGN KEY (donation_id) REFERENCES donations(id) ON DELETE CASCADE,
     CONSTRAINT check_single_detail CHECK (
@@ -99,7 +99,7 @@ CREATE TABLE payments (
 
 CREATE TABLE registration_requests (
     id                    character varying(100) PRIMARY KEY,
-    sub                   character varying(100) NOT NULL,
+    profile_id                   character varying(100) NOT NULL,
     register_role         character varying(10) NOT NULL,
     identity_code         character varying(20) NOT NULL,
     identity_card_blob_id character varying(100) NOT NULL,
@@ -121,12 +121,12 @@ CREATE TABLE registration_requests (
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     closed_at timestamptz NOT NULL,
-    CONSTRAINT fk_registration_profile FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE
+    CONSTRAINT fk_registration_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
 CREATE TABLE upload_child_requests (
     id                    character varying(100) PRIMARY KEY,
-    sub                   character varying(100) NOT NULL,
+    profile_id                   character varying(100) NOT NULL,
     identity_code         character varying(20) NOT NULL,
     avatar_blob_id        character varying(100) NOT NULL,
     region                character varying(30),
@@ -143,18 +143,18 @@ CREATE TABLE upload_child_requests (
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     closed_at timestamptz NOT NULL,
-    CONSTRAINT fk_upload_child_profile FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE
+    CONSTRAINT fk_upload_child_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
 CREATE TABLE supported_region_proposals (
     id character varying(100) PRIMARY KEY,
-    sub character varying(20) NOT NULL,
+    profile_id character varying(20) NOT NULL,
     region character varying(30) NOT NULL UNIQUE,
     content TEXT NOT NULL,
     created_by character varying(100) NOT NULL,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT fk_region_profile FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE
+    CONSTRAINT fk_region_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
 CREATE TABLE volunteer_notis (
@@ -185,12 +185,6 @@ CREATE TABLE leader_notis (
 CREATE INDEX idx_registration_status ON registration_requests(status);
 CREATE INDEX idx_registration_email ON registration_requests(email);
 CREATE INDEX idx_center_status ON center_requests(status);
-
-
-
--- UPDATE users 
--- SET tags = array_append(tags, 'new-login') 
--- WHERE id = 42;
 
 
 -- CREATE TABLE registration_requests (

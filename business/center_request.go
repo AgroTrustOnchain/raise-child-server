@@ -17,6 +17,7 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 	"slices"
@@ -32,6 +33,7 @@ import (
 type centerRequestService struct {
 	centerRequestRepo i_repository.ICenterRequestRepository
 	profileRepo       i_repository.IProfileRepository
+	redisCache        cache.IRedisCache
 	clients           map[string]sui.ISuiAPI
 	errLogger         *log.Logger
 }
@@ -48,6 +50,7 @@ func InitializeCenterRequestService(db *sql.DB, errLogger *log.Logger) business.
 	return &centerRequestService{
 		centerRequestRepo: repository.InitializeCenterRequestRepository(db, errLogger),
 		profileRepo:       repository.InitializeProfileRepository(db, errLogger),
+		redisCache:        cache.InitializeRedisCache(),
 		clients:           _networkAliases,
 		errLogger:         errLogger,
 	}
@@ -92,7 +95,7 @@ func (c *centerRequestService) ConfirmRequest(id string, ctx context.Context) (r
 	}
 
 	var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
-	//var isDenied bool = false
+	// var isDenied bool = false
 
 	// if rate >= approve_rate_limit {
 	// 	req.Status = request_approved_status
@@ -305,11 +308,24 @@ func (c *centerRequestService) CreateRequest(req request.CreateCenterRequest, ct
 
 // GetRequest implements business.ICenterRequestService.
 func (c *centerRequestService) GetRequest(id string, ctx context.Context) (*entities.CenterRequest, error) {
-	if id == "" {
-		return nil, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	// if id == "" {
+	// 	return nil, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	// }
+
+	var data entities.CenterRequest
+	var redisKey string = c.getCenterRequestRedisKey(id)
+	if c.redisCache.Get(redisKey, &data, ctx) {
+		return &data, nil
 	}
 
-	return c.centerRequestRepo.GetRequest(id, ctx)
+	res, err := c.centerRequestRepo.GetRequest(id, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	c.redisCache.Set(redisKey, *res, time.Minute, ctx)
+
+	return res, nil
 }
 
 // GetRequests implements business.ICenterRequestService.
@@ -322,6 +338,12 @@ func (c *centerRequestService) GetRequests(req request.GetCenterRequests, ctx co
 		req.PageSize = default_page_size
 	}
 
+	var res response.PaginationDataResponse
+	var redisKey string = c.getGetCenterRequestsRedisKey(req)
+	if c.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
 	data, pages, err := c.centerRequestRepo.GetRegistrationRequests(req, ctx)
 	var amount int
 	if data == nil || len(data) == 0 {
@@ -330,21 +352,39 @@ func (c *centerRequestService) GetRequests(req request.GetCenterRequests, ctx co
 		amount = len(data)
 	}
 
-	return response.PaginationDataResponse{
+	res = response.PaginationDataResponse{
 		Data:       data,
 		Amount:     amount,
 		Page:       req.Page,
 		TotalPages: pages,
-	}, err
+	}
+
+	c.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, err
 }
 
 // GetWalletRequests implements business.ICenterRequestService.
 func (c *centerRequestService) GetWalletRequests(id string, ctx context.Context) ([]entities.CenterRequest, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return nil, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
-	return c.centerRequestRepo.GetWalletRegistrationRequests(id, ctx)
+	var res []entities.CenterRequest
+	var redisKey string = c.getGetWalletCenterRequestsRedisKey(id)
+	if c.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
+	var errRes error
+	res, errRes = c.centerRequestRepo.GetWalletRegistrationRequests(id, ctx)
+	if errRes != nil {
+		return nil, errRes
+	}
+
+	c.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, errRes
 }
 
 // VoteRequest implements business.ICenterRequestService.
@@ -447,4 +487,37 @@ func (c *centerRequestService) EditStaffNumbersToRequestCenter(req request.EditS
 	}
 
 	return nil
+}
+
+func (c *centerRequestService) getGetCenterRequestsRedisKey(req request.GetCenterRequests) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var region string = "empty"
+	if req.Region != "" {
+		region = req.Region
+	}
+
+	var status string = "empty"
+	if req.Status != "" {
+		status = req.Status
+	}
+
+	var isClosed string = "empty"
+	if req.IsClosed != nil {
+		isClosed = fmt.Sprintf("%b", *req.IsClosed)
+	}
+
+	return fmt.Sprintf("center_rq:kw:%s:r:%s:status:%s:close:%s:o:%s:s:%d:p:%d",
+		keyword, region, status, isClosed, req.SortOrder, req.PageSize, req.Page)
+}
+
+func (c *centerRequestService) getGetWalletCenterRequestsRedisKey(wallet string) string {
+	return fmt.Sprintf("center_rq:wallet:%s", wallet)
+}
+
+func (c *centerRequestService) getCenterRequestRedisKey(id string) string {
+	return fmt.Sprintf("center_rq:%s", id)
 }

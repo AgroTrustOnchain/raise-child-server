@@ -18,9 +18,11 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 	"strings"
+	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
 	"github.com/block-vision/sui-go-sdk/models"
@@ -30,6 +32,7 @@ import (
 
 type giftService struct {
 	profileRepo i_repository.IProfileRepository
+	redisCache  cache.IRedisCache
 	clients     map[string]sui.ISuiAPI
 	errLogger   *log.Logger
 }
@@ -37,7 +40,17 @@ type giftService struct {
 func InitializeGiftService(db *sql.DB, errLogger *log.Logger) business.IGiftService {
 	return &giftService{
 		profileRepo: repository.InitializeProfileRepository(db, errLogger),
+		redisCache:  cache.InitializeRedisCache(),
 		clients:     _networkAliases,
+		errLogger:   errLogger,
+	}
+}
+
+func initializeGiftService(profileRepo i_repository.IProfileRepository, clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IGiftService {
+	return &giftService{
+		profileRepo: profileRepo,
+		redisCache:  cache.InitializeRedisCache(),
+		clients:     clients,
 		errLogger:   errLogger,
 	}
 }
@@ -50,7 +63,8 @@ func GenerateGiftService() (business.IGiftService, error) {
 		return nil, err
 	}
 
-	return InitializeGiftService(cnn, errLogger), nil
+	// return InitializeGiftService(cnn, errLogger), nil
+	return initializeGiftService(repository.InitializeProfileRepository(cnn, errLogger), _networkAliases, errLogger), nil
 }
 
 const (
@@ -332,7 +346,7 @@ func (g *giftService) CreateGift(req request.CreateGiftRequest, ctx context.Cont
 
 // GetGift implements business.IGiftService.
 func (g *giftService) GetGift(id string, ctx context.Context) (response.GiftResponse, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.GiftResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -347,27 +361,50 @@ func (g *giftService) GetGift(id string, ctx context.Context) (response.GiftResp
 
 // GetGiftsOfChild implements business.IGiftService.
 func (g *giftService) GetGiftsOfChild(id string, req request.GetGiftsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	req.Keyword = util.StanderizeString(req.Keyword)
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Category = strings.TrimSpace(req.Category)
+	var res response.PaginationDataResponse
+	var redisKey string = g.getGetGiftsRedisKey(id, req)
+	if g.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
 	var client = g.clients[constant.SuiTestnet]
-	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+	var giftIds []string
+	var getOnchainObjReq = on_chain.GetOnChainObjectRequest{
 		Client:    client,
 		ObjectId:  id,
 		ErrLogger: g.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.PaginationDataResponse{}, err
 	}
 
-	if child.Gifts == nil || len(child.Gifts) == 0 {
+	if child, _ := on_chain.GetOnChainObject[entities.Child](getOnchainObjReq, ctx); child != nil {
+		giftIds = child.Gifts
+	} else {
+		if center, _ := on_chain.GetOnChainObject[entities.Center](getOnchainObjReq, ctx); center != nil {
+			giftIds = center.Gifts
+		}
+	}
+
+	if len(giftIds) == 0 {
 		return response.PaginationDataResponse{}, nil
 	}
 
 	gifts, err := on_chain.GetOnChainObjects[entities.Gift](on_chain.GetOnChainObjectsRequest{
 		Client:    client,
-		ObjectIds: child.Gifts,
+		ObjectIds: giftIds,
 		ErrLogger: g.errLogger,
 	}, ctx)
 	if err != nil {
@@ -375,32 +412,22 @@ func (g *giftService) GetGiftsOfChild(id string, req request.GetGiftsRequest, ct
 	}
 
 	var filteredGifts []entities.Gift
-	var keyword string = util.StanderizeString(req.Keyword)
-	if req.SortOrder == "desc" || req.SortOrder == "" {
+	if req.SortOrder == "DESC" || req.SortOrder == "" {
 		for i := len(gifts) - 1; i >= 0; i-- {
 			var gift = gifts[i]
-			if isGiftMatchedFilter(gift, keyword, req.Status, req.Category) {
+			if isGiftMatchedFilter(gift, req.Keyword, req.Status, req.Category) {
 				filteredGifts = append(filteredGifts, gift)
 			}
 		}
 	} else {
 		for _, gift := range gifts {
-			if isGiftMatchedFilter(gift, keyword, req.Status, req.Category) {
+			if isGiftMatchedFilter(gift, req.Keyword, req.Status, req.Category) {
 				filteredGifts = append(filteredGifts, gift)
 			}
 		}
 	}
 
-	var page int = req.Page
-	if page < 1 {
-		page = 1
-	}
-
-	if req.PageSize < 1 {
-		req.PageSize = default_page_size
-	}
-
-	var skippedRecords int = (page - 1) * req.PageSize
+	var skippedRecords int = (req.Page - 1) * req.PageSize
 	if len(filteredGifts) <= skippedRecords {
 		return response.PaginationDataResponse{}, nil
 	}
@@ -410,11 +437,113 @@ func (g *giftService) GetGiftsOfChild(id string, req request.GetGiftsRequest, ct
 		data = append(data, filteredGifts[i].ToGiftResponse())
 	}
 
-	return response.PaginationDataResponse{
+	res = response.PaginationDataResponse{
 		Data:       data,
-		Page:       page,
-		TotalPages: int(math.Ceil(float64(len(filteredGifts)) / float64(gift_limit_record))),
-	}, nil
+		Amount:     len(data),
+		Page:       req.Page,
+		TotalPages: int(math.Ceil(float64(len(filteredGifts)) / float64(req.PageSize))),
+	}
+
+	g.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, nil
+}
+
+// GetGiftsOfRegion implements business.IGiftService.
+func (g *giftService) GetGiftsOfRegion(region string, req request.GetGiftsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	req.Keyword = util.StanderizeString(req.Keyword)
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Category = strings.TrimSpace(req.Category)
+	var res response.PaginationDataResponse
+	var redisKey string = g.getGetGiftsOfegionRedisKey(region, req)
+	if g.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
+	var client = g.clients[constant.SuiTestnet]
+	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.PACKAGE_ID),
+		ErrLogger: g.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.PaginationDataResponse{}, err
+	}
+
+	var centerId string
+	for i, localReion := range manageObj.LocalRegions {
+		if localReion == region {
+			centerId = manageObj.ChildrenCenters[i]
+			break
+		}
+	}
+
+	if centerId == "" {
+		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	center, err := on_chain.GetOnChainObject[entities.Center](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  centerId,
+		ErrLogger: g.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.PaginationDataResponse{}, err
+	}
+
+	gifts, err := on_chain.GetOnChainObjects[entities.Gift](on_chain.GetOnChainObjectsRequest{
+		Client:    client,
+		ObjectIds: center.AllGifts,
+		ErrLogger: g.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.PaginationDataResponse{}, err
+	}
+
+	var filteredGifts []entities.Gift
+	if req.SortOrder == "DESC" || req.SortOrder == "" {
+		for i := len(gifts) - 1; i >= 0; i-- {
+			var gift = gifts[i]
+			if isGiftMatchedFilter(gift, req.Keyword, req.Status, req.Category) {
+				filteredGifts = append(filteredGifts, gift)
+			}
+		}
+	} else {
+		for _, gift := range gifts {
+			if isGiftMatchedFilter(gift, req.Keyword, req.Status, req.Category) {
+				filteredGifts = append(filteredGifts, gift)
+			}
+		}
+	}
+
+	var skippedRecords int = (req.Page - 1) * req.PageSize
+	if len(filteredGifts) <= skippedRecords {
+		return response.PaginationDataResponse{}, nil
+	}
+
+	var data []response.GiftResponse
+	for i := skippedRecords; i < len(filteredGifts); i++ {
+		data = append(data, filteredGifts[i].ToGiftResponse())
+	}
+
+	res = response.PaginationDataResponse{
+		Data:       data,
+		Amount:     len(data),
+		Page:       req.Page,
+		TotalPages: int(math.Ceil(float64(len(filteredGifts)) / float64(req.PageSize))),
+	}
+
+	g.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, nil
 }
 
 func isGiftMatchedFilter(gift entities.Gift, keyword, status, category string) bool {
@@ -437,4 +566,44 @@ func isGiftMatchedFilter(gift entities.Gift, keyword, status, category string) b
 	}
 
 	return true
+}
+
+func (g *giftService) getGetGiftsRedisKey(id string, req request.GetGiftsRequest) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var status string = "empty"
+	if req.Status != "" {
+		status = req.Status
+	}
+
+	var category string = "empty"
+	if req.Category != "" {
+		category = req.Category
+	}
+
+	return fmt.Sprintf("gift:of:%s:kw:%s:status:%s:c:%s:o:%s:s:%d:p:%d",
+		id, keyword, status, category, req.SortOrder, req.PageSize, req.Page)
+}
+
+func (g *giftService) getGetGiftsOfegionRedisKey(region string, req request.GetGiftsRequest) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var status string = "empty"
+	if req.Status != "" {
+		status = req.Status
+	}
+
+	var category string = "empty"
+	if req.Category != "" {
+		category = req.Category
+	}
+
+	return fmt.Sprintf("gift:region:%s:kw:%s:status:%s:c:%s:o:%s:s:%d:p:%d",
+		region, keyword, status, category, req.SortOrder, req.PageSize, req.Page)
 }

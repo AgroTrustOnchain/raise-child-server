@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 	"sort"
@@ -32,6 +34,7 @@ import (
 
 type adminService struct {
 	profileRepo i_repository.IProfileRepository
+	redisCache  cache.IRedisCache
 	clients     map[string]sui.ISuiAPI
 	errLogger   *log.Logger
 }
@@ -39,6 +42,7 @@ type adminService struct {
 func InitializeAdminService(db *sql.DB, errLogger *log.Logger) business.IAdminService {
 	return &adminService{
 		profileRepo: repository.InitializeProfileRepository(db, errLogger),
+		redisCache:  cache.InitializeRedisCache(),
 		clients:     _networkAliases,
 		errLogger:   errLogger,
 	}
@@ -47,6 +51,7 @@ func InitializeAdminService(db *sql.DB, errLogger *log.Logger) business.IAdminSe
 func initializeAdminServiceV2(profileRepo i_repository.IProfileRepository, clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IAdminService {
 	return &adminService{
 		profileRepo: profileRepo,
+		redisCache:  cache.InitializeRedisCache(),
 		clients:     clients,
 		errLogger:   errLogger,
 	}
@@ -65,7 +70,8 @@ func GenerateAdminService() (business.IAdminService, error) {
 	return initializeAdminServiceV2(
 		repository.InitializeProfileRepository(cnn, errLogger),
 		_networkAliases,
-		errLogger), nil
+		errLogger,
+	), nil
 }
 
 const (
@@ -74,17 +80,28 @@ const (
 
 // GetAdmins implements business.IAdminService.
 func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Keyword = util.StanderizeString(req.Keyword)
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var res response.PaginationDataResponse
+	var redisKey string = a.getGetAdminsRedisKey(req)
+	if a.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
 	var client = a.clients[constant.SuiTestnet]
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
 		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
 		ErrLogger: a.errLogger,
 	}, ctx)
-	// manageObj, err := on_chain.GetManageObject(on_chain.GetOnChainObjectRequest{
-	// 	Client:    client,
-	// 	ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
-	// 	ErrLogger: a.errLogger,
-	// }, ctx)
 	if err != nil {
 		return response.PaginationDataResponse{}, err
 	}
@@ -94,25 +111,18 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 		ObjectIds: manageObj.AdminNfts,
 		ErrLogger: a.errLogger,
 	}, ctx)
-
-	// admins, err := on_chain.GetAdminNftObjects(on_chain.GetOnChainObjectsRequest{
-	// 	Client:    client,
-	// 	ObjectIds: manageObj.AdminNfts,
-	// 	ErrLogger: a.errLogger,
-	// }, ctx)
 	if err != nil {
 		return response.PaginationDataResponse{}, err
 	}
 
-	var keyword string = util.StanderizeString(req.Keyword)
 	var filteredAdmins []entities.AdminNft
 	for i := len(admins) - 1; i >= 0; i-- {
 		var admin entities.AdminNft = admins[i]
 
-		if keyword != "" {
+		if req.Keyword != "" {
 			var firstName string = util.StanderizeString(admin.FirstName)
 			var lastName string = util.StanderizeString(admin.LastName)
-			if !strings.Contains(firstName, keyword) && !strings.Contains(lastName, keyword) && !strings.Contains(admin.IdentityCode, keyword) && !strings.Contains(admin.PhoneNumber, keyword) && !strings.Contains(admin.Email, keyword) { // Not matched
+			if !strings.Contains(firstName, req.Keyword) && !strings.Contains(lastName, req.Keyword) && !strings.Contains(admin.IdentityCode, req.Keyword) && !strings.Contains(admin.PhoneNumber, req.Keyword) && !strings.Contains(admin.Email, req.Keyword) { // Not matched
 				continue
 			}
 		}
@@ -133,32 +143,25 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 		filteredAdmins = append(filteredAdmins, admin)
 	}
 
-	if req.SortOrder != "" {
-		sort.Slice(filteredAdmins, func(i, j int) bool {
-			if req.SortCriteria == "date_of_birth" {
-				var dob1 time.Time = util.RawDateToTime(filteredAdmins[i].DateOfBirth)
-				var dob2 time.Time = util.RawDateToTime(filteredAdmins[j].DateOfBirth)
-				if req.SortOrder == "desc" {
-					return dob2.After(dob1)
-				}
-
-				return dob2.Before(dob1)
+	sort.Slice(filteredAdmins, func(i, j int) bool {
+		if req.SortCriteria == "date_of_birth" {
+			var dob1 time.Time = util.RawDateToTime(filteredAdmins[i].DateOfBirth)
+			var dob2 time.Time = util.RawDateToTime(filteredAdmins[j].DateOfBirth)
+			if req.SortOrder == "DESC" {
+				return dob2.After(dob1)
 			}
 
-			if req.SortOrder == "asc" {
-				return false
-			}
+			return dob2.Before(dob1)
+		}
 
-			return true
-		})
-	}
+		if req.SortOrder == "ASC" {
+			return false
+		}
 
-	var page int = req.Page
-	if page < 1 {
-		page = 1
-	}
+		return true
+	})
 
-	var skippedRecords int = (page - 1) * admin_records_limit
+	var skippedRecords int = (req.Page - 1) * req.PageSize
 	if len(filteredAdmins) <= skippedRecords {
 		return response.PaginationDataResponse{}, nil
 	}
@@ -168,12 +171,16 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 		data = append(data, filteredAdmins[i].ToAdminNftResponse())
 	}
 
-	return response.PaginationDataResponse{
+	res = response.PaginationDataResponse{
 		Data:       data,
 		Amount:     len(data),
-		Page:       page,
-		TotalPages: int(math.Ceil(float64(len(filteredAdmins)) / float64(admin_records_limit))),
-	}, nil
+		Page:       req.Page,
+		TotalPages: int(math.Ceil(float64(len(filteredAdmins)) / float64(req.PageSize))),
+	}
+
+	a.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, nil
 }
 
 // UpdatePublisherInfo implements business.IAdminService.
@@ -256,4 +263,30 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 	return response.BuildTransactionResponse{
 		TxBytes: txBytes,
 	}, a.profileRepo.UploadProfile(*profile, ctx)
+}
+
+func (a *adminService) getGetAdminsRedisKey(req request.GetAdminsRequest) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var gender string = "empty"
+	if req.Gender != "" {
+		gender = req.Gender
+	}
+
+	var yob string = "empty"
+	if req.YearOfBirth != nil {
+		yob = fmt.Sprintf("%d", *req.YearOfBirth)
+	}
+
+	var sortCriteria string = "empty"
+	if req.SortCriteria != "" {
+		sortCriteria = req.SortCriteria
+	}
+
+	return fmt.Sprintf("admin:kw:%s:g:%s:y:%s:sc:%s:o:%s:s:%d:p:%d",
+		keyword, gender, yob, sortCriteria, req.SortOrder, req.PageSize, req.Page,
+	)
 }

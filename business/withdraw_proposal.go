@@ -19,6 +19,7 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 	"slices"
@@ -38,6 +39,7 @@ type withdrawProposalService struct {
 	paymentRepo     i_repository.IPaymentRepository
 	bankProfileRepo i_repository.IBankProfileRepository
 	withdrawRepo    i_repository.IOffChainWithdrawProposalRepository
+	redisCache      cache.IRedisCache
 	clients         map[string]sui.ISuiAPI
 	errLogger       *log.Logger
 }
@@ -47,7 +49,25 @@ func InitializeWithdrawProposalService(db *sql.DB, errLogger *log.Logger) busine
 		paymentRepo:     repository.InitializePaymentRepository(db, errLogger),
 		bankProfileRepo: repository.InitializeBankProfileRepository(db, errLogger),
 		withdrawRepo:    repository.InitializeOffChainWithdrawProposalRepository(db, errLogger),
+		redisCache:      cache.InitializeRedisCache(),
 		clients:         _networkAliases,
+		errLogger:       errLogger,
+	}
+}
+
+func initializeWithdrawProposalService(
+	paymentRepo i_repository.IPaymentRepository,
+	bankProfileRepo i_repository.IBankProfileRepository,
+	withdrawRepo i_repository.IOffChainWithdrawProposalRepository,
+	clients map[string]sui.ISuiAPI,
+	errLogger *log.Logger,
+) business.IWithdrawProposalService {
+	return &withdrawProposalService{
+		paymentRepo:     paymentRepo,
+		bankProfileRepo: bankProfileRepo,
+		withdrawRepo:    withdrawRepo,
+		redisCache:      cache.InitializeRedisCache(),
+		clients:         clients,
 		errLogger:       errLogger,
 	}
 }
@@ -60,7 +80,15 @@ func GenerateWithdrawProposalService() (business.IWithdrawProposalService, error
 		return nil, err
 	}
 
-	return InitializeWithdrawProposalService(cnn, errLogger), nil
+	//return InitializeWithdrawProposalService(cnn, errLogger), nil
+
+	return initializeWithdrawProposalService(
+		repository.InitializePaymentRepository(cnn, errLogger),
+		repository.InitializeBankProfileRepository(cnn, errLogger),
+		repository.InitializeOffChainWithdrawProposalRepository(cnn, errLogger),
+		_networkAliases,
+		errLogger,
+	), nil
 }
 
 const (
@@ -387,7 +415,7 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 	return res, w.paymentRepo.CreatePayment(entities.Payment{
 		ID:            paymentId,
 		Actor:         sender,
-		Sub:           ctx.Value("sub").(string),
+		ProfileID:     ctx.Value("sub").(string),
 		ProposalID:    &detail.ID,
 		IsDonateTx:    false,
 		TransactionId: fmt.Sprint(orderCode),
@@ -505,7 +533,7 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 
 	var creator string = strings.TrimSpace(req.Creator)
 	if creator != "" {
-		if !utils.IsValidSuiAddress(models.SuiAddress(creator)) {
+		if !util.IsValidSuiAddressStrict(creator) {
 			return response.PaginationDataResponse{}, genericErr
 		}
 	}
@@ -520,6 +548,22 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 				return response.PaginationDataResponse{}, nil
 			}
 		}
+	}
+
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Keyword = util.StanderizeString(req.Keyword)
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var res response.PaginationDataResponse
+	var redisKey string = w.getGetWithdrawProposalsRedisKey(req)
+	if w.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
 	}
 
 	var client = w.clients[constant.SuiTestnet]
@@ -543,7 +587,6 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 
 	var filteredProposals []entities.WithdrawProposal
 	var curTime time.Time = time.Now()
-	var keyword string = util.StanderizeString(req.Keyword)
 	for i := len(pool.WithdrawProposals) - 1; i >= 0; i-- {
 		var proposal = proposals[i]
 		if creator != "" {
@@ -552,10 +595,10 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 			}
 		}
 
-		if keyword != "" {
+		if req.Keyword != "" {
 			var poolName string = util.StanderizeString(proposal.PoolName)
 			var description string = util.StanderizeString(proposal.Description)
-			if !strings.Contains(proposal.PoolID, keyword) && !strings.Contains(poolName, keyword) && !strings.Contains(description, keyword) {
+			if !strings.Contains(proposal.PoolID, req.Keyword) && !strings.Contains(poolName, req.Keyword) && !strings.Contains(description, req.Keyword) {
 				continue
 			}
 		}
@@ -597,46 +640,35 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 		filteredProposals = append(filteredProposals, proposal)
 	}
 
-	if req.SortOrder != "" {
-		sort.Slice(filteredProposals, func(i, j int) bool {
-			if req.SortCriteria == "withdraw_amount" {
-				withdrawAmount1, _ := strconv.ParseInt(filteredProposals[i].WithdrawAmount, 10, 64)
-				withdrawAmount2, _ := strconv.ParseInt(filteredProposals[j].WithdrawAmount, 10, 64)
-				if req.SortOrder == "desc" {
-					return withdrawAmount2 > withdrawAmount1
-				}
-
-				return withdrawAmount2 < withdrawAmount1
-			} else if req.SortCriteria == "closed_at" {
-				closedAt1, _ := strconv.ParseInt(filteredProposals[i].ClosedAt, 10, 64)
-				closedAt2, _ := strconv.ParseInt(filteredProposals[j].ClosedAt, 10, 64)
-				var closedPeriod1 = util.MilliSecToTime(closedAt1)
-				var closedPeriod2 = util.MilliSecToTime(closedAt2)
-				if req.SortOrder == "desc" {
-					return closedPeriod2.After(closedPeriod1)
-				}
-
-				return closedPeriod2.Before(closedPeriod1)
+	sort.Slice(filteredProposals, func(i, j int) bool {
+		if req.SortCriteria == "withdraw_amount" {
+			withdrawAmount1, _ := strconv.ParseInt(filteredProposals[i].WithdrawAmount, 10, 64)
+			withdrawAmount2, _ := strconv.ParseInt(filteredProposals[j].WithdrawAmount, 10, 64)
+			if req.SortOrder == "DESC" {
+				return withdrawAmount2 > withdrawAmount1
 			}
 
-			if req.SortOrder == "asc" {
-				return false
+			return withdrawAmount2 < withdrawAmount1
+		} else if req.SortCriteria == "closed_at" {
+			closedAt1, _ := strconv.ParseInt(filteredProposals[i].ClosedAt, 10, 64)
+			closedAt2, _ := strconv.ParseInt(filteredProposals[j].ClosedAt, 10, 64)
+			var closedPeriod1 = util.MilliSecToTime(closedAt1)
+			var closedPeriod2 = util.MilliSecToTime(closedAt2)
+			if req.SortOrder == "DESC" {
+				return closedPeriod2.After(closedPeriod1)
 			}
 
-			return true
-		})
-	}
+			return closedPeriod2.Before(closedPeriod1)
+		}
 
-	var page int = req.Page
-	if page < 1 {
-		page = 1
-	}
+		if req.SortOrder == "ASC" {
+			return false
+		}
 
-	if req.PageSize < 1 {
-		req.PageSize = default_page_size
-	}
+		return true
+	})
 
-	var skippedRecords int = (page - 1) * req.PageSize
+	var skippedRecords int = (req.Page - 1) * req.PageSize
 	if len(filteredProposals) <= skippedRecords {
 		return response.PaginationDataResponse{}, nil
 	}
@@ -646,12 +678,16 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 		data = append(data, filteredProposals[i].ToMinimumWithdrawProposalResponse())
 	}
 
-	return response.PaginationDataResponse{
+	res = response.PaginationDataResponse{
 		Data:       data,
 		Amount:     len(data),
-		Page:       page,
-		TotalPages: int(math.Ceil(float64(len(filteredProposals)) / float64(withdraw_proposal_records_limit))),
-	}, nil
+		Page:       req.Page,
+		TotalPages: int(math.Ceil(float64(len(filteredProposals)) / float64(req.PageSize))),
+	}
+
+	w.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, nil
 }
 
 // VoteWithdrawProposal implements business.IWithdrawProposalService.
@@ -716,4 +752,44 @@ func (w *withdrawProposalService) VoteWithdrawProposal(id string, req request.Vo
 	return response.BuildTransactionResponse{
 		TxBytes: txBytes,
 	}, err
+}
+
+func (w *withdrawProposalService) getGetWithdrawProposalsRedisKey(req request.GetWithdrawProposalsRequest) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var creator string = "empty"
+	if req.Creator != "" {
+		creator = req.Creator
+	}
+
+	var minAmount string = "empty"
+	if req.MinAmount != nil {
+		minAmount = fmt.Sprintf("%d", *req.MinAmount)
+	}
+
+	var maxAmount string = "empty"
+	if req.MaxAmount != nil {
+		maxAmount = fmt.Sprintf("%d", *req.MaxAmount)
+	}
+
+	var isExecuted string = "empty"
+	if req.IsExecuted != nil {
+		isExecuted = fmt.Sprintf("%b", *req.IsExecuted)
+	}
+
+	var isClosed string = "empty"
+	if req.IsClosed != nil {
+		isClosed = fmt.Sprintf("%b", *req.IsClosed)
+	}
+
+	var sortCriteria string = "empty"
+	if req.SortCriteria != "" {
+		sortCriteria = req.SortCriteria
+	}
+
+	return fmt.Sprintf("withdraw_proposal:kw:%s:of:%s:min:%s:max:%s:executed:%s:closed:%s:sc:%s:o:%s:s:%d:p:%d",
+		keyword, creator, minAmount, maxAmount, isExecuted, isClosed, sortCriteria, req.SortOrder, req.PageSize, req.Page)
 }

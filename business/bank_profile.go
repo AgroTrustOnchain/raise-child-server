@@ -127,7 +127,7 @@ func (b *bankProfileService) CreateBankProfile(req request.CreateBankProfileRequ
 	var curTime time.Time = time.Now()
 	var bankProfile = entities.BankProfile{
 		ID:               util.GenerateId(),
-		Sub:              ctx.Value("sub").(string),
+		ProfileID:        ctx.Value("sub").(string),
 		Owner:            sender,
 		BankOrg:          strings.TrimSpace(req.BankOrg),
 		BankCode:         strings.TrimSpace(req.BankCode),
@@ -154,7 +154,7 @@ func (b *bankProfileService) GetBankProfile(id string, ctx context.Context) (res
 	}
 
 	var address string = ctx.Value("address").(string)
-	if res.Sub != ctx.Value("sub").(string) || res.Owner != address {
+	if res.ProfileID != ctx.Value("sub").(string) || res.Owner != address {
 		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 			Client:    b.clients[constant.SuiTestnet],
 			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
@@ -188,7 +188,7 @@ func (b *bankProfileService) GetBankProfileByOwner(id string, ctx context.Contex
 	}
 
 	var address string = ctx.Value("address").(string)
-	if res.Sub != ctx.Value("sub").(string) || res.Owner != address || id != address {
+	if res.ProfileID != ctx.Value("sub").(string) || res.Owner != address || id != address {
 		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 			Client:    b.clients[constant.SuiTestnet],
 			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),

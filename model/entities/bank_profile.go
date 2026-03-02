@@ -7,7 +7,7 @@ import (
 
 type BankProfile struct {
 	ID               string    `json:"id"`
-	Sub              string    `json:"sub"`
+	ProfileID        string    `json:"profile_id"`
 	Owner            string    `json:"owner"`
 	BankOrg          string    `json:"bank_org"`
 	BankCode         string    `json:"bank_code"`

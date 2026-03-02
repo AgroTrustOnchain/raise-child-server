@@ -17,6 +17,7 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 	"slices"
@@ -50,6 +51,7 @@ const (
 type registrationRequestService struct {
 	registrationRequestRepo i_repository.IRegistrationRequestRepository
 	profileRepo             i_repository.IProfileRepository
+	redisCache              cache.IRedisCache
 	clients                 map[string]sui.ISuiAPI
 	errLogger               *log.Logger
 }
@@ -63,6 +65,21 @@ func InitializeRegistrationRequestService(db *sql.DB, errLogger *log.Logger) bus
 	}
 }
 
+func initializeRegistrationRequestService(
+	registrationRequestRepo i_repository.IRegistrationRequestRepository,
+	profileRepo i_repository.IProfileRepository,
+	clients map[string]sui.ISuiAPI,
+	errLogger *log.Logger,
+) business.IRegistrationRequestService {
+	return &registrationRequestService{
+		registrationRequestRepo: registrationRequestRepo,
+		profileRepo:             profileRepo,
+		redisCache:              cache.InitializeRedisCache(),
+		clients:                 clients,
+		errLogger:               errLogger,
+	}
+}
+
 func GenerateRegistrationRequestService() (business.IRegistrationRequestService, error) {
 	var errLogger = util.GetLogConfig(shared.ERROR_LEVEL)
 
@@ -71,7 +88,13 @@ func GenerateRegistrationRequestService() (business.IRegistrationRequestService,
 		return nil, err
 	}
 
-	return InitializeRegistrationRequestService(cnn, errLogger), nil
+	//return InitializeRegistrationRequestService(cnn, errLogger), nil
+	return initializeRegistrationRequestService(
+		repository.InitializeRegistrationRequestRepo(cnn, errLogger),
+		repository.InitializeProfileRepository(cnn, errLogger),
+		_networkAliases,
+		errLogger,
+	), nil
 }
 
 // ConfirmRegistrationRequest implements business.IRegistrationRequestService.
@@ -281,7 +304,7 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 	var curTime time.Time = time.Now()
 	var request = entities.RegistrationRequest{
 		ID:                   util.GenerateId(),
-		Sub:                  ctx.Value("sub").(string),
+		ProfileID:            ctx.Value("sub").(string),
 		RegisterRole:         role,
 		IdentityCode:         util.StanderizeString(profile.IdentityCode),
 		IdentityCardBlobID:   strings.TrimSpace(req.IdentityCardBlobID),
@@ -316,12 +339,19 @@ func (r *registrationRequestService) GetRegistrationRequest(id string, ctx conte
 
 // GetRegistrationRequests implements business.IRegistrationRequestService.
 func (r *registrationRequestService) GetRegistrationRequests(req request.GetRegistrationRequests, ctx context.Context) (response.PaginationDataResponse, error) {
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
 	if req.Page < 1 {
 		req.Page = 1
 	}
 
 	if req.PageSize < 1 {
 		req.PageSize = default_page_size
+	}
+
+	var res response.PaginationDataResponse
+	var redisKey string = r.getGetRegistrationRequestsRedisKey(req)
+	if r.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
 	}
 
 	data, pages, err := r.registrationRequestRepo.GetRegistrationRequests(req, ctx)
@@ -332,12 +362,16 @@ func (r *registrationRequestService) GetRegistrationRequests(req request.GetRegi
 		amount = len(data)
 	}
 
-	return response.PaginationDataResponse{
+	res = response.PaginationDataResponse{
 		Data:       data,
 		Amount:     amount,
 		Page:       req.Page,
 		TotalPages: pages,
-	}, err
+	}
+
+	r.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, err
 }
 
 // GetWalletRegistrationRequests implements business.IRegistrationRequestService.
@@ -407,4 +441,44 @@ func (r *registrationRequestService) VoteRegistrationRequest(id string, req requ
 	request.UpdatedAt = time.Now()
 
 	return r.registrationRequestRepo.UpdateRegistrationRequest(*request, ctx)
+}
+
+func (r *registrationRequestService) getGetRegistrationRequestsRedisKey(req request.GetRegistrationRequests) string {
+	var role string = "empty"
+	if req.RegisterRole != "" {
+		role = req.RegisterRole
+	}
+
+	var isAvailable string = "empty"
+	if req.IsAvailableToConfirm != nil {
+		isAvailable = fmt.Sprintf("%b", *req.IsAvailableToConfirm)
+	}
+
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var region string = "empty"
+	if req.Region != "" {
+		region = req.Region
+	}
+
+	var gender string = "empty"
+	if req.Gender != "" {
+		gender = req.Gender
+	}
+
+	var status string = "empty"
+	if req.Status != "" {
+		status = req.Status
+	}
+
+	var isClosed string = "empty"
+	if req.IsClosed != nil {
+		isClosed = fmt.Sprintf("%b", *req.IsClosed)
+	}
+
+	return fmt.Sprintf("registration_req:role:%s:available:%s:kw:%s:r:%s:g:%s:status:%s:closed:%s:o:%s:s:%d:p:%d",
+		role, isAvailable, keyword, region, gender, status, isClosed, req.SortOrder, req.PageSize, req.Page)
 }

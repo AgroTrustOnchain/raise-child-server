@@ -39,7 +39,7 @@ type LocalLeaderRegistrationRequest struct {
 
 type RegistrationRequest struct {
 	ID                   string    `json:"id"`
-	Sub                  string    `json:"sub"`
+	ProfileID            string    `json:"profile_id"`
 	RegisterRole         string    `json:"register_role"`
 	IdentityCode         string    `json:"identity_code"`
 	IdentityCardBlobID   string    `json:"identity_card_blob_id"`

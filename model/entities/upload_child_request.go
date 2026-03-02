@@ -4,7 +4,7 @@ import "time"
 
 type UploadChildRequest struct {
 	ID              string    `json:"id"`
-	Sub             string    `json:"sub"`
+	ProfileID       string    `json:"profile_id"`
 	IdentityCode    string    `json:"identity_code"`
 	AvatarBlobId    string    `json:"avatar_blob_id" validate:"required"`
 	Region          string    `json:"region" validate:"required"`

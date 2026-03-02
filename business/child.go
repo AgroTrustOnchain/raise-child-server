@@ -24,6 +24,7 @@ import (
 	"raise-child/model/dtos/response"
 	"raise-child/model/entities"
 	"raise-child/util"
+	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 	"slices"
@@ -45,6 +46,7 @@ type childService struct {
 	bankRepo          i_repository.IBankProfileRepository
 	volunteerNotiRepo i_repository.IVolunteerNotiRepository
 	leaderNotiRepo    i_repository.ILeaderNotiRepository
+	redisCache        cache.IRedisCache
 	clients           map[string]sui.ISuiAPI
 	errLogger         *log.Logger
 }
@@ -58,6 +60,7 @@ func InitializeChildService(db *sql.DB, errLogger *log.Logger) business.IChildSe
 		bankRepo:          repository.InitializeBankProfileRepository(db, errLogger),
 		volunteerNotiRepo: repository.InitializeVolunteerNotiRepository(db, errLogger),
 		leaderNotiRepo:    repository.InitializeLeaderNotiRepository(db, errLogger),
+		redisCache:        cache.InitializeRedisCache(),
 		clients:           _networkAliases,
 		errLogger:         errLogger,
 	}
@@ -80,8 +83,14 @@ const (
 
 // GetChild implements business.IChildService.
 func (c *childService) GetChild(id string, ctx context.Context) (response.ChildResponse, error) {
-	if utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.ChildResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	var res response.ChildResponse
+	var redisKey string = c.getGetChildRediskey(id)
+	if c.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
 	}
 
 	var client = c.clients[constant.SuiTestnet]
@@ -90,8 +99,11 @@ func (c *childService) GetChild(id string, ctx context.Context) (response.ChildR
 		ObjectId:  id,
 		ErrLogger: c.errLogger,
 	}, ctx)
+	if err != nil {
+		return response.ChildResponse{}, err
+	}
 
-	var res response.ChildResponse = child.ToChildResponse()
+	res = child.ToChildResponse()
 	if len(res.DynamicFields) > 0 {
 		// Has dynamic fields
 		if dynamicValues, _ := on_chain.GetDynamicFields(id, client, c.errLogger, ctx); dynamicValues != nil {
@@ -99,11 +111,29 @@ func (c *childService) GetChild(id string, ctx context.Context) (response.ChildR
 		}
 	}
 
+	c.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
 	return res, err
 }
 
 // GetChilds implements business.IChildService.
 func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Keyword = util.StanderizeString(req.Keyword)
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var res response.PaginationDataResponse
+	var redisKey string = c.getGetChildrenRediskey(req)
+	if c.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
 	var client = c.clients[constant.SuiTestnet]
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
@@ -127,9 +157,12 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 		return response.PaginationDataResponse{}, nil
 	}
 
-	var page int = req.Page
-	if page < 1 {
-		page = 1
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
 	}
 
 	var keyword string = util.StanderizeString(req.Keyword)
@@ -168,24 +201,18 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 		filteredChildren = append(filteredChildren, child)
 	}
 
-	if req.SortOrder != "" {
-		sort.Slice(filteredChildren, func(i, j int) bool {
-			var name1 string = filteredChildren[i].LastName + " " + filteredChildren[i].FirstName
-			var name2 string = filteredChildren[j].LastName + " " + filteredChildren[j].FirstName
+	sort.Slice(filteredChildren, func(i, j int) bool {
+		var name1 string = filteredChildren[i].LastName + " " + filteredChildren[i].FirstName
+		var name2 string = filteredChildren[j].LastName + " " + filteredChildren[j].FirstName
 
-			if req.SortOrder == "asc" {
-				return name1 < name2
-			}
+		if req.SortOrder == "ASC" {
+			return name1 < name2
+		}
 
-			return name2 > name1
-		})
-	}
+		return name2 > name1
+	})
 
-	if req.PageSize < 1 {
-		req.PageSize = default_page_size
-	}
-
-	var skippedRecords int = (page - 1) * req.PageSize
+	var skippedRecords int = (req.Page - 1) * req.PageSize
 	if len(filteredChildren) <= skippedRecords {
 		return response.PaginationDataResponse{}, nil
 	}
@@ -195,12 +222,15 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 		data = append(data, filteredChildren[i].ToMinimumChildResponse())
 	}
 
-	return response.PaginationDataResponse{
+	res = response.PaginationDataResponse{
 		Data:       data,
 		Amount:     len(data),
-		Page:       page,
-		TotalPages: int(math.Ceil(float64(len(filteredChildren)) / float64(child_records_limit))),
-	}, nil
+		Page:       req.Page,
+		TotalPages: int(math.Ceil(float64(len(filteredChildren)) / float64(req.PageSize))),
+	}
+
+	c.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+	return res, nil
 }
 
 // UploadChild implements business.IChildService.
@@ -1007,7 +1037,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 		}, c.paymentRepo.CreatePayment(entities.Payment{
 			ID:            paymentId,
 			Actor:         ctx.Value("address").(string),
-			Sub:           profile.ID,
+			ProfileID:     profile.ID,
 			DonationID:    &donationId,
 			IsDonateTx:    true,
 			TransactionId: fmt.Sprint(orderCode),
@@ -1214,7 +1244,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 		}, c.paymentRepo.CreatePayment(entities.Payment{
 			ID:            paymentId,
 			Actor:         ctx.Value("address").(string),
-			Sub:           profile.ID,
+			ProfileID:     profile.ID,
 			DonationID:    &donationId,
 			IsDonateTx:    true,
 			TransactionId: fmt.Sprint(orderCode),
@@ -1297,7 +1327,7 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 		}, c.paymentRepo.CreatePayment(entities.Payment{
 			ID:            paymentId,
 			Actor:         ctx.Value("address").(string),
-			Sub:           profile.ID,
+			ProfileID:     profile.ID,
 			DonationID:    &donationId,
 			IsDonateTx:    true,
 			TransactionId: fmt.Sprint(orderCode),
@@ -1381,4 +1411,33 @@ func (c *childService) VoteSpecialNeedProposal(id string, req request.VoteReques
 	return response.BuildTransactionResponse{
 		TxBytes: txBytes,
 	}, err
+}
+
+func (c *childService) getGetChildrenRediskey(req request.GetChildrenRequest) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var region string = "empty"
+	if req.Region != "" {
+		region = req.Region
+	}
+
+	var yob string = "empty"
+	if req.YearOfBirth != nil {
+		yob = fmt.Sprintf("%d", *req.YearOfBirth)
+	}
+
+	var gender string = "empty"
+	if req.Gender != "" {
+		gender = req.Gender
+	}
+
+	return fmt.Sprintf("child:kw:%s:r:%s:y:%s:o:%s:g:%s:s:%d:p:%d",
+		keyword, region, yob, req.SortOrder, gender, req.PageSize, req.Page)
+}
+
+func (c *childService) getGetChildRediskey(id string) string {
+	return fmt.Sprintf("child:%s", id)
 }

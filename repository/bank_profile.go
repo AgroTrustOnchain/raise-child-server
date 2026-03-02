@@ -29,13 +29,13 @@ func InitializeBankProfileRepository(db *sql.DB, errLogger *log.Logger) reposito
 // CreateBankProfile implements repository.IBankProfileRepository.
 func (b *bankProfileRepo) CreateBankProfile(bp entities.BankProfile, ctx context.Context) error {
 	var query string = "INSERT INTO " + bank_profile_table +
-		" (id, sub, owner, bank_org, bank_code, owner_name, " +
+		" (id, profile_id, owner, bank_org, bank_code, owner_name, " +
 		"payos_client_id, payos_api_key, payos_check_sum_key, " +
 		"created_at, updated_at) " +
 		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.BANK_PROFILE_REPOSITORY) + "CreatePayment - "
 
-	if _, err := b.db.ExecContext(ctx, query, bp.ID, bp.Sub, bp.Owner, bp.BankOrg, bp.BankCode, bp.OwnerName,
+	if _, err := b.db.ExecContext(ctx, query, bp.ID, bp.ProfileID, bp.Owner, bp.BankOrg, bp.BankCode, bp.OwnerName,
 		bp.PayosClientID, bp.PayosApiKey, bp.PayosCheckSumKey,
 		bp.CreatedAt, bp.UpdatedAt); err != nil {
 
@@ -53,7 +53,7 @@ func (b *bankProfileRepo) GetBankProfileById(id string, ctx context.Context) (*e
 
 	var res entities.BankProfile
 	if err := b.db.QueryRowContext(ctx, query, id).Scan(
-		&res.ID, &res.Sub, &res.Owner, &res.BankOrg, &res.BankCode, &res.OwnerName,
+		&res.ID, &res.ProfileID, &res.Owner, &res.BankOrg, &res.BankCode, &res.OwnerName,
 		&res.PayosClientID, &res.PayosApiKey, &res.PayosCheckSumKey,
 		&res.CreatedAt, &res.UpdatedAt); err != nil {
 
@@ -75,7 +75,7 @@ func (b *bankProfileRepo) GetBankProfileByOwner(owner string, ctx context.Contex
 
 	var res entities.BankProfile
 	if err := b.db.QueryRowContext(ctx, query, owner).Scan(
-		&res.ID, &res.Sub, &res.Owner, &res.BankOrg, &res.BankCode, &res.OwnerName,
+		&res.ID, &res.ProfileID, &res.Owner, &res.BankOrg, &res.BankCode, &res.OwnerName,
 		&res.PayosClientID, &res.PayosApiKey, &res.PayosCheckSumKey,
 		&res.CreatedAt, &res.UpdatedAt); err != nil {
 
@@ -118,13 +118,13 @@ func (b *bankProfileRepo) UpdateBankProfile(bp entities.BankProfile, ctx context
 }
 
 // IsBankWithSubExist implements repository.IBankProfileRepository.
-func (b *bankProfileRepo) IsBankWithSubExist(sub string, ctx context.Context) (bool, error) {
-	var query string = "SELECT id FROM " + bank_profile_table + " WHERE sub = $1 LIMIT 1"
+func (b *bankProfileRepo) IsBankWithSubExist(profile_id string, ctx context.Context) (bool, error) {
+	var query string = "SELECT id FROM " + bank_profile_table + " WHERE profile_id = $1 LIMIT 1"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.BANK_PROFILE_REPOSITORY) + "IsBankWithSubExist - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var id string
-	if err := b.db.QueryRowContext(ctx, query, sub).Scan(&id); err != nil {
+	if err := b.db.QueryRowContext(ctx, query, profile_id).Scan(&id); err != nil {
 		b.errLogger.Println(errLogMsg + err.Error())
 		return false, internalErr
 	}

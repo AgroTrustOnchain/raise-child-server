@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"raise-child/constants/env"
 	"raise-child/constants/noti"
@@ -14,6 +15,7 @@ import (
 	"raise-child/model/dtos/response"
 	"raise-child/model/entities"
 	"raise-child/util"
+	"raise-child/util/cache"
 	on_chain "raise-child/util/on_chain"
 	"sort"
 	"strings"
@@ -26,14 +28,16 @@ import (
 )
 
 type staffService struct {
-	clients   map[string]sui.ISuiAPI
-	errLogger *log.Logger
+	redisCache cache.IRedisCache
+	clients    map[string]sui.ISuiAPI
+	errLogger  *log.Logger
 }
 
 func InitializeStaffService(errLogger *log.Logger) business.IStaffService {
 	return &staffService{
-		clients:   _networkAliases,
-		errLogger: errLogger,
+		redisCache: cache.InitializeRedisCache(),
+		clients:    _networkAliases,
+		errLogger:  errLogger,
 	}
 }
 
@@ -79,6 +83,23 @@ func (s *staffService) GetStaff(id string, ctx context.Context) (response.StaffR
 
 // GetStaffs implements business.IStaffService.
 func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	req.Keyword = util.StanderizeString(req.Keyword)
+	req.Region = util.StanderizeString(req.Region)
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var res response.PaginationDataResponse
+	var redisKey string = s.getGetStaffsRedisKey(req)
+	if s.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
 	var client = s.clients[constant.SuiTestnet]
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
@@ -104,13 +125,6 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 		return response.PaginationDataResponse{}, nil
 	}
 
-	var page int = 1
-	if req.Page > 0 {
-		page = req.Page
-	}
-
-	var keyword string = util.StanderizeString(req.Keyword)
-	var region string = util.StanderizeString(req.Region)
 	var filteredStaffs []entities.StaffNft
 	for i := len(staffs) - 1; i >= 0; i-- {
 		var staff entities.StaffNft = staffs[i]
@@ -121,8 +135,8 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 			}
 		}
 
-		if region != "" {
-			if util.StanderizeString(staff.Region) != region { // Not matched
+		if req.Region != "" {
+			if util.StanderizeString(staff.Region) != req.Region { // Not matched
 				continue
 			}
 		}
@@ -140,10 +154,10 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 			}
 		}
 
-		if keyword != "" {
+		if req.Keyword != "" {
 			var firstName string = util.StanderizeString(staff.FirstName)
 			var lastName string = util.StanderizeString(staff.LastName)
-			if !strings.Contains(firstName, keyword) && !strings.Contains(lastName, keyword) && !strings.Contains(staff.IdentityCode, keyword) && !strings.Contains(staff.PhoneNumber, keyword) && !strings.Contains(staff.Email, keyword) { // Not matched
+			if !strings.Contains(firstName, req.Keyword) && !strings.Contains(lastName, req.Keyword) && !strings.Contains(staff.IdentityCode, req.Keyword) && !strings.Contains(staff.PhoneNumber, req.Keyword) && !strings.Contains(staff.Email, req.Keyword) { // Not matched
 				continue
 			}
 		}
@@ -151,43 +165,70 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 		filteredStaffs = append(filteredStaffs, staff)
 	}
 
-	if req.SortOrder != "" {
-		sort.Slice(filteredStaffs, func(i, j int) bool {
-			var name1 string = filteredStaffs[i].LastName + " " + filteredStaffs[i].FirstName
-			var name2 string = filteredStaffs[j].LastName + " " + filteredStaffs[j].FirstName
+	sort.Slice(filteredStaffs, func(i, j int) bool {
+		var name1 string = filteredStaffs[i].LastName + " " + filteredStaffs[i].FirstName
+		var name2 string = filteredStaffs[j].LastName + " " + filteredStaffs[j].FirstName
 
-			if req.SortOrder == "asc" {
-				return name1 < name2
-			}
+		if req.SortOrder == "ASC" {
+			return name1 < name2
+		}
 
-			return name2 > name1
-		})
-	}
+		return name2 > name1
+	})
 
-	if req.PageSize < 1 {
-		req.PageSize = default_page_size
-	}
-
-	var skippedRecords int = (page - 1) * req.PageSize
+	var skippedRecords int = (req.Page - 1) * req.PageSize
 	if len(filteredStaffs) <= skippedRecords {
 		return response.PaginationDataResponse{}, err
 	}
-
-	var totalPages int = len(filteredStaffs)/staff_records_limit + 1
 
 	var data []response.StaffNftResponse
 	for i := skippedRecords; i < len(filteredStaffs); i++ {
 		data = append(data, filteredStaffs[i].ToStaffNftResponse())
 	}
 
-	return response.PaginationDataResponse{
+	res = response.PaginationDataResponse{
 		Data:       data,
-		Page:       page,
-		TotalPages: totalPages,
-	}, nil
+		Amount:     len(data),
+		Page:       req.Page,
+		TotalPages: int(math.Ceil(float64(len(filteredStaffs)) / float64(req.PageSize))),
+	}
+
+	s.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, nil
 }
 
 // GetStaffsV2 implements business.IStaffService.
 func (s *staffService) GetStaffsV2(req request.GetStaffsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
 	panic("unimplemented")
+}
+
+func (s *staffService) getGetStaffsRedisKey(req request.GetStaffsRequest) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var role string = "empty"
+	if req.Role != "" {
+		role = req.Role
+	}
+
+	var region string = "empty"
+	if req.Region != "" {
+		region = req.Region
+	}
+
+	var gender string = "empty"
+	if req.Gender != "" {
+		gender = req.Gender
+	}
+
+	var yob string = "empty"
+	if req.YearOfBirth != nil {
+		yob = fmt.Sprintf("%d", *req.YearOfBirth)
+	}
+
+	return fmt.Sprintf("staff:kw:%s:role:%s:region:%s:g:%s:y:%s:o:%s:s:%d:p:%d",
+		keyword, role, region, gender, yob, req.SortOrder, req.PageSize, req.Page)
 }

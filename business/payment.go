@@ -183,7 +183,7 @@ func (p *paymentService) ConfirmWithdrawProposal(id string, ctx context.Context)
 // Donate implements business.IPaymentService.
 func (p *paymentService) Donate(req request.DonateRequest, ctx context.Context) (response.UrlAPIResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !utils.IsValidSuiAddress(models.SuiAddress(req.PoolId)) {
+	if !util.IsValidSuiAddressStrict(req.PoolId) {
 		return response.UrlAPIResponse{}, genericErr
 	}
 	profile, err := p.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
@@ -236,7 +236,7 @@ func (p *paymentService) Donate(req request.DonateRequest, ctx context.Context) 
 		}, p.paymentRepo.CreatePayment(entities.Payment{
 			ID:            paymentId,
 			Actor:         ctx.Value("address").(string),
-			Sub:           profile.ID,
+			ProfileID:     profile.ID,
 			DonationID:    &donationId,
 			IsDonateTx:    true,
 			TransactionId: fmt.Sprint(orderCode),
@@ -304,7 +304,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 		}), nil
 	}
 
-	profile, err := p.profileRepo.GetProfile(payment.Sub, ctx)
+	profile, err := p.profileRepo.GetProfile(payment.ProfileID, ctx)
 	if err != nil {
 		return "", err
 	}
@@ -700,7 +700,7 @@ func (p *paymentService) CallbackWithAuth(id string, capturedImgBlobId string, c
 		}), nil
 	}
 
-	profile, err := p.profileRepo.GetProfile(payment.Sub, ctx)
+	profile, err := p.profileRepo.GetProfile(payment.ProfileID, ctx)
 	if err != nil {
 		return "", err
 	}

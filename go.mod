@@ -32,10 +32,11 @@ require (
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/payOSHQ/payos-lib-golang v1.0.7 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/redis/go-redis/v9 v9.17.2 // indirect
+	github.com/redis/go-redis/v9 v9.18.0 // indirect
 	github.com/samber/lo v1.49.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

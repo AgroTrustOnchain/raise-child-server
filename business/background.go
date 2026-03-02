@@ -71,14 +71,7 @@ func (b *backgroundService) ProcessBackgroundCenterRequests(ctx context.Context)
 	var module = on_chain.InitializeModuleManage()
 	for i, req := range approvedRes {
 		modules[i] = module.GetModule()
-		switch req.Role {
-		case admin_role:
-			functions[i] = module.GetFunctionMintRegisterAdminCap()
-		case local_leader_role:
-			functions[i] = module.GetFunctionMintRegisterLeaderCap()
-		case volunteer_role:
-			functions[i] = module.GetFunctionMintRegisterVolunteerCap()
-		}
+		functions[i] = module.GetFunctionMintUploadCenterCap()
 		args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
 			Recipient: req.Sender,
 		}))
@@ -122,7 +115,14 @@ func (b *backgroundService) ProcessBackgroundRegistrationRequests(ctx context.Co
 	var module = on_chain.InitializeModuleManage()
 	for i, req := range approvedRes {
 		modules[i] = module.GetModule()
-		functions[i] = module.GetFunctionMintUploadCenterCap()
+		switch req.Role {
+		case admin_role:
+			functions[i] = module.GetFunctionMintRegisterAdminCap()
+		case local_leader_role:
+			functions[i] = module.GetFunctionMintRegisterLeaderCap()
+		case volunteer_role:
+			functions[i] = module.GetFunctionMintRegisterVolunteerCap()
+		}
 		args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
 			Recipient: req.Sender,
 		}))
@@ -143,44 +143,44 @@ func (b *backgroundService) ProcessBackgroundRegistrationRequests(ctx context.Co
 
 // ProcessBackgroundUploadChildRequests implements business.IBackgroundService.
 func (b *backgroundService) ProcessBackgroundUploadChildRequests(ctx context.Context) {
-	pendingRes, approvedRes, err := b.uploadChildRequestRepo.GetPendingRequests(ctx)
-	if err != nil {
-		return
-	}
+	// pendingRes, approvedRes, err := b.uploadChildRequestRepo.GetPendingRequests(ctx)
+	// if err != nil {
+	// 	return
+	// }
 
-	var refusedReqs []entities.BackgroundRecord
-	for _, req := range pendingRes {
-		var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
-		if rate >= approve_rate_limit {
-			approvedRes = append(approvedRes, req)
-		} else {
-			refusedReqs = append(refusedReqs, req)
-		}
-	}
+	// var refusedReqs []entities.BackgroundRecord
+	// for _, req := range pendingRes {
+	// 	var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
+	// 	if rate >= approve_rate_limit {
+	// 		approvedRes = append(approvedRes, req)
+	// 	} else {
+	// 		refusedReqs = append(refusedReqs, req)
+	// 	}
+	// }
 
-	b.uploadChildRequestRepo.SetRefusedStatuses(refusedReqs, ctx)
+	// b.uploadChildRequestRepo.SetRefusedStatuses(refusedReqs, ctx)
 
-	var modules []string
-	var functions []string
-	var args [][]interface{}
-	var module = on_chain.InitializeModuleManage()
-	for i, req := range approvedRes {
-		modules[i] = module.GetModule()
-		functions[i] = module.GetFunctionMintUploadCenterCap()
-		args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
-			Recipient: req.Sender,
-		}))
-	}
+	// var modules []string
+	// var functions []string
+	// var args [][]interface{}
+	// var module = on_chain.InitializeModuleManage()
+	// for i, req := range approvedRes {
+	// 	modules[i] = module.GetModule()
+	// 	functions[i] = module.GetFunctionMintUploadCenterCap()
+	// 	args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
+	// 		Recipient: req.Sender,
+	// 	}))
+	// }
 
-	if err := on_chain.BuildMultiBackgroundTransactions(on_chain.BuildMultiBackgroundTransactionsRequest{
-		Client:    b.clients[constant.SuiTestnet],
-		Modules:   modules,
-		Functions: functions,
-		Arguments: args,
-		ErrLogger: b.errLogger,
-	}, ctx); err != nil {
-		return
-	}
+	// if err := on_chain.BuildMultiBackgroundTransactions(on_chain.BuildMultiBackgroundTransactionsRequest{
+	// 	Client:    b.clients[constant.SuiTestnet],
+	// 	Modules:   modules,
+	// 	Functions: functions,
+	// 	Arguments: args,
+	// 	ErrLogger: b.errLogger,
+	// }, ctx); err != nil {
+	// 	return
+	// }
 
-	b.uploadChildRequestRepo.SetApprovedStatuses(approvedRes, ctx)
+	// b.uploadChildRequestRepo.SetApprovedStatuses(approvedRes, ctx)
 }

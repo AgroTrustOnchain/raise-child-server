@@ -33,6 +33,7 @@ type Center struct {
 	CenterPhoneNumber string   `json:"center_phone_number"`
 	ImageBlobIDs      []string `json:"image_blob_ids"`
 	Gifts             []string `json:"gifts"`
+	AllGifts          []string `json:"all_gifts"`
 	UploadedAt        string   `json:"uploaded_at"`
 	UpdatedAt         string   `json:"updated_at"`
 }

@@ -61,7 +61,7 @@ func (r *registratioRequestRepo) GetRoleRegistrationRequests(role string, ctx co
 		// }
 
 		if err := rows.Scan(
-			&x.ID, &x.Sub, &x.RegisterRole, &x.IdentityCode, &x.IdentityCardBlobID,
+			&x.ID, &x.ProfileID, &x.RegisterRole, &x.IdentityCode, &x.IdentityCardBlobID,
 			&x.AvatarBlobID, &x.Region, &x.FirstName, &x.LastName, &x.Gender,
 			&x.DateOfBirth, &x.PhoneNumber, &x.Email, pq.Array(&x.Approvers), pq.Array(&x.Refusers),
 			pq.Array(&x.RefuseReasons), &x.Status, &x.IsAvailableToConfirm, &x.IsConfirmRegister,
@@ -80,7 +80,7 @@ func (r *registratioRequestRepo) GetRoleRegistrationRequests(role string, ctx co
 // CreateRegistrationRequest implements repository.IRegistrationRequestRepository.
 func (r *registratioRequestRepo) CreateRegistrationRequest(req entities.RegistrationRequest, ctx context.Context) error {
 	var query string = "INSERT INTO " + registraion_request_table +
-		" (id, sub, register_role, identity_code, identity_card_blob_id, avatar_blob_id, " +
+		" (id, profile_id, register_role, identity_code, identity_card_blob_id, avatar_blob_id, " +
 		"region, first_name, last_name, gender, date_of_birth, phone_number, email, " +
 		"approvers, refusers, refuse_reasons, status, is_available_to_confirm, is_confirm_register, " +
 		"created_by, created_at, updated_at, closed_at) " +
@@ -89,7 +89,7 @@ func (r *registratioRequestRepo) CreateRegistrationRequest(req entities.Registra
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.REGISTRAION_REQUEST_REPOSITORY) + "CreateRegistrationRequest - "
 
-	if _, err := r.db.ExecContext(ctx, query, req.ID, req.Sub, req.RegisterRole, req.IdentityCode, req.IdentityCardBlobID,
+	if _, err := r.db.ExecContext(ctx, query, req.ID, req.ProfileID, req.RegisterRole, req.IdentityCode, req.IdentityCardBlobID,
 		req.AvatarBlobID, req.Region, req.FirstName, req.LastName, req.Gender,
 		req.DateOfBirth, req.PhoneNumber, req.Email, pq.Array(req.Approvers), pq.Array(req.Refusers),
 		pq.Array(req.RefuseReasons), req.Status, req.IsAvailableToConfirm, req.IsConfirmRegister,
@@ -142,7 +142,7 @@ func (r *registratioRequestRepo) GetRegistrationRequest(id string, ctx context.C
 
 	var res entities.RegistrationRequest
 	if err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&res.ID, &res.Sub, &res.RegisterRole, &res.IdentityCode, &res.IdentityCardBlobID,
+		&res.ID, &res.ProfileID, &res.RegisterRole, &res.IdentityCode, &res.IdentityCardBlobID,
 		&res.AvatarBlobID, &res.Region, &res.FirstName, &res.LastName, &res.Gender,
 		&res.DateOfBirth, &res.PhoneNumber, &res.Email, pq.Array(&res.Approvers), pq.Array(&res.Refusers),
 		pq.Array(&res.RefuseReasons), &res.Status, &res.IsAvailableToConfirm, &res.IsConfirmRegister,
@@ -270,7 +270,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 		// }
 
 		if err := rows.Scan(
-			&x.ID, &x.Sub, &x.RegisterRole, &x.IdentityCode, &x.IdentityCardBlobID,
+			&x.ID, &x.ProfileID, &x.RegisterRole, &x.IdentityCode, &x.IdentityCardBlobID,
 			&x.AvatarBlobID, &x.Region, &x.FirstName, &x.LastName, &x.Gender,
 			&x.DateOfBirth, &x.PhoneNumber, &x.Email, pq.Array(&x.Approvers), pq.Array(&x.Refusers),
 			pq.Array(&x.RefuseReasons), &x.Status, &x.IsAvailableToConfirm, &x.IsConfirmRegister,
@@ -305,7 +305,7 @@ func (r *registratioRequestRepo) GetWalletRegistrationRequests(id string, ctx co
 	for rows.Next() {
 		var x entities.RegistrationRequest
 		if err := rows.Scan(
-			&x.ID, &x.Sub, &x.RegisterRole, &x.IdentityCode, &x.IdentityCardBlobID,
+			&x.ID, &x.ProfileID, &x.RegisterRole, &x.IdentityCode, &x.IdentityCardBlobID,
 			&x.AvatarBlobID, &x.Region, &x.FirstName, &x.LastName, &x.Gender,
 			&x.DateOfBirth, &x.PhoneNumber, &x.Email, pq.Array(&x.Approvers), pq.Array(&x.Refusers),
 			pq.Array(&x.RefuseReasons), &x.Status, &x.IsAvailableToConfirm, &x.IsConfirmRegister,

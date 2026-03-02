@@ -16,6 +16,7 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 	"time"
@@ -28,6 +29,7 @@ import (
 
 type regionService struct {
 	regionRepo i_repository.ISupportedRegionProposalRepository
+	redisCache cache.IRedisCache
 	clients    map[string]sui.ISuiAPI
 	regions    []string
 	errLogger  *log.Logger
@@ -41,6 +43,7 @@ func initalizeRegionService(regionRepo i_repository.ISupportedRegionProposalRepo
 	errLogger *log.Logger) business.IRegionService {
 	return &regionService{
 		regionRepo: regionRepo,
+		redisCache: cache.InitializeRedisCache(),
 		clients:    clients,
 		regions:    regions,
 		errLogger:  errLogger,
@@ -175,6 +178,13 @@ func (r *regionService) GetSupportedRegionProposal(id string, ctx context.Contex
 
 // GetSupportedRegionProposals implements business.IRegionService.
 func (r *regionService) GetSupportedRegionProposals(req request.GetSupportedRegionProposalsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	if req.CreatedBy != "" {
+		if !util.IsValidSuiAddressStrict(req.CreatedBy) {
+			return response.PaginationDataResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+		}
+	}
+
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
 	if req.PageSize < 1 {
 		req.PageSize = default_page_size
 	}
@@ -183,7 +193,12 @@ func (r *regionService) GetSupportedRegionProposals(req request.GetSupportedRegi
 		req.Page = 1
 	}
 
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	var res response.PaginationDataResponse
+	var redisKey string = r.getGetSupportedRegionProposalsRedisKey(req)
+	if r.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
 	data, pages, err := r.regionRepo.GetSupportedRegionProposals(req, ctx)
 	var amount int
 	if data == nil || len(data) == 0 {
@@ -192,12 +207,16 @@ func (r *regionService) GetSupportedRegionProposals(req request.GetSupportedRegi
 		amount = len(data)
 	}
 
-	return response.PaginationDataResponse{
+	res = response.PaginationDataResponse{
 		Data:       data,
 		Amount:     amount,
 		Page:       req.Page,
 		TotalPages: pages,
-	}, err
+	}
+
+	r.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, err
 }
 
 // GetRegions implements business.IRegionService.
@@ -205,6 +224,21 @@ func (r *regionService) GetRegions() response.RegionsResponse {
 	return response.RegionsResponse{
 		Regions: r.regions,
 	}
+}
+
+func (r *regionService) getGetSupportedRegionProposalsRedisKey(req request.GetSupportedRegionProposalsRequest) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var createdBy string = "empty"
+	if req.CreatedBy != "" {
+		createdBy = req.CreatedBy
+	}
+
+	return fmt.Sprintf("region_proposal:kw:%s:of:%s:o:%s:s:%d:p:%d",
+		keyword, createdBy, req.SortOrder, req.PageSize, req.Page)
 }
 
 func isRegionExist(region string) bool {

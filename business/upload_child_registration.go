@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"raise-child/constants/env"
@@ -16,6 +17,7 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 	"slices"
@@ -30,6 +32,7 @@ import (
 
 type uploadChildRequestService struct {
 	uploadChildRequestRepo i_repository.IUploadChildRequestRepository
+	redisCache             cache.IRedisCache
 	clients                map[string]sui.ISuiAPI
 	errLogger              *log.Logger
 }
@@ -42,6 +45,19 @@ func InitializeUploadChildRequestService(db *sql.DB, errLogger *log.Logger) busi
 	}
 }
 
+func initializeUploadChildRequestService(
+	uploadChildRequestRepo i_repository.IUploadChildRequestRepository,
+	clients map[string]sui.ISuiAPI,
+	errLogger *log.Logger,
+) business.IUploadChildRequestService {
+	return &uploadChildRequestService{
+		uploadChildRequestRepo: uploadChildRequestRepo,
+		redisCache:             cache.InitializeRedisCache(),
+		clients:                clients,
+		errLogger:              errLogger,
+	}
+}
+
 func GenerateUploadChildRequestService() (business.IUploadChildRequestService, error) {
 	var errLogger = util.GetLogConfig(shared.ERROR_LEVEL)
 
@@ -50,7 +66,9 @@ func GenerateUploadChildRequestService() (business.IUploadChildRequestService, e
 		return nil, err
 	}
 
-	return InitializeUploadChildRequestService(cnn, errLogger), nil
+	//return InitializeUploadChildRequestService(cnn, errLogger), nil
+
+	return initializeUploadChildRequestService(repository.InitializeUploadChildRequestRepo(cnn, errLogger), _networkAliases, errLogger), nil
 }
 
 // ConfirmUploadChildRequest implements business.IUploadChildRequestService.
@@ -185,7 +203,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 	var curTime time.Time = time.Now()
 	var request = entities.UploadChildRequest{
 		ID:           util.GenerateId(),
-		Sub:          ctx.Value("sub").(string),
+		ProfileID:    ctx.Value("sub").(string),
 		IdentityCode: identityCode,
 		AvatarBlobId: strings.TrimSpace(req.AvatarBlobId),
 		Region:       region,
@@ -214,7 +232,8 @@ func (u *uploadChildRequestService) GetUploadChildRequest(id string, ctx context
 
 // GetUploadChildRequests implements business.IUploadChildRequestService.
 func (u *uploadChildRequestService) GetUploadChildRequests(req request.GetUploadChildRequests, ctx context.Context) (response.PaginationDataResponse, error) {
-	if req.Page <= 0 {
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	if req.Page < 1 {
 		req.Page = 1
 	}
 
@@ -222,7 +241,17 @@ func (u *uploadChildRequestService) GetUploadChildRequests(req request.GetUpload
 		req.PageSize = default_page_size
 	}
 
+	var res response.PaginationDataResponse
+	var redisKey string = u.getGetUploadChildRequestsRedisKey(req)
+	if u.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
 	data, pages, err := u.uploadChildRequestRepo.GetUploadChildRequests(req, ctx)
+	if err != nil {
+		return response.PaginationDataResponse{}, err
+	}
+
 	var amount int
 	if data == nil || len(data) == 0 {
 		amount = 0
@@ -230,17 +259,21 @@ func (u *uploadChildRequestService) GetUploadChildRequests(req request.GetUpload
 		amount = len(data)
 	}
 
-	return response.PaginationDataResponse{
+	res = response.PaginationDataResponse{
 		Data:       data,
 		Amount:     amount,
 		Page:       req.Page,
 		TotalPages: pages,
-	}, err
+	}
+
+	u.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, nil
 }
 
 // GetWalletUploadChildRequests implements business.IUploadChildRequestService.
 func (u *uploadChildRequestService) GetWalletUploadChildRequests(id string, page int, ctx context.Context) (response.PaginationDataResponse, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -248,13 +281,34 @@ func (u *uploadChildRequestService) GetWalletUploadChildRequests(id string, page
 		page = 1
 	}
 
-	data, pages, err := u.uploadChildRequestRepo.GetWalletUploadChildRequests(id, page, ctx)
+	var res response.PaginationDataResponse
+	var redisKey string = u.getGetUploadChildRequestsOfWalletRedisKey(id, page)
+	if u.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
 
-	return response.PaginationDataResponse{
+	data, pages, err := u.uploadChildRequestRepo.GetWalletUploadChildRequests(id, page, ctx)
+	if err != nil {
+		return response.PaginationDataResponse{}, err
+	}
+
+	var amount int
+	if data == nil || len(data) == 0 {
+		amount = 0
+	} else {
+		amount = len(data)
+	}
+
+	res = response.PaginationDataResponse{
 		Data:       data,
+		Amount:     amount,
 		Page:       page,
 		TotalPages: pages,
-	}, err
+	}
+
+	u.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, nil
 }
 
 // VoteUploadChildRequest implements business.IUploadChildRequestService.
@@ -315,4 +369,38 @@ func (u *uploadChildRequestService) VoteUploadChildRequest(id string, req reques
 	request.UpdatedAt = time.Now()
 
 	return u.uploadChildRequestRepo.UpdateUploadChildRequest(*request, ctx)
+}
+
+func (u *uploadChildRequestService) getGetUploadChildRequestsRedisKey(req request.GetUploadChildRequests) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var region string = "empty"
+	if req.Region != "" {
+		region = req.Region
+	}
+
+	var gender string = "empty"
+	if req.Gender != "" {
+		gender = req.Gender
+	}
+
+	var status string = "empty"
+	if req.Status != "" {
+		status = req.Status
+	}
+
+	var isClosed string = "empty"
+	if req.IsClosed != nil {
+		isClosed = fmt.Sprintf("%b", *req.IsClosed)
+	}
+
+	return fmt.Sprintf("upload_child_req:kw:%s:r:%s:g:%s:status:%s:closed:%s:o:%s:s:%d:p:%d",
+		keyword, region, gender, status, isClosed, req.SortOrder, req.PageSize, req.Page)
+}
+
+func (u *uploadChildRequestService) getGetUploadChildRequestsOfWalletRedisKey(id string, page int) string {
+	return fmt.Sprintf("upload_child_req:of:%s:s:%d:p;%d", id, default_page_size, page)
 }

@@ -5,7 +5,7 @@ import "time"
 type Payment struct {
 	ID            string    `json:"id"`
 	Actor         string    `json:"actor"`
-	Sub           string    `json:"sub"`
+	ProfileID     string    `json:"profile_id"`
 	ProposalID    *string   `json:"proposal_id"`
 	DonationID    *string   `json:"donation_id"`
 	IsDonateTx    bool      `json:"is_donate_tx"`
@@ -30,7 +30,3 @@ const (
 	MEAL_NEED_PURPOSE    PaymentPurpose = "Child Meal Need"
 	SPECIAL_NEED_PURPOSE PaymentPurpose = "Child Special Need"
 )
-
-
-
-
