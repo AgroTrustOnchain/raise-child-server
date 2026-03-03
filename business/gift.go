@@ -297,33 +297,69 @@ func (g *giftService) CreateGift(req request.CreateGiftRequest, ctx context.Cont
 
 	var giftModule = on_chain.InitializeModuleGift()
 	var function string
+	var args []interface{}
 	var getRecipientObjReq = on_chain.GetOnChainObjectRequest{
 		Client:    client,
 		ObjectId:  req.Recipient,
 		ErrLogger: g.errLogger,
 	}
 
-	if child, _ := on_chain.GetOnChainObject[entities.Child](getRecipientObjReq, ctx); child != nil {
-		function = giftModule.GetFunctionCreateGiftForChild()
-	} else {
-		if center, _ := on_chain.GetOnChainObject[entities.Center](getRecipientObjReq, ctx); center != nil {
-			function = giftModule.GetFunctionCreateGiftForCenter()
+	var child *entities.Child
+	var errRes error
+	child, errRes = on_chain.GetOnChainObject[entities.Child](getRecipientObjReq, ctx)
+	if errRes != nil {
+		return response.BuildTransactionResponse{}, errRes
+	}
+
+	// Gift for child
+	if child != nil {
+		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+			Client:    client,
+			ObjectId:  os.Getenv(env.PACKAGE_ID),
+			ErrLogger: g.errLogger,
+		}, ctx)
+		if err != nil {
+			return response.BuildTransactionResponse{}, err
 		}
-	}
 
-	if function == "" {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+		var centerId string
+		for i, region := range manageObj.LocalRegions {
+			if region == child.Region {
+				centerId = manageObj.ChildrenCenters[i]
+				break
+			}
+		}
 
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    client,
-		Sender:    sender,
-		Module:    giftModule.GetModule(),
-		Function:  function,
-		ErrLogger: g.errLogger,
-		Arguments: giftModule.ToCreateGiftArguments(on_chain.CreateGiftArguments{
+		function = giftModule.GetFunctionCreateGiftForChild()
+		args = giftModule.ToCreateGiftForChildArguments(on_chain.CreateGiftForChildArguments{
+			ChildID: req.Recipient,
+			CreateGiftForCenterArguments: on_chain.CreateGiftForCenterArguments{
+				DonorID:         nftId,
+				CenterID:        centerId,
+				TrackingCode:    req.TrackingCode,
+				Carrier:         req.Carrier,
+				GiftImageBlobID: req.GiftImageBlobID,
+				Category:        req.Category,
+				Amount:          req.GiftValue,
+				FirstName:       profile.FirstName,
+				LastName:        profile.LastName,
+				Gender:          profile.Gender,
+				PhoneNumber:     profile.PhoneNumber,
+				Email:           profile.Email,
+				Message:         msg,
+				Description:     description,
+			},
+		})
+	} else {
+		center, _ := on_chain.GetOnChainObject[entities.Center](getRecipientObjReq, ctx)
+		if center == nil {
+			return response.BuildTransactionResponse{}, genericErr
+		}
+
+		function = giftModule.GetFunctionCreateGiftForCenter()
+		args = giftModule.ToCreateGiftForCenterArguments(on_chain.CreateGiftForCenterArguments{
 			DonorID:         nftId,
-			Recipient:       req.Recipient,
+			CenterID:        req.Recipient,
 			TrackingCode:    req.TrackingCode,
 			Carrier:         req.Carrier,
 			GiftImageBlobID: req.GiftImageBlobID,
@@ -336,7 +372,61 @@ func (g *giftService) CreateGift(req request.CreateGiftRequest, ctx context.Cont
 			Email:           profile.Email,
 			Message:         msg,
 			Description:     description,
-		}),
+		})
+	}
+
+	// if child, _ := on_chain.GetOnChainObject[entities.Child](getRecipientObjReq, ctx); child != nil {
+	// 	function = giftModule.GetFunctionCreateGiftForChild()
+	// 	args = giftModule.ToCreateGiftForChildArguments(on_chain.CreateGiftForChildArguments{
+	// 		ChildID: req.Recipient,
+	// 		CreateGiftForCenterArguments: on_chain.CreateGiftForCenterArguments{
+	// 			DonorID:         nftId,
+	// 			TrackingCode:    req.TrackingCode,
+	// 			Carrier:         req.Carrier,
+	// 			GiftImageBlobID: req.GiftImageBlobID,
+	// 			Category:        req.Category,
+	// 			Amount:          req.GiftValue,
+	// 			FirstName:       profile.FirstName,
+	// 			LastName:        profile.LastName,
+	// 			Gender:          profile.Gender,
+	// 			PhoneNumber:     profile.PhoneNumber,
+	// 			Email:           profile.Email,
+	// 			Message:         msg,
+	// 			Description:     description,
+	// 		},
+	// 	})
+	// } else {
+	// 	if center, _ := on_chain.GetOnChainObject[entities.Center](getRecipientObjReq, ctx); center != nil {
+	// 		function = giftModule.GetFunctionCreateGiftForCenter()
+	// 		args = giftModule.ToCreateGiftForCenterArguments(on_chain.CreateGiftForCenterArguments{
+	// 			DonorID:         nftId,
+	// 			TrackingCode:    req.TrackingCode,
+	// 			Carrier:         req.Carrier,
+	// 			GiftImageBlobID: req.GiftImageBlobID,
+	// 			Category:        req.Category,
+	// 			Amount:          req.GiftValue,
+	// 			FirstName:       profile.FirstName,
+	// 			LastName:        profile.LastName,
+	// 			Gender:          profile.Gender,
+	// 			PhoneNumber:     profile.PhoneNumber,
+	// 			Email:           profile.Email,
+	// 			Message:         msg,
+	// 			Description:     description,
+	// 		})
+	// 	}
+	// }
+
+	if function == "" {
+		return response.BuildTransactionResponse{}, genericErr
+	}
+
+	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+		Client:    client,
+		Sender:    sender,
+		Module:    giftModule.GetModule(),
+		Function:  function,
+		ErrLogger: g.errLogger,
+		Arguments: args,
 	}, ctx)
 
 	return response.BuildTransactionResponse{

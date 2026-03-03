@@ -55,6 +55,9 @@ type MealNeed struct {
 	Durations            []MealSupportDuration  `json:"durations"`
 	TotalSupportedMonths string                 `json:"total_supported_months"`
 	SupportedYears       MealNeedSupportedYears `json:"supported_years"`
+	ProvideMealDates     []string               `json:"provide_meal_dates"`
+	ProvideMealPeriods   []string               `json:"provide_meal_periods"`
+	ProvideMealStaffs    []string               `json:"provide_meal_staffs"`
 	WithdrawProposals    []string               `json:"withdraw_proposals"`
 	WithdrawsForNeed     []string               `json:"withdraws_for_need"`
 }

@@ -11,7 +11,9 @@ import (
 	"raise-child/constants/noti"
 )
 
-var _cnn *sql.DB
+var (
+	_cnn *sql.DB
+)
 
 // Database connection
 func ConnectDB(logger *log.Logger, server ISQLServer) (*sql.DB, error) {

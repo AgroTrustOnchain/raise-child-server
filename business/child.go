@@ -791,7 +791,7 @@ func (c *childService) CreateSpecialNeedProposal(req request.CreateSpecialNeedPr
 // CreateSpecialNeedWithdrawProposal implements business.IChildService.
 func (c *childService) CreateSpecialNeedWithdrawProposal(req request.CreateSpecialNeedWithdrawProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !utils.IsValidSuiAddress(models.SuiAddress(req.CampaignID)) {
+	if !util.IsValidSuiAddressStrict(req.CampaignID) {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
@@ -891,6 +891,107 @@ func (c *childService) CreateSpecialNeedWithdrawProposal(req request.CreateSpeci
 // EditSpecialNeedDao implements business.IChildService.
 func (c *childService) EditSpecialNeedDao(req request.EditDaoRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
 	panic("unimplemented")
+}
+
+// ConfirmProvideMealForChild implements business.IChildService.
+func (c *childService) ConfirmProvideMealForChild(id string, req request.ConfirmProvideMealForChildRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if !util.IsValidSuiAddressStrict(id) {
+		return response.BuildTransactionResponse{}, genericErr
+	}
+
+	var client = c.clients[constant.SuiTestnet]
+	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  id,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
+	}
+
+	if child == nil {
+		return response.BuildTransactionResponse{}, genericErr
+	}
+
+	var staffModule = on_chain.InitializeModuleStaff()
+	var sender string = ctx.Value("address").(string)
+	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
+		Client:       client,
+		OwnerAddress: sender,
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
+	}, ctx)
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
+	}
+
+	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	if staffNfts == nil || len(staffNfts) == 0 {
+		return response.BuildTransactionResponse{}, genericRightErr
+	}
+
+	var isStaffOfRegion bool = false
+	for _, nft := range staffNfts {
+		if nft.Region == child.Region {
+			isStaffOfRegion = true
+			break
+		}
+	}
+
+	if !isStaffOfRegion {
+		return response.BuildTransactionResponse{}, genericRightErr
+	}
+
+	need, err := on_chain.GetOnChainObject[entities.MealNeed](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  child.MealNeed,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
+	}
+
+	var curTime time.Time = time.Now()
+	var rawProvideDate string = util.TimeToRawDate(curTime)
+	if slices.Contains(need.ProvideMealDates, rawProvideDate) {
+		return response.BuildTransactionResponse{}, errors.New(noti.CHILD_PROVIDED_MEAL_MESSAGE)
+	}
+
+	var isProvideDateInDuration bool = false
+	for i := len(need.Durations) - 1; i >= 0; i-- {
+		var duration = need.Durations[i]
+		var startPeriod = util.RawDateToTime(duration.Fields.StartPeriod)
+		var endPeriod = util.RawDateToTime(duration.Fields.EndPeriod)
+		if !startPeriod.After(curTime) && !curTime.After(endPeriod) {
+			isProvideDateInDuration = true
+			break
+		}
+	}
+
+	if !isProvideDateInDuration {
+		return response.BuildTransactionResponse{}, errors.New(noti.CHILD_NOT_IN_MEAL_SUPPORT)
+	}
+
+	// todo: implement AI to validate image
+	var childModule = on_chain.InitializeModuleChild()
+	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+		Client:    client,
+		Sender:    sender,
+		Module:    childModule.GetModule(),
+		Function:  childModule.GetFunctionConfirmProvideMealForChild(),
+		ErrLogger: c.errLogger,
+		Arguments: childModule.ToConfirmProvideMealForChildArguments(on_chain.ConfirmProvideMealForChildArguments{
+			ChildID:     id,
+			NeedID:      need.ID.ID,
+			StaffNft:    staffNfts[0].ID.ID,
+			ImageBlobID: req.ImageBlobID,
+			ProvideDate: rawProvideDate,
+		}),
+	}, ctx)
+
+	return response.BuildTransactionResponse{
+		TxBytes: txBytes,
+	}, err
 }
 
 // SupportBooksNeed implements business.IChildService.

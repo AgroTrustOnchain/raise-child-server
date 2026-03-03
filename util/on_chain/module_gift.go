@@ -6,9 +6,9 @@ import (
 	"raise-child/constants/on-chain/sui"
 )
 
-type CreateGiftArguments struct {
+type CreateGiftForCenterArguments struct {
 	DonorID         string
-	Recipient       string
+	CenterID        string
 	TrackingCode    string
 	Carrier         string
 	GiftImageBlobID string
@@ -23,6 +23,10 @@ type CreateGiftArguments struct {
 	Description     string
 }
 
+type CreateGiftForChildArguments struct {
+	ChildID string
+	CreateGiftForCenterArguments
+}
 type CancelGiftArguments struct {
 	GiftID       string
 	CancelReason string
@@ -38,7 +42,8 @@ type ConfirmReceiveGiftArguments struct {
 type IModuleGift interface {
 	GetModule() string
 	GetGiftObjectStruct() string
-	ToCreateGiftArguments(args CreateGiftArguments) []interface{}
+	ToCreateGiftForCenterArguments(args CreateGiftForCenterArguments) []interface{}
+	ToCreateGiftForChildArguments(args CreateGiftForChildArguments) []interface{}
 	ToCancelGiftArguments(args CancelGiftArguments) []interface{}
 	ToConfirmReceiveGiftArguments(args ConfirmReceiveGiftArguments) []interface{}
 	GetFunctionCreateGiftForChild() string
@@ -110,11 +115,34 @@ func (m *moduleGift) ToConfirmReceiveGiftArguments(args ConfirmReceiveGiftArgume
 }
 
 // ToCreateGiftArguments implements IModuleGift.
-func (m *moduleGift) ToCreateGiftArguments(args CreateGiftArguments) []interface{} {
+func (m *moduleGift) ToCreateGiftForCenterArguments(args CreateGiftForCenterArguments) []interface{} {
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		args.DonorID,
-		args.Recipient,
+		args.CenterID,
+		args.TrackingCode,
+		args.Carrier,
+		args.GiftImageBlobID,
+		args.Category,
+		uint64(args.Amount),
+		args.FirstName,
+		args.LastName,
+		args.Gender,
+		args.PhoneNumber,
+		args.Email,
+		args.Message,
+		args.Description,
+		sui.CLOCK_OBJECT_ID,
+	}
+}
+
+// ToCreateGiftForChildArguments implements IModuleGift.
+func (m *moduleGift) ToCreateGiftForChildArguments(args CreateGiftForChildArguments) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		args.DonorID,
+		args.ChildID,
+		args.CenterID,
 		args.TrackingCode,
 		args.Carrier,
 		args.GiftImageBlobID,

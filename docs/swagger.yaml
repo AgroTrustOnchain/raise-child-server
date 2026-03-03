@@ -20,7 +20,7 @@ definitions:
         type: string
       payos_client_id:
         type: string
-      sub:
+      profile_id:
         type: string
       updated_at:
         type: string
@@ -107,6 +107,8 @@ definitions:
         type: string
       phone_number:
         type: string
+      profile_id:
+        type: string
       refuse_reasons:
         items:
           type: string
@@ -121,8 +123,6 @@ definitions:
         type: string
       status:
         description: e.g. "Pending", "Approved", "Refused"
-        type: string
-      sub:
         type: string
       updated_at:
         type: string
@@ -174,6 +174,8 @@ definitions:
         type: boolean
       last_name:
         type: string
+      profile_id:
+        type: string
       refuse_reasons:
         items:
           type: string
@@ -186,8 +188,6 @@ definitions:
         type: string
       status:
         description: e.g. "Pending", "Approved", "Refused"
-        type: string
-      sub:
         type: string
       updated_at:
         type: string
@@ -208,6 +208,13 @@ definitions:
     required:
     - key
     - value
+    type: object
+  request.ConfirmProvideMealForChildRequest:
+    properties:
+      image_blob_id:
+        type: string
+    required:
+    - image_blob_id
     type: object
   request.ConfirmReceiveGiftRequest:
     properties:
@@ -1778,6 +1785,49 @@ paths:
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
       summary: Get child details
+      tags:
+      - children
+  /children/{id}/provide-meal/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for confirming provide meal for
+        a child with specific ID on-chain
+      parameters:
+      - description: Child ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Confirm Provide Meal For Child Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ConfirmProvideMealForChildRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm provide meal for child
       tags:
       - children
   /children/books-need/{id}/support:

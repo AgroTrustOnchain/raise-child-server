@@ -75,6 +75,10 @@ const (
 	SUPPORT_SURPASS_CAMPAIGN_TARGET_MESSAGE string = "The donation is surpassed the campaign target."
 
 	SUPPORRT_REGION_REQUEST_MESSAGE string = "This to-supported region is requested with proposal."
+
+	CHILD_PROVIDED_MEAL_MESSAGE string = "This child has received meal today."
+
+	CHILD_NOT_IN_MEAL_SUPPORT string = "This child currently doesn't have meal support."
 )
 
 const (

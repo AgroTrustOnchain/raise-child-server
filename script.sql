@@ -129,7 +129,7 @@ CREATE TABLE upload_child_requests (
     profile_id                   character varying(100) NOT NULL,
     identity_code         character varying(20) NOT NULL,
     avatar_blob_id        character varying(100) NOT NULL,
-    region                character varying(30),
+    region                character varying(30) NOT NULL,
     first_name            character varying(10) NOT NULL,
     last_name             character varying(50) NOT NULL,
     gender                character varying(10) NOT NULL,

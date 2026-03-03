@@ -62,6 +62,14 @@ type SupportChildSpeicalNeedArguments struct {
 	Message     string
 }
 
+type ConfirmProvideMealForChildArguments struct {
+	ChildID     string
+	NeedID      string
+	StaffNft    string
+	ImageBlobID string
+	ProvideDate string
+}
+
 type CreateChildNormalNeedWithdrawProposalArguments struct {
 	NeedID      string
 	ChildID     string
@@ -106,6 +114,7 @@ type IModuleChild interface {
 	ToSupportChildBooksNeedArguments(args SupportChildBooksNeedArguments) []interface{}
 	ToSupportChildMealNeedArguments(args SupportChildMealNeedArguments) []interface{}
 	ToSupportChildSpeicalNeedArguments(args SupportChildSpeicalNeedArguments) []interface{}
+	ToConfirmProvideMealForChildArguments(args ConfirmProvideMealForChildArguments) []interface{}
 	ToCreateChildNormalNeedWithdrawProposalArguments(args CreateChildNormalNeedWithdrawProposalArguments) []interface{}
 	ToCreateChildSpecialNeedWithdrawProposalArguments(args CreateChildSpecialNeedWithdrawProposalArguments) []interface{}
 	ToCreateChildSpecialNeedProposalArguments(args CreateChildSpecialNeedProposalArguments) []interface{}
@@ -130,6 +139,7 @@ type IModuleChild interface {
 	GetFunctionSupportChildBooksNeed() string
 	GetFunctionSupportChildMealNeed() string
 	GetFunctionSupportChildSpecialNeedCampaign() string
+	GetFunctionConfirmProvideMealForChild() string
 }
 
 type moduleChild struct{}
@@ -180,7 +190,7 @@ func (m *moduleChild) GetFunctionSupportChildMealNeed() string {
 
 // GetFunctionSupportChildSpecialNeedCampaign implements IModuleChild.
 func (m *moduleChild) GetFunctionSupportChildSpecialNeedCampaign() string {
-	return sui.SUPPORT_CHILD_SPECIAL_NEED_CAMPAIGN
+	return sui.SUPPORT_CHILD_SPECIAL_NEED_CAMPAIGN_FUNCTION
 }
 
 // GetFunctionWithdrawFromBooksNeedProposal implements IModuleChild.
@@ -201,6 +211,23 @@ func (m *moduleChild) GetFunctionWithdrawFromSpecialNeedCampaign() string {
 // GetFunctionCreateChildSpecialNeedWithdrawProposal implements IModuleChild.
 func (m *moduleChild) GetFunctionCreateChildSpecialNeedWithdrawProposal() string {
 	return sui.CREATE_CHILD_SPEICAL_NEED_WITHDRAW_PROPOSAL_FUNCTION
+}
+
+// GetFunctionConfirmProvideMealForChild implements IModuleChild.
+func (m *moduleChild) GetFunctionConfirmProvideMealForChild() string {
+	return sui.CONFIRM_PROVIDE_MEAL_FOR_CHILD_FUNCTION
+}
+
+// ToConfirmProvideMealForChildArguments implements IModuleChild.
+func (m *moduleChild) ToConfirmProvideMealForChildArguments(args ConfirmProvideMealForChildArguments) []interface{} {
+	return []interface{}{
+		args.ChildID,
+		args.NeedID,
+		args.StaffNft,
+		args.ImageBlobID,
+		args.ProvideDate,
+		sui.CLOCK_OBJECT_ID,
+	}
 }
 
 // ToCreateChildSpecialNeedWithdrawProposalArguments implements IModuleChild.

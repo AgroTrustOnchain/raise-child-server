@@ -80,7 +80,7 @@ func ManagerRoleAuthorize(ctx *gin.Context) {
 
 func StaffRoleAuthorize(ctx *gin.Context) {
 	var role string = ctx.Value("role").(string)
-	if role != "Admin" && role != "Local Leader" && role != "Volunteer" {
+	if role != "Staff" && role != "Local Leader" && role != "Volunteer" {
 		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
 		ctx.Abort()
 		return

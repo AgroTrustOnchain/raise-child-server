@@ -42,6 +42,10 @@ type SupportSpecialNeedRequest struct {
 	Amount int64 `json:"amount" validate:"required,min=2000"`
 }
 
+type ConfirmProvideMealForChildRequest struct {
+	ImageBlobID string `json:"image_blob_id" validate:"required"`
+}
+
 // childs/books-need/withdraw-proposal
 // childs/meal-need/withdraw-proposal
 type CreateNormalNeedWithdrawProposalRequest struct {

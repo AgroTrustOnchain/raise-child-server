@@ -2017,6 +2017,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/children/{id}/provide-meal/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for confirming provide meal for a child with specific ID on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Confirm provide meal for child",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Child ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Confirm Provide Meal For Child Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ConfirmProvideMealForChildRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/donors": {
             "get": {
                 "description": "Retrieves a list of donors based on filter criteria",
@@ -3922,7 +3986,7 @@ const docTemplate = `{
                 "payos_client_id": {
                     "type": "string"
                 },
-                "sub": {
+                "profile_id": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -4049,6 +4113,9 @@ const docTemplate = `{
                 "phone_number": {
                     "type": "string"
                 },
+                "profile_id": {
+                    "type": "string"
+                },
                 "refuse_reasons": {
                     "type": "array",
                     "items": {
@@ -4069,9 +4136,6 @@ const docTemplate = `{
                 },
                 "status": {
                     "description": "e.g. \"Pending\", \"Approved\", \"Refused\"",
-                    "type": "string"
-                },
-                "sub": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -4156,6 +4220,9 @@ const docTemplate = `{
                 "last_name": {
                     "type": "string"
                 },
+                "profile_id": {
+                    "type": "string"
+                },
                 "refuse_reasons": {
                     "type": "array",
                     "items": {
@@ -4175,9 +4242,6 @@ const docTemplate = `{
                     "description": "e.g. \"Pending\", \"Approved\", \"Refused\"",
                     "type": "string"
                 },
-                "sub": {
-                    "type": "string"
-                },
                 "updated_at": {
                     "type": "string"
                 }
@@ -4194,6 +4258,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.ConfirmProvideMealForChildRequest": {
+            "type": "object",
+            "required": [
+                "image_blob_id"
+            ],
+            "properties": {
+                "image_blob_id": {
                     "type": "string"
                 }
             }
