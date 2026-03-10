@@ -149,7 +149,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 
 	// Track total records in table
 	var totalRecords int
-	p.db.QueryRow(generateCountTotalRecordsQuery(payment_table, queryCondition)).Scan(&totalRecords)
+	p.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(payment_table, queryCondition)).Scan(&totalRecords)
 
 	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }

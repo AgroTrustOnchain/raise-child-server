@@ -71,24 +71,60 @@ func GenerateUploadChildRequestService() (business.IUploadChildRequestService, e
 	return initializeUploadChildRequestService(repository.InitializeUploadChildRequestRepo(cnn, errLogger), _networkAliases, errLogger), nil
 }
 
-// ConfirmUploadChildRequest implements business.IUploadChildRequestService.
-func (u *uploadChildRequestService) ConfirmUploadChildRequest(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return response.BuildTransactionResponse{}, genericErr
+// ReviewUploadChildRequest implements business.IUploadChildRequestService.
+func (u *uploadChildRequestService) ReviewUploadChildRequest(id string, req request.VoteRequest, ctx context.Context) error {
+	request, err := u.uploadChildRequestRepo.GetUploadChildRequest(id, ctx)
+	if err != nil {
+		return err
 	}
 
+	if request == nil {
+		return errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	if request.ReviewStatus != request_pending_status || request.ReviewedBy != nil {
+		return errors.New(noti.REQUEST_REVIEWED_MESSAGE)
+	}
+
+	var sender string = ctx.Value("address").(string)
+	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    u.clients[constant.SuiTestnet],
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: u.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if !slices.Contains(manageObj.AdminIds, sender) {
+		return errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	}
+
+	var status string
+	var closedAt *time.Time
+	if req.IsVoteYes {
+		status = request_approved_status
+		var tmp = util.GetRequestDuration()
+		closedAt = &tmp
+	} else {
+		status = request_refused_status
+	}
+
+	return u.uploadChildRequestRepo.SetReviewStatus(id, status, sender, closedAt, ctx)
+}
+
+// ConfirmUploadChildRequest implements business.IUploadChildRequestService.
+func (u *uploadChildRequestService) ConfirmUploadChildRequest(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
 	req, err := u.uploadChildRequestRepo.GetUploadChildRequest(id, ctx)
 	if err != nil {
 		return response.BuildTransactionResponse{}, err
 	}
 
 	if req == nil {
-		return response.BuildTransactionResponse{}, genericErr
+		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
+	var sender string = ctx.Value("address").(string)
 	if req.CreatedBy != sender {
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
@@ -124,7 +160,7 @@ func (u *uploadChildRequestService) ConfirmUploadChildRequest(id string, ctx con
 		var module = on_chain.InitializeModuleChild()
 		txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
 			Client:    u.clients[constant.SuiTestnet],
-			Sender:    sender,
+			Sender:    ctx.Value("address").(string),
 			Module:    module.GetModule(),
 			Function:  module.GetFunctionAddChild(),
 			ErrLogger: u.errLogger,
@@ -147,13 +183,6 @@ func (u *uploadChildRequestService) ConfirmUploadChildRequest(id string, ctx con
 
 // CreateUploadChildRequest implements business.IUploadChildRequestService.
 func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadChildRequest, ctx context.Context) (*entities.UploadChildRequest, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return nil, genericErr
-	}
-
 	var identityCode string = strings.TrimSpace(req.IdentityCode)
 	isRequested, err := u.uploadChildRequestRepo.IsChildRequested(identityCode, ctx)
 	if err != nil {
@@ -200,22 +229,47 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 		}
 	}
 
+	var firstGuardianProfile = entities.ChildGuardianProfile{
+		FullName:           strings.TrimSpace(req.FirstGuardian.FullName),
+		PhoneNumber:        strings.TrimSpace(req.FirstGuardian.PhoneNumber),
+		Relation:           req.FirstGuardian.Relation,
+		IdentityCardBlobID: strings.TrimSpace(req.FirstGuardian.IdentityCardBlobID),
+	}
+
+	if firstGuardianProfile.FullName == "" || firstGuardianProfile.PhoneNumber == "" || firstGuardianProfile.Relation == "" || firstGuardianProfile.IdentityCardBlobID == "" {
+		return nil, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	var secondGuardianProfile *entities.ChildGuardianProfile
+	if req.SecondGuardian != nil {
+		secondGuardianProfile = &entities.ChildGuardianProfile{
+			FullName:           strings.TrimSpace(req.SecondGuardian.FullName),
+			PhoneNumber:        strings.TrimSpace(req.SecondGuardian.PhoneNumber),
+			Relation:           req.SecondGuardian.Relation,
+			IdentityCardBlobID: strings.TrimSpace(req.SecondGuardian.IdentityCardBlobID),
+		}
+	}
+
+	// todo: AI validation
 	var curTime time.Time = time.Now()
 	var request = entities.UploadChildRequest{
-		ID:           util.GenerateId(),
-		ProfileID:    ctx.Value("sub").(string),
-		IdentityCode: identityCode,
-		AvatarBlobId: strings.TrimSpace(req.AvatarBlobId),
-		Region:       region,
-		FirstName:    strings.TrimSpace(req.FirstName),
-		LastName:     strings.TrimSpace(req.LastName),
-		Gender:       gender,
-		DateOfBirth:  dateOfBirth,
-		Status:       request_pending_status,
-		CreatedBy:    sender,
-		CreatedAt:    curTime,
-		UpdatedAt:    curTime,
-		ClosedAt:     util.GetRequestDuration(),
+		ID:                    util.GenerateId(),
+		ProfileID:             ctx.Value("sub").(string),
+		IdentityCode:          identityCode,
+		AvatarBlobId:          strings.TrimSpace(req.AvatarBlobId),
+		HomeBlobID:            req.HomeBlobID,
+		Region:                region,
+		FirstName:             strings.TrimSpace(req.FirstName),
+		LastName:              strings.TrimSpace(req.LastName),
+		Gender:                gender,
+		DateOfBirth:           dateOfBirth,
+		HomeAddress:           strings.TrimSpace(req.HomeAddress),
+		FirstGuardianProfile:  firstGuardianProfile,
+		SecondGuardianProfile: secondGuardianProfile,
+		AIEvaluation:          "",
+		CreatedBy:             ctx.Value("address").(string),
+		CreatedAt:             curTime,
+		UpdatedAt:             curTime,
 	}
 
 	return &request, u.uploadChildRequestRepo.CreateUploadChildRequest(request, ctx)
@@ -394,7 +448,7 @@ func (u *uploadChildRequestService) getGetUploadChildRequestsRedisKey(req reques
 
 	var isClosed string = "empty"
 	if req.IsClosed != nil {
-		isClosed = fmt.Sprintf("%b", *req.IsClosed)
+		isClosed = fmt.Sprintf("%v", *req.IsClosed)
 	}
 
 	return fmt.Sprintf("upload_child_req:kw:%s:r:%s:g:%s:status:%s:closed:%s:o:%s:s:%d:p:%d",

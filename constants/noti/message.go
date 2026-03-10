@@ -79,6 +79,8 @@ const (
 	CHILD_PROVIDED_MEAL_MESSAGE string = "This child has received meal today."
 
 	CHILD_NOT_IN_MEAL_SUPPORT string = "This child currently doesn't have meal support."
+
+	REQUEST_REVIEWED_MESSAGE string = "This request has been reviewed."
 )
 
 const (

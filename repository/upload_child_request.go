@@ -36,19 +36,28 @@ func InitializeUploadChildRequestRepo(db *sql.DB, errLogger *log.Logger) reposit
 // CreateUploadChildRequest implements repository.IUploadChildRequestRepository.
 func (u *uploadChildRepo) CreateUploadChildRequest(req entities.UploadChildRequest, ctx context.Context) error {
 	var query string = "INSERT INTO " + upload_child_request_table +
-		" (id, profile_id, identity_code, avatar_blob_id, " +
-		"region, first_name, last_name, gender, date_of_birth, " +
-		"approvers, refusers, refuse_reasons, status, is_confirm_upload, " +
-		"created_by, created_at, updated_at, closed_at, is_closed) " +
-		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, " +
-		"$11, $12, $13, $14, $15, $16, $17, $18)"
+		" (id, profile_id, identity_code, avatar_blob_id, home_blob_id, " +
+		"region, first_name, last_name, gender, date_of_birth, home_address, " +
+		"first_guardian_name, first_guardian_phone, first_guardian_relation, first_guardian_identity_card_blob_id, " +
+		"second_guardian_name, second_guardian_phone, second_guardian_relation, second_guardian_identity_card_blob_id, " +
+		"ai_evaluation, status, created_by, created_at, updated_at) " +
+		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, " +
+		"$13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "CreateUploadChildRequest - "
+	var secondGuardianName, secondGuardianPhone, secondGuardianRelation, secondGuardianIdentityBlob *string
+	if req.SecondGuardianProfile != nil {
+		secondGuardianName = &req.SecondGuardianProfile.FullName
+		secondGuardianPhone = &req.SecondGuardianProfile.PhoneNumber
+		secondGuardianRelation = &req.SecondGuardianProfile.Relation
+		secondGuardianIdentityBlob = &req.SecondGuardianProfile.IdentityCardBlobID
+	}
 
-	if _, err := u.db.ExecContext(ctx, query, req.ID, req.ProfileID, req.IdentityCode, req.AvatarBlobId,
-		req.Region, req.FirstName, req.LastName, req.Gender, req.DateOfBirth,
-		pq.Array(req.Approvers), pq.Array(req.Refusers), pq.Array(req.RefuseReasons), req.Status, req.IsConfirmUpload,
-		req.CreatedBy, req.CreatedAt, req.UpdatedAt, req.ClosedAt); err != nil {
+	if _, err := u.db.ExecContext(ctx, query, req.ID, req.ProfileID, req.IdentityCode, req.AvatarBlobId, req.HomeBlobID,
+		req.Region, req.FirstName, req.LastName, req.Gender, req.DateOfBirth, req.HomeAddress,
+		req.FirstGuardianProfile.FullName, req.FirstGuardianProfile.PhoneNumber, req.FirstGuardianProfile.Relation, req.FirstGuardianProfile.IdentityCardBlobID,
+		secondGuardianName, secondGuardianPhone, secondGuardianRelation, secondGuardianIdentityBlob,
+		req.AIEvaluation, req.Status, req.CreatedBy, req.UpdatedAt, req.ClosedAt); err != nil {
 
 		u.errLogger.Println(errLogMsg + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
@@ -63,11 +72,16 @@ func (u *uploadChildRepo) GetUploadChildRequest(id string, ctx context.Context) 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "GetUploadChildRequest - "
 
 	var res entities.UploadChildRequest
+	var secondGuardianName, secondGuardianPhone, secondGuardianRelation, secondGuardianIdentityBlob *string
+
 	if err := u.db.QueryRowContext(ctx, query, id).Scan(
-		&res.ID, &res.ProfileID, &res.IdentityCode, &res.AvatarBlobId,
-		&res.Region, &res.FirstName, &res.LastName, &res.Gender, &res.DateOfBirth,
-		pq.Array(&res.Approvers), pq.Array(&res.Refusers), pq.Array(&res.RefuseReasons), &res.Status, &res.IsConfirmUpload,
-		&res.CreatedBy, &res.CreatedAt, &res.UpdatedAt, &res.ClosedAt); err != nil {
+		&res.ID, &res.ProfileID, &res.IdentityCode, &res.AvatarBlobId, &res.HomeBlobID,
+		&res.Region, &res.FirstName, &res.LastName, &res.Gender, &res.DateOfBirth, &res.HomeAddress,
+		&res.FirstGuardianProfile.FullName, &res.FirstGuardianProfile.PhoneNumber, &res.FirstGuardianProfile.Relation, &res.FirstGuardianProfile.IdentityCardBlobID,
+		&secondGuardianName, &secondGuardianPhone, &secondGuardianRelation, &secondGuardianIdentityBlob,
+		pq.Array(&res.Approvers), pq.Array(&res.Refusers), pq.Array(&res.RefuseReasons),
+		&res.AIEvaluation, &res.Status, &res.ReviewStatus, &res.IsConfirmUpload,
+		&res.CreatedBy, &res.ReviewedBy, &res.CreatedAt, &res.UpdatedAt, &res.ClosedAt); err != nil {
 
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -75,6 +89,15 @@ func (u *uploadChildRepo) GetUploadChildRequest(id string, ctx context.Context) 
 
 		u.errLogger.Println(errLogMsg + err.Error())
 		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	if secondGuardianName != nil {
+		res.SecondGuardianProfile = &entities.ChildGuardianProfile{
+			FullName:           *secondGuardianName,
+			PhoneNumber:        *secondGuardianPhone,
+			Relation:           *secondGuardianRelation,
+			IdentityCardBlobID: *secondGuardianIdentityBlob,
+		}
 	}
 
 	return &res, nil
@@ -88,7 +111,8 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 	var queryCondition string
 	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
-		queryCondition += fmt.Sprintf("(identity_code LIKE '%s' OR LOWER(first_name) LIKE LOWER('%%%%%s%%%%') OR LOWER(last_name) LIKE LOWER('%%%%%s%%%%') OR date_of_birth LIKE '%%%%%s%%%%')", req.Keyword, req.Keyword, req.Keyword, req.Keyword)
+		queryCondition += fmt.Sprintf("(identity_code LIKE '%s' OR LOWER(first_name) LIKE LOWER('%%%%%s%%%%') OR LOWER(last_name) LIKE LOWER('%%%%%s%%%%') OR date_of_birth LIKE '%%%%%s%%%%' OR LOWER(home_address) LIKE LOWER('%%%%%s%%%%') OR LOWER(first_guardian_name) LIKE LOWER('%%%%%s%%%%')  OR LOWER(first_guardian_phone) LIKE LOWER('%%%%%s%%%%') LOWER(second_guardian_name) LIKE LOWER('%%%%%s%%%%') OR LOWER(second_guardian_phone) LIKE LOWER('%%%%%s%%%%'))",
+			req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword)
 		isHavePreviosCondition = true
 	}
 
@@ -160,21 +184,35 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 	var res []entities.UploadChildRequest
 	for rows.Next() {
 		var x entities.UploadChildRequest
+		var secondGuardianName, secondGuardianPhone, secondGuardianRelation, secondGuardianIdentityBlob *string
+
 		if err := rows.Scan(
-			&x.ID, &x.ProfileID, &x.IdentityCode, &x.AvatarBlobId,
-			&x.Region, &x.FirstName, &x.LastName, &x.Gender, &x.DateOfBirth,
-			pq.Array(&x.Approvers), pq.Array(&x.Refusers), pq.Array(&x.RefuseReasons), &x.Status, &x.IsConfirmUpload,
-			&x.CreatedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt); err != nil {
+			&x.ID, &x.ProfileID, &x.IdentityCode, &x.AvatarBlobId, &x.HomeBlobID,
+			&x.Region, &x.FirstName, &x.LastName, &x.Gender, &x.DateOfBirth, &x.HomeAddress,
+			&x.FirstGuardianProfile.FullName, &x.FirstGuardianProfile.PhoneNumber, &x.FirstGuardianProfile.Relation, &x.FirstGuardianProfile.IdentityCardBlobID,
+			&secondGuardianName, &secondGuardianPhone, &secondGuardianRelation, &secondGuardianIdentityBlob,
+			pq.Array(&x.Approvers), pq.Array(&x.Refusers), pq.Array(&x.RefuseReasons),
+			&x.AIEvaluation, &x.Status, &x.ReviewStatus, &x.IsConfirmUpload,
+			&x.CreatedBy, &x.ReviewedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt); err != nil {
 
 			u.errLogger.Println(errLogMsg + err.Error())
 			return nil, 0, internalErr
+		}
+
+		if secondGuardianName != nil {
+			x.SecondGuardianProfile = &entities.ChildGuardianProfile{
+				FullName:           *secondGuardianName,
+				PhoneNumber:        *secondGuardianPhone,
+				Relation:           *secondGuardianRelation,
+				IdentityCardBlobID: *secondGuardianIdentityBlob,
+			}
 		}
 
 		res = append(res, x)
 	}
 
 	var totalRecords int
-	u.db.QueryRow(generateCountTotalRecordsQuery(upload_child_request_table, queryCondition)).Scan(&totalRecords)
+	u.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(upload_child_request_table, queryCondition)).Scan(&totalRecords)
 
 	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
@@ -202,21 +240,35 @@ func (u *uploadChildRepo) GetWalletUploadChildRequests(id string, page int, ctx 
 	var res []entities.UploadChildRequest
 	for rows.Next() {
 		var x entities.UploadChildRequest
+		var secondGuardianName, secondGuardianPhone, secondGuardianRelation, secondGuardianIdentityBlob *string
+
 		if err := rows.Scan(
-			&x.ID, &x.ProfileID, &x.IdentityCode, &x.AvatarBlobId,
-			&x.Region, &x.FirstName, &x.LastName, &x.Gender, &x.DateOfBirth,
-			pq.Array(&x.Approvers), pq.Array(&x.Refusers), pq.Array(&x.RefuseReasons), &x.Status, &x.IsConfirmUpload,
-			&x.CreatedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt); err != nil {
+			&x.ID, &x.ProfileID, &x.IdentityCode, &x.AvatarBlobId, &x.HomeBlobID,
+			&x.Region, &x.FirstName, &x.LastName, &x.Gender, &x.DateOfBirth, &x.HomeAddress,
+			&x.FirstGuardianProfile.FullName, &x.FirstGuardianProfile.PhoneNumber, &x.FirstGuardianProfile.Relation, &x.FirstGuardianProfile.IdentityCardBlobID,
+			&secondGuardianName, &secondGuardianPhone, &secondGuardianRelation, &secondGuardianIdentityBlob,
+			pq.Array(&x.Approvers), pq.Array(&x.Refusers), pq.Array(&x.RefuseReasons),
+			&x.AIEvaluation, &x.Status, &x.ReviewStatus, &x.IsConfirmUpload,
+			&x.CreatedBy, &x.ReviewedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt); err != nil {
 
 			u.errLogger.Println(errLogMsg + err.Error())
 			return nil, 0, internalErr
+		}
+
+		if secondGuardianName != nil {
+			x.SecondGuardianProfile = &entities.ChildGuardianProfile{
+				FullName:           *secondGuardianName,
+				PhoneNumber:        *secondGuardianPhone,
+				Relation:           *secondGuardianRelation,
+				IdentityCardBlobID: *secondGuardianIdentityBlob,
+			}
 		}
 
 		res = append(res, x)
 	}
 
 	var totalRecords int
-	u.db.QueryRow(generateCountTotalRecordsQuery(upload_child_request_table, queryCondition)).Scan(&totalRecords)
+	u.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(upload_child_request_table, queryCondition)).Scan(&totalRecords)
 
 	return res, caculateTotalPages(totalRecords, upload_child_request_limit_record), nil
 }
@@ -333,6 +385,32 @@ func (u *uploadChildRepo) SetRefusedStatuses(reqs []entities.BackgroundRecord, c
 	if _, err := u.db.ExecContext(ctx, query, time.Now()); err != nil {
 		u.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "SetRefusedStatuses - " + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	return nil
+}
+
+// SetReviewStatus implements repository.IUploadChildRequestRepository.
+func (u *uploadChildRepo) SetReviewStatus(id string, reviewStatus string, reviewer string, closedAt *time.Time, ctx context.Context) error {
+	var query string = "UPDATE " + upload_child_request_table + " SET review_status = $1, reviewed_by = $2, closed_at = $3 WHERE id = $4"
+
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "SetReviewStatus - "
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+
+	res, err := u.db.ExecContext(ctx, query, reviewStatus, reviewer, closedAt, id)
+	if err != nil {
+		u.errLogger.Println(errLogMsg + err.Error())
+		return internalErr
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		u.errLogger.Println(errLogMsg + err.Error())
+		return internalErr
+	}
+
+	if rowsAffected == 0 {
+		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, upload_child_request_table))
 	}
 
 	return nil

@@ -9,7 +9,7 @@ import (
 
 type IRegionService interface {
 	GetRegions() response.RegionsResponse
-	GetSupportedRegionProposals(req request.GetSupportedRegionProposalsRequest, ctx context.Context) (response.PaginationDataResponse, error)
-	GetSupportedRegionProposal(id string, ctx context.Context) (*entities.SupportedRegionProposal, error)
-	CreateSupportedRegionProposal(req request.CreateSupportedRegionProposalsRequest, ctx context.Context) (*entities.SupportedRegionProposal, error)
+	GetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, ctx context.Context) (response.PaginationDataResponse, error)
+	GetSupportedRegionSuggestion(id string, ctx context.Context) (*entities.SupportedRegionSuggestion, error)
+	CreateSupportedRegionSuggestion(req request.CreateSupportedRegionSuggestionsRequest, ctx context.Context) (*entities.SupportedRegionSuggestion, error)
 }

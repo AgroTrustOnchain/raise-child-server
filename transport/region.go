@@ -30,19 +30,19 @@ func GetRegions(ctx *gin.Context) {
 	})
 }
 
-// GetSupportedRegionProposals godoc
+// GetSupportedRegionSuggestions godoc
 // @Summary      Get list of supported region proposals
 // @Description  Retrieves a list of supported region proposals based on filter criteria
 // @Tags         regions
 // @Accept       json
 // @Produce      json
-// @Param        request  query     request.GetSupportedRegionProposalsRequest  true  "Filter Criteria"
+// @Param        request  query     request.GetSupportedRegionSuggestionsRequest  true  "Filter Criteria"
 // @Success      200  {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /regions/supported-proposal [get]
-func GetSupportedRegionProposals(ctx *gin.Context) {
-	var request request.GetSupportedRegionProposalsRequest
+func GetSupportedRegionSuggestions(ctx *gin.Context) {
+	var request request.GetSupportedRegionSuggestionsRequest
 	if ctx.ShouldBindQuery(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return
@@ -54,7 +54,7 @@ func GetSupportedRegionProposals(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.GetSupportedRegionProposals(request, ctx)
+	res, err := service.GetSupportedRegionSuggestions(request, ctx)
 
 	util.ProcessResponse(response.APIResponse{
 		Data1:    res,
@@ -65,20 +65,20 @@ func GetSupportedRegionProposals(ctx *gin.Context) {
 	})
 }
 
-// GetUserSupportedRegionProposals godoc
+// GetUserSupportedRegionSuggestions godoc
 // @Summary      Get list of supported region proposals from a user
 // @Description  Retrieves a list of supported region proposals based on filter criteria from a user
 // @Tags         regions
 // @Accept       json
 // @Produce      json
 // @Param        id       path      string  true  "User Wallet Address"
-// @Param        request  query     request.GetSupportedRegionProposalsRequest  true  "Filter Criteria"
+// @Param        request  query     request.GetSupportedRegionSuggestionsRequest  true  "Filter Criteria"
 // @Success      200  {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /regions/supported-proposal/user/{id} [get]
-func GetUserSupportedRegionProposals(ctx *gin.Context) {
-	var request request.GetSupportedRegionProposalsRequest
+func GetUserSupportedRegionSuggestions(ctx *gin.Context) {
+	var request request.GetSupportedRegionSuggestionsRequest
 	if ctx.ShouldBindQuery(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return
@@ -92,7 +92,7 @@ func GetUserSupportedRegionProposals(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.GetSupportedRegionProposals(request, ctx)
+	res, err := service.GetSupportedRegionSuggestions(request, ctx)
 
 	util.ProcessResponse(response.APIResponse{
 		Data1:    res,
@@ -103,25 +103,25 @@ func GetUserSupportedRegionProposals(ctx *gin.Context) {
 	})
 }
 
-// GetSupportedRegionProposal godoc
+// GetSupportedRegionSuggestion godoc
 // @Summary      Get a supported region proposal detail
 // @Description  Retrieves a supported region proposal detailed information
 // @Tags         regions
 // @Accept       json
 // @Produce      json
 // @Param        id       path      string  true  "Supported Region Proposal ID"
-// @Success      200  {object}  entities.SupportedRegionProposal
+// @Success      200  {object}  entities.SupportedRegionSuggestion
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /regions/supported-proposal/{id} [get]
-func GetSupportedRegionProposal(ctx *gin.Context) {
+func GetSupportedRegionSuggestion(ctx *gin.Context) {
 	service, err := business.GenerateRegionService()
 	if err != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
 		return
 	}
 
-	res, err := service.GetSupportedRegionProposal(ctx.Param("id"), ctx)
+	res, err := service.GetSupportedRegionSuggestion(ctx.Param("id"), ctx)
 
 	util.ProcessResponse(response.APIResponse{
 		Data1:    res,
@@ -132,21 +132,21 @@ func GetSupportedRegionProposal(ctx *gin.Context) {
 	})
 }
 
-// CreateSupportedRegionProposal godoc
+// CreateSupportedRegionSuggestion godoc
 // @Summary      Create a new supported region proposal
 // @Description  Submit a new supported region proposal.
 // @Tags         regions
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        request  body      request.CreateSupportedRegionProposalsRequest  true  "Supported Region Request Body"
-// @Success      201      {object}  entities.SupportedRegionProposal
+// @Param        request  body      request.CreateSupportedRegionSuggestionsRequest  true  "Supported Region Request Body"
+// @Success      201      {object}  entities.SupportedRegionSuggestion
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /regions/supported-proposal [post]
-func CreateSupportedRegionProposal(ctx *gin.Context) {
-	var request request.CreateSupportedRegionProposalsRequest
+func CreateSupportedRegionSuggestion(ctx *gin.Context) {
+	var request request.CreateSupportedRegionSuggestionsRequest
 	if ctx.ShouldBindJSON(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return
@@ -158,7 +158,7 @@ func CreateSupportedRegionProposal(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.CreateSupportedRegionProposal(request, ctx)
+	res, err := service.CreateSupportedRegionSuggestion(request, ctx)
 
 	util.ProcessResponse(response.APIResponse{
 		Data1:    res,

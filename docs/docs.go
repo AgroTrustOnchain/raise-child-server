@@ -2853,7 +2853,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.CreateSupportedRegionProposalsRequest"
+                            "$ref": "#/definitions/request.CreateSupportedRegionSuggestionsRequest"
                         }
                     }
                 ],
@@ -2861,7 +2861,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/entities.SupportedRegionProposal"
+                            "$ref": "#/definitions/entities.SupportedRegionSuggestion"
                         }
                     },
                     "400": {
@@ -2980,7 +2980,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entities.SupportedRegionProposal"
+                            "$ref": "#/definitions/entities.SupportedRegionSuggestion"
                         }
                     },
                     "400": {
@@ -4143,7 +4143,7 @@ const docTemplate = `{
                 }
             }
         },
-        "entities.SupportedRegionProposal": {
+        "entities.SupportedRegionSuggestion": {
             "type": "object",
             "properties": {
                 "content": {
@@ -4448,7 +4448,7 @@ const docTemplate = `{
                 }
             }
         },
-        "request.CreateSupportedRegionProposalsRequest": {
+        "request.CreateSupportedRegionSuggestionsRequest": {
             "type": "object",
             "required": [
                 "content",

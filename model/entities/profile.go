@@ -8,6 +8,7 @@ import (
 type Profile struct {
 	ID           string    `json:"id"`
 	Salt         string    `json:"salt"`
+	Status       string    `json:"status"`
 	IdentityCode string    `json:"identity_code"`
 	FirstName    string    `json:"first_name"`
 	LastName     string    `json:"last_name"`

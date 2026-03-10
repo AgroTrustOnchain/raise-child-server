@@ -4,6 +4,7 @@ import (
 	"raise-child/model/dtos/response"
 	"raise-child/util"
 	"strconv"
+	"time"
 )
 
 type StaffNft struct {
@@ -40,6 +41,15 @@ type AdminNft struct {
 	UploadedAt         string `json:"uploaded_at"`
 	Name               string `json:"name"`
 	Url                string `json:"url"`
+}
+
+type NftProfile struct {
+	ID        string
+	ProfileID string
+	NftID     *string
+	Role      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (s StaffNft) ToStaffNftResponse() response.StaffNftResponse {

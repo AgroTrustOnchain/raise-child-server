@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/block-vision/sui-go-sdk/models"
-	"github.com/block-vision/sui-go-sdk/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -45,7 +43,7 @@ func Authorize(ctx *gin.Context) {
 		return
 	}
 
-	if !utils.IsValidSuiAddress(models.SuiAddress(address)) {
+	if !util.IsValidSuiAddressStrict(address) {
 		util.ProcessResponse(unAuthBodyResponse)
 		ctx.Abort()
 		return

@@ -510,8 +510,10 @@ func (c *childService) CreateMealNeedWithdrawProposal(req request.CreateNormalNe
 		if months >= 0 {
 			startDate = startPeriod.AddDate(0, months, 0)
 			endDate = startDate.AddDate(0, 1, 0)
-			expectedDay = startPeriod.Day() - 3
-			expectedMonth = startMonth + months
+
+			var expectedDate = startDate.AddDate(0, -3, 0)
+			expectedDay = expectedDate.Day()
+			expectedMonth = int(expectedDate.Month())
 			break
 		}
 
@@ -1040,6 +1042,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 		ReturnUrl:   callbackUrl,
 		CancelUrl:   callbackUrl,
 	})
+
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
 		return response.UrlAPIResponse{}, errors.New(noti.INTERNALL_ERR_MSG)

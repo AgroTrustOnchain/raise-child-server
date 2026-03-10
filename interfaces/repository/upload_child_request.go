@@ -4,6 +4,7 @@ import (
 	"context"
 	"raise-child/model/dtos/request"
 	"raise-child/model/entities"
+	"time"
 )
 
 type IUploadChildRequestRepository interface {
@@ -16,4 +17,5 @@ type IUploadChildRequestRepository interface {
 	GetPendingRequests(ctx context.Context) ([]entities.BackgroundRecord, []entities.BackgroundRecord, error)
 	SetApprovedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error
 	SetRefusedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error
+	SetReviewStatus(id, reviewStatus, reviewer string, closedAt *time.Time, ctx context.Context) error
 }

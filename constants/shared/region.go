@@ -24,7 +24,7 @@ const (
 	DONG_THAP_REGION   string = "Tỉnh Đồng Tháp"
 	CA_MAU_REGION      string = "Tỉnh Cà Mau"
 	AN_GIANG_REGION    string = "Tỉnh An Giang"
-	HA_NOI_REGION      string = "Thành phố Hà Nội"
+	HA_NOI_REGION      string = "Thành phố Hà Nội"	
 	HUE_REGION         string = "Thành phố Huế"
 	LAI_CHAU_REGION    string = "Tỉnh Lai Châu"
 	DIEN_BIEN_REGION   string = "Tỉnh Điện Biên"

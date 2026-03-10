@@ -20,10 +20,10 @@ func InitializeRegionRoutes(server *gin.Engine) {
 	// Normal group
 	var norGroup = server.Group(contextPath)
 	norGroup.GET("", middleware.RateLimitMiddleware(listLimit), transport.GetRegions)
-	norGroup.GET("/supported-proposal", middleware.RateLimitMiddleware(listLimit), transport.GetSupportedRegionProposals)
-	norGroup.GET("/supported-proposal/user/:id", middleware.RateLimitMiddleware(listLimit), transport.GetUserSupportedRegionProposals)
-	norGroup.GET("/supported-proposal/:id", middleware.RateLimitMiddleware(viewLimit), transport.GetSupportedRegionProposal)
+	norGroup.GET("/supported-proposal", middleware.RateLimitMiddleware(listLimit), transport.GetSupportedRegionSuggestions)
+	norGroup.GET("/supported-proposal/user/:id", middleware.RateLimitMiddleware(listLimit), transport.GetUserSupportedRegionSuggestions)
+	norGroup.GET("/supported-proposal/:id", middleware.RateLimitMiddleware(viewLimit), transport.GetSupportedRegionSuggestion)
 
 	var authGroup = server.Group(contextPath, middleware.Authorize, middleware.ManagerRoleAuthorize)
-	authGroup.POST("/supported-proposal", middleware.RateLimitMiddleware(createLimit), transport.CreateSupportedRegionProposal)
+	authGroup.POST("/supported-proposal", middleware.RateLimitMiddleware(createLimit), transport.CreateSupportedRegionSuggestion)
 }

@@ -105,7 +105,7 @@ func (v *localLeaderRequestRepo) GetRegistrationRequests(req request.GetNormalSt
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("is_confirm_register = %b", *req.IsConfirm)
+		queryCondition += fmt.Sprintf("is_confirm_register = %v", *req.IsConfirm)
 	}
 
 	if isHavePreviosCondition {
@@ -152,7 +152,7 @@ func (v *localLeaderRequestRepo) GetRegistrationRequests(req request.GetNormalSt
 	}
 
 	var totalRecords int
-	v.db.QueryRow(generateCountTotalRecordsQuery(local_leader_request_table, queryCondition)).Scan(&totalRecords)
+	v.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(local_leader_request_table, queryCondition)).Scan(&totalRecords)
 
 	return res, caculateTotalPages(totalRecords, local_leader_request_limit_record), nil
 }

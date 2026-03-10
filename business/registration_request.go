@@ -451,7 +451,7 @@ func (r *registrationRequestService) getGetRegistrationRequestsRedisKey(req requ
 
 	var isAvailable string = "empty"
 	if req.IsAvailableToConfirm != nil {
-		isAvailable = fmt.Sprintf("%b", *req.IsAvailableToConfirm)
+		isAvailable = fmt.Sprintf("%v", *req.IsAvailableToConfirm)
 	}
 
 	var keyword string = "empty"
@@ -476,7 +476,7 @@ func (r *registrationRequestService) getGetRegistrationRequestsRedisKey(req requ
 
 	var isClosed string = "empty"
 	if req.IsClosed != nil {
-		isClosed = fmt.Sprintf("%b", *req.IsClosed)
+		isClosed = fmt.Sprintf("%v", *req.IsClosed)
 	}
 
 	return fmt.Sprintf("registration_req:role:%s:available:%s:kw:%s:r:%s:g:%s:status:%s:closed:%s:o:%s:s:%d:p:%d",

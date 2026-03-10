@@ -6,10 +6,10 @@ import (
 	"raise-child/model/entities"
 )
 
-type ISupportedRegionProposalRepository interface {
-	GetSupportedRegionProposals(req request.GetSupportedRegionProposalsRequest, ctx context.Context) ([]entities.SupportedRegionProposal, int, error)
-	GetSupportedRegionProposal(id string, ctx context.Context) (*entities.SupportedRegionProposal, error)
-	CreateSupportedRegionProposal(proposal entities.SupportedRegionProposal, ctx context.Context) error
-	UpdateSupportedRegionProposal(proposal entities.SupportedRegionProposal, ctx context.Context) error
+type ISupportedRegionSuggestionRepository interface {
+	GetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, ctx context.Context) ([]entities.SupportedRegionSuggestion, int, error)
+	GetSupportedRegionSuggestion(id string, ctx context.Context) (*entities.SupportedRegionSuggestion, error)
+	CreateSupportedRegionSuggestion(proposal entities.SupportedRegionSuggestion, ctx context.Context) error
+	UpdateSupportedRegionSuggestion(proposal entities.SupportedRegionSuggestion, ctx context.Context) error
 	IsRegionRequested(region string, ctx context.Context) (bool, error)
 }

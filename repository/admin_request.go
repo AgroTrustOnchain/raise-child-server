@@ -103,7 +103,7 @@ func (a *adminRequestRepo) GetRegistrationRequests(req request.GetAdminRegistrat
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("is_confirm_register = %b", *req.IsConfirm)
+		queryCondition += fmt.Sprintf("is_confirm_register = %v", *req.IsConfirm)
 	}
 
 	if isHavePreviosCondition {
@@ -149,7 +149,7 @@ func (a *adminRequestRepo) GetRegistrationRequests(req request.GetAdminRegistrat
 	}
 
 	var totalRecords int
-	a.db.QueryRow(generateCountTotalRecordsQuery(admin_request_table, queryCondition)).Scan(&totalRecords)
+	a.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(admin_request_table, queryCondition)).Scan(&totalRecords)
 
 	return res, caculateTotalPages(totalRecords, admin_request_limit_record), nil
 }

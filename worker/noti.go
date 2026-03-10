@@ -1,5 +1,14 @@
 package worker
 
+import (
+	"log"
+	"raise-child/constants/shared"
+	"raise-child/interfaces/repository"
+	"raise-child/model/entities"
+	"raise-child/util"
+	"sync"
+)
+
 // import (
 // 	"context"
 // 	"database/sql"
@@ -11,36 +20,84 @@ package worker
 // 	"time"
 // )
 
-// var (
-// 	notiWorker *NotificationWorker
-// 	once       sync.Once
-// )
+var (
+	notiWorker *notificationWorker
+	once       sync.Once
+)
 
-// type NotificationWorker struct {
-// 	staffNotiJobs chan entities.Notification
-// 	wg            sync.WaitGroup
-// 	isClosed      bool
-// 	mu            sync.Mutex
-// 	errLogger     *log.Logger
-// 	infoLogger    *log.Logger
-// }
+type notificationWorker struct {
+	volunteerNotiJobs chan entities.VolunteerNoti
+	leaderNotiJobs    chan entities.LeaderNoti
+	volunteerNotiRepo repository.IVolunteerNotiRepository
+	leaderNotiRepo    repository.ILeaderNotiRepository
+	wg                sync.WaitGroup
+	isClosed          bool
+	mu                sync.Mutex
+	errLogger         *log.Logger
+	infoLogger        *log.Logger
+}
 
-// func InitalizeNotificationWorker(db *sql.DB, errLogger *log.Logger) *NotificationWorker {
-// 	once.Do(func() {
-// 		notiWorker = &NotificationWorker{
-// 			staffNotiJobs: make(chan entities.Notification, 1000),
-// 			errLogger:     errLogger,
-// 			infoLogger:    util.GetLogConfig(shared.INFO_LEVEL),
-// 		}
+type INotificationWorker interface {
+	EnqueueVolunteerNoti(v entities.VolunteerNoti) bool
+	EnqueueLeaderNoti(l entities.LeaderNoti) bool
+	Stop()
+}
 
-// 		for i := 0; i < 3; i++ {
-// 			go notiWorker.start(i)
-// 		}
+func InitalizeNotificationWorker(
+	volunteerNotiRepo repository.IVolunteerNotiRepository,
+	leaderNotiRepo repository.ILeaderNotiRepository,
+	errLogger *log.Logger,
+) INotificationWorker {
+	once.Do(func() {
+		notiWorker = &notificationWorker{
+			volunteerNotiJobs: make(chan entities.VolunteerNoti, 1000),
+			errLogger:         errLogger,
+			infoLogger:        util.GetLogConfig(shared.INFO_LEVEL),
+		}
 
-// 	})
+		for i := 0; i < 3; i++ {
+			//go notiWorker.start(i)
+		}
 
-// 	return notiWorker
-// }
+	})
+
+	return notiWorker
+}
+
+// EnqueueLeaderNoti implements INotificationWorker.
+func (n *notificationWorker) EnqueueLeaderNoti(l entities.LeaderNoti) bool {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	if n.isClosed {
+		log.Println("Cảnh báo: Worker đã đóng, không thể nhận thêm job")
+		return false
+	}
+
+	// Gửi job vào channel (không block nếu channel còn chỗ)
+	n.leaderNotiJobs <- l
+	return true
+}
+
+// EnqueueVolunteerNoti implements INotificationWorker.
+func (n *notificationWorker) EnqueueVolunteerNoti(v entities.VolunteerNoti) bool {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	if n.isClosed {
+		log.Println("Cảnh báo: Worker đã đóng, không thể nhận thêm job")
+		return false
+	}
+
+	// Gửi job vào channel (không block nếu channel còn chỗ)
+	n.volunteerNotiJobs <- v
+	return true
+}
+
+// Stop implements INotificationWorker.
+func (n *notificationWorker) Stop() {
+	panic("unimplemented")
+}
 
 // func (w *NotificationWorker) start(id int) {
 // 	w.wg.Add(1)

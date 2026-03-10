@@ -5,12 +5,18 @@ import (
 	"raise-child/interfaces/repository"
 	"raise-child/model/dtos/request"
 	"raise-child/model/entities"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 )
 
 type uploadChildRequestMockRepo struct {
 	mock.Mock
+}
+
+// SetReviewStatus implements repository.IUploadChildRequestRepository.
+func (u *uploadChildRequestMockRepo) SetReviewStatus(id string, reviewStatus string, reviewer string, closedAt *time.Time, ctx context.Context) error {
+	panic("unimplemented")
 }
 
 func InializeUploadChildRequestMockRepo() repository.IUploadChildRequestRepository {

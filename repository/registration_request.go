@@ -212,7 +212,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("is_available_to_confirm = %b", *req.IsAvailableToConfirm)
+		queryCondition += fmt.Sprintf("is_available_to_confirm = %v", *req.IsAvailableToConfirm)
 		isHavePreviosCondition = true
 	}
 
@@ -284,7 +284,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 	}
 
 	var totalRecords int
-	r.db.QueryRow(generateCountTotalRecordsQuery(registraion_request_table, queryCondition)).Scan(&totalRecords)
+	r.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(registraion_request_table, queryCondition)).Scan(&totalRecords)
 
 	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }

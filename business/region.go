@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
-	"raise-child/constants/env"
 	"raise-child/constants/noti"
 	"raise-child/constants/shared"
 	"raise-child/interfaces/business"
@@ -18,17 +16,15 @@ import (
 	"raise-child/util"
 	"raise-child/util/cache"
 	"raise-child/util/db"
-	on_chain "raise-child/util/on_chain"
 	"time"
 
 	"slices"
 
-	"github.com/block-vision/sui-go-sdk/constant"
 	"github.com/block-vision/sui-go-sdk/sui"
 )
 
 type regionService struct {
-	regionRepo i_repository.ISupportedRegionProposalRepository
+	regionRepo i_repository.ISupportedRegionSuggestionRepository
 	redisCache cache.IRedisCache
 	clients    map[string]sui.ISuiAPI
 	regions    []string
@@ -37,7 +33,7 @@ type regionService struct {
 
 var _regions []string
 
-func initalizeRegionService(regionRepo i_repository.ISupportedRegionProposalRepository,
+func initalizeRegionService(regionRepo i_repository.ISupportedRegionSuggestionRepository,
 	clients map[string]sui.ISuiAPI,
 	regions []string,
 	errLogger *log.Logger) business.IRegionService {
@@ -96,11 +92,11 @@ func GenerateRegionService() (business.IRegionService, error) {
 		}
 	}
 
-	return initalizeRegionService(repository.InitializeSupportedRegionProposalRepository(cnn, errLogger), _networkAliases, _regions, errLogger), nil
+	return initalizeRegionService(repository.InitializeSupportedRegionSuggestionRepository(cnn, errLogger), _networkAliases, _regions, errLogger), nil
 }
 
-// CreateSupportedRegionProposal implements business.IRegionService.
-func (r *regionService) CreateSupportedRegionProposal(req request.CreateSupportedRegionProposalsRequest, ctx context.Context) (*entities.SupportedRegionProposal, error) {
+// CreateSupportedRegionSuggestion implements business.IRegionService.
+func (r *regionService) CreateSupportedRegionSuggestion(req request.CreateSupportedRegionSuggestionsRequest, ctx context.Context) (*entities.SupportedRegionSuggestion, error) {
 	var address string = ctx.Value("address").(string)
 	if !util.IsValidSuiAddressStrict(address) {
 		return nil, errors.New(noti.GENERIC_ERROR_WARN_MSG)
@@ -115,69 +111,66 @@ func (r *regionService) CreateSupportedRegionProposal(req request.CreateSupporte
 		return nil, errors.New(noti.SUPPORRT_REGION_REQUEST_MESSAGE)
 	}
 
-	var client = r.clients[constant.SuiTestnet]
-	var packageId string = os.Getenv(env.PACKAGE_ID)
-	var manageModule = on_chain.InitializeModuleManage()
-	adminNfts, err := on_chain.GetOnChainOwnedObjects[entities.AdminNft](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: address,
-		StructType:   fmt.Sprintf("%s::%s::%s", packageId, manageModule.GetModule(), manageModule.GetAdminNftStruct()),
-	}, ctx)
-	if err != nil {
-		return nil, err
-	}
+	// var client = r.clients[constant.SuiTestnet]
+	// var packageId string = os.Getenv(env.PACKAGE_ID)
+	// var manageModule = on_chain.InitializeModuleManage()
+	// adminNfts, err := on_chain.GetOnChainOwnedObjects[entities.AdminNft](on_chain.GetOnChainOwnedObjectsRequest{
+	// 	Client:       client,
+	// 	OwnerAddress: address,
+	// 	StructType:   fmt.Sprintf("%s::%s::%s", packageId, manageModule.GetModule(), manageModule.GetAdminNftStruct()),
+	// }, ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	// Not admin
-	if adminNfts == nil || len(adminNfts) == 0 {
-		var staffModule = on_chain.InitializeModuleStaff()
-		staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
-			Client:       client,
-			OwnerAddress: address,
-			StructType:   fmt.Sprintf("%s::%s::%s", packageId, staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
-		}, ctx)
-		if err != nil {
-			return nil, err
-		}
+	// // Not admin
+	// if adminNfts == nil || len(adminNfts) == 0 {
+	// 	var staffModule = on_chain.InitializeModuleStaff()
+	// 	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
+	// 		Client:       client,
+	// 		OwnerAddress: address,
+	// 		StructType:   fmt.Sprintf("%s::%s::%s", packageId, staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
+	// 	}, ctx)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
 
-		var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-		if staffNfts == nil || len(staffNfts) == 0 {
-			return nil, genericRightErr
-		}
+	// 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	// 	if staffNfts == nil || len(staffNfts) == 0 {
+	// 		return nil, genericRightErr
+	// 	}
 
-		var isLeaderOfRegion bool = false
-		for _, nft := range staffNfts {
-			if nft.Region == req.Region && nft.Role == local_leader_role {
-				isLeaderOfRegion = true
-				break
-			}
-		}
+	// 	var isLeaderOfRegion bool = false
+	// 	for _, nft := range staffNfts {
+	// 		if nft.Region == req.Region && nft.Role == local_leader_role {
+	// 			isLeaderOfRegion = true
+	// 			break
+	// 		}
+	// 	}
 
-		if !isLeaderOfRegion {
-			return nil, genericRightErr
-		}
-	}
+	// 	if !isLeaderOfRegion {
+	// 		return nil, genericRightErr
+	// 	}
+	// }
 
-	var curTime time.Time = time.Now()
-	var proposal = entities.SupportedRegionProposal{
+	var proposal = entities.SupportedRegionSuggestion{
 		ID:        util.GenerateId(),
-		Sub:       ctx.Value("sub").(string),
+		ProfileID: ctx.Value("sub").(string),
 		Region:    req.Region,
 		Content:   req.Content,
 		CreatedBy: address,
-		CreatedAt: curTime,
-		UpdatedAt: curTime,
 	}
 
-	return &proposal, r.regionRepo.CreateSupportedRegionProposal(proposal, ctx)
+	return &proposal, r.regionRepo.CreateSupportedRegionSuggestion(proposal, ctx)
 }
 
-// GetSupportedRegionProposal implements business.IRegionService.
-func (r *regionService) GetSupportedRegionProposal(id string, ctx context.Context) (*entities.SupportedRegionProposal, error) {
-	return r.regionRepo.GetSupportedRegionProposal(id, ctx)
+// GetSupportedRegionSuggestion implements business.IRegionService.
+func (r *regionService) GetSupportedRegionSuggestion(id string, ctx context.Context) (*entities.SupportedRegionSuggestion, error) {
+	return r.regionRepo.GetSupportedRegionSuggestion(id, ctx)
 }
 
-// GetSupportedRegionProposals implements business.IRegionService.
-func (r *regionService) GetSupportedRegionProposals(req request.GetSupportedRegionProposalsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+// GetSupportedRegionSuggestions implements business.IRegionService.
+func (r *regionService) GetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
 	if req.CreatedBy != "" {
 		if !util.IsValidSuiAddressStrict(req.CreatedBy) {
 			return response.PaginationDataResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
@@ -194,12 +187,12 @@ func (r *regionService) GetSupportedRegionProposals(req request.GetSupportedRegi
 	}
 
 	var res response.PaginationDataResponse
-	var redisKey string = r.getGetSupportedRegionProposalsRedisKey(req)
+	var redisKey string = r.getGetSupportedRegionSuggestionsRedisKey(req)
 	if r.redisCache.Get(redisKey, &res, ctx) {
 		return res, nil
 	}
 
-	data, pages, err := r.regionRepo.GetSupportedRegionProposals(req, ctx)
+	data, pages, err := r.regionRepo.GetSupportedRegionSuggestions(req, ctx)
 	var amount int
 	if data == nil || len(data) == 0 {
 		amount = 0
@@ -226,7 +219,7 @@ func (r *regionService) GetRegions() response.RegionsResponse {
 	}
 }
 
-func (r *regionService) getGetSupportedRegionProposalsRedisKey(req request.GetSupportedRegionProposalsRequest) string {
+func (r *regionService) getGetSupportedRegionSuggestionsRedisKey(req request.GetSupportedRegionSuggestionsRequest) string {
 	var keyword string = "empty"
 	if req.Keyword != "" {
 		keyword = req.Keyword

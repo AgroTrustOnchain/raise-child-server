@@ -2850,7 +2850,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.CreateSupportedRegionProposalsRequest"
+                            "$ref": "#/definitions/request.CreateSupportedRegionSuggestionsRequest"
                         }
                     }
                 ],
@@ -2858,7 +2858,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/entities.SupportedRegionProposal"
+                            "$ref": "#/definitions/entities.SupportedRegionSuggestion"
                         }
                     },
                     "400": {
@@ -2977,7 +2977,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entities.SupportedRegionProposal"
+                            "$ref": "#/definitions/entities.SupportedRegionSuggestion"
                         }
                     },
                     "400": {
@@ -4140,7 +4140,7 @@
                 }
             }
         },
-        "entities.SupportedRegionProposal": {
+        "entities.SupportedRegionSuggestion": {
             "type": "object",
             "properties": {
                 "content": {
@@ -4445,7 +4445,7 @@
                 }
             }
         },
-        "request.CreateSupportedRegionProposalsRequest": {
+        "request.CreateSupportedRegionSuggestionsRequest": {
             "type": "object",
             "required": [
                 "content",

@@ -507,7 +507,7 @@ func (c *centerRequestService) getGetCenterRequestsRedisKey(req request.GetCente
 
 	var isClosed string = "empty"
 	if req.IsClosed != nil {
-		isClosed = fmt.Sprintf("%b", *req.IsClosed)
+		isClosed = fmt.Sprintf("%v", *req.IsClosed)
 	}
 
 	return fmt.Sprintf("center_rq:kw:%s:r:%s:status:%s:close:%s:o:%s:s:%d:p:%d",

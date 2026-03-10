@@ -480,6 +480,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 
 			switch detail.Purpose {
 			case string(entities.BOOKS_NEED_PURPOSE):
+				function = childModule.GetFunctionSupportChildBooksNeed()
 				args = childModule.ToSupportChildBooksNeedArguments(on_chain.SupportChildBooksNeedArguments{
 					NeedID:      targetId,
 					LocalPool:   localPoolId,
@@ -494,6 +495,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 					Message:     payment.Message,
 				})
 			case string(entities.MEAL_NEED_PURPOSE):
+				function = childModule.GetFunctionSupportChildMealNeed()
 				args = childModule.ToSupportChildMealNeedArguments(on_chain.SupportChildMealNeedArguments{
 					StartPeriod: "",
 					EndPeriod:   "",
@@ -512,6 +514,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 					},
 				})
 			case string(entities.SPECIAL_NEED_PURPOSE):
+				function = childModule.GetFunctionSupportChildSpecialNeedCampaign()
 				args = childModule.ToSupportChildSpeicalNeedArguments(on_chain.SupportChildSpeicalNeedArguments{
 					CampaignID:  targetId,
 					LocalPool:   localPoolId,

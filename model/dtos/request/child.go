@@ -11,13 +11,24 @@ type GetChildrenRequest struct {
 }
 
 type UploadChildRequest struct {
-	IdentityCode string `json:"identity_code" validate:"required"`
-	Region       string `json:"region" validate:"required"`
-	FirstName    string `json:"first_name" validate:"required"`
-	LastName     string `json:"last_name" validate:"required"`
-	Gender       string `json:"gender" validate:"required"`
-	DateOfBirth  string `json:"date_of_birth" validate:"required"`
-	AvatarBlobId string `json:"avatar_blob_id" validate:"required"`
+	HomeBlobID     string                `json:"home_blob_id" validate:"required"`
+	IdentityCode   string                `json:"identity_code" validate:"required"`
+	Region         string                `json:"region" validate:"required"`
+	FirstName      string                `json:"first_name" validate:"required"`
+	LastName       string                `json:"last_name" validate:"required"`
+	Gender         string                `json:"gender" validate:"required"`
+	DateOfBirth    string                `json:"date_of_birth" validate:"required"`
+	HomeAddress    string                `json:"home_address" validate:"required"`
+	AvatarBlobId   string                `json:"avatar_blob_id" validate:"required"`
+	FirstGuardian  ChildGuardianProfile  `json:"first_guardian" validate:"required"`
+	SecondGuardian *ChildGuardianProfile `json:"second_guardian"`
+}
+
+type ChildGuardianProfile struct {
+	FullName           string `json:"guardian_full_name" validate:"required"`
+	PhoneNumber        string `json:"guardian_phone_number" validate:"required"`
+	Relation           string `json:"guardian_relation" validate:"required"`
+	IdentityCardBlobID string `json:"identity_card_blob_id" validate:"required"`
 }
 
 type AddChildStringMetadaRequest struct {

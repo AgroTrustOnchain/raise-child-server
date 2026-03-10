@@ -777,12 +777,12 @@ func (w *withdrawProposalService) getGetWithdrawProposalsRedisKey(req request.Ge
 
 	var isExecuted string = "empty"
 	if req.IsExecuted != nil {
-		isExecuted = fmt.Sprintf("%b", *req.IsExecuted)
+		isExecuted = fmt.Sprintf("%v", *req.IsExecuted)
 	}
 
 	var isClosed string = "empty"
 	if req.IsClosed != nil {
-		isClosed = fmt.Sprintf("%b", *req.IsClosed)
+		isClosed = fmt.Sprintf("%v", *req.IsClosed)
 	}
 
 	var sortCriteria string = "empty"

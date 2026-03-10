@@ -14,4 +14,5 @@ type IUploadChildRequestService interface {
 	CreateUploadChildRequest(req request.UploadChildRequest, ctx context.Context) (*entities.UploadChildRequest, error)
 	VoteUploadChildRequest(id string, req request.VoteRequest, ctx context.Context) error
 	ConfirmUploadChildRequest(id string, ctx context.Context) (response.BuildTransactionResponse, error)
+	ReviewUploadChildRequest(id string, req request.VoteRequest, ctx context.Context) error
 }

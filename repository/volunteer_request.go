@@ -112,7 +112,7 @@ func (v *volunteerRequestRepo) GetRegistrationRequests(req request.GetNormalStaf
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("is_confirm_register = %b", *req.IsConfirm)
+		queryCondition += fmt.Sprintf("is_confirm_register = %v", *req.IsConfirm)
 	}
 
 	if isHavePreviosCondition {
@@ -158,7 +158,7 @@ func (v *volunteerRequestRepo) GetRegistrationRequests(req request.GetNormalStaf
 	}
 
 	var totalRecords int
-	v.db.QueryRow(generateCountTotalRecordsQuery(volunteer_request_table, queryCondition)).Scan(&totalRecords)
+	v.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(volunteer_request_table, queryCondition)).Scan(&totalRecords)
 
 	return res, caculateTotalPages(totalRecords, volunteer_request_limit_record), nil
 }

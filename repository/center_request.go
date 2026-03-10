@@ -101,7 +101,7 @@ func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequest
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("is_available_to_confirm = %b", *req.IsAvailableToConfirm)
+		queryCondition += fmt.Sprintf("is_available_to_confirm = %v", *req.IsAvailableToConfirm)
 		isHavePreviosCondition = true
 	}
 
@@ -173,7 +173,7 @@ func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequest
 	}
 
 	var totalRecords int
-	c.db.QueryRow(generateCountTotalRecordsQuery(center_request_table, queryCondition)).Scan(&totalRecords)
+	c.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(center_request_table, queryCondition)).Scan(&totalRecords)
 
 	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
