@@ -45,6 +45,7 @@ const (
 	DONATE_TO_LOCAL_POOL_FUNCTION                        string = "donate_to_local_pool"
 	WITHDRAW_FROM_POOL_FUNCTION                          string = "withdraw_from_pool"
 	CREATE_WITHDRAW_PROPOSAL_FUNCTION                    string = "create_withdraw_proposal"
+	CREATE_WITHDRAW_PROPOSAL_V2_FUNCTION                 string = "create_withdraw_proposal_v2"
 	VOTE_WITHDRAW_PROPOSAL_FUNCTION                      string = "vote_withdraw_proposal"
 	UPDATE_PUBLISHER_NFT_FUNCTION                        string = "update_publisher_nft"
 	CREATE_CENTER_FUNCTION                               string = "create_children_center"

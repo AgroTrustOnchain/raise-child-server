@@ -63,6 +63,9 @@ func setupApiRoutes(server *gin.Engine) {
 	// Noti API endpoints
 	api_route.InitializeNotiRoute(server)
 
+	// Pending Withdraw Proposal API endpoints
+	api_route.InitializePendingWithdrawProposalRoute(server)
+
 	// Default route to Swagger documentation
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusMovedPermanently, "/swagger/index.html#")

@@ -30,6 +30,15 @@ type CreateWithdrawProposalArguments struct {
 	ClosedAt        int64
 }
 
+type CreateWithdrawProposalV2Arguments struct {
+	LocalPoolId     string
+	WithdrawAmount  int64
+	Description     string
+	IsFromLocalPool bool
+	ClosedAt        int64
+	Creator         string
+}
+
 type VoteWithdrawProposalArguments struct {
 	ProposalId   string
 	DonorId      string
@@ -52,6 +61,7 @@ type IModulePool interface {
 	ToDonateToPoolArguments(args DonateToPoolArguments) []interface{}
 	ToDonateToLocalPoolArguments(args DonateToLocalPoolArguments) []interface{}
 	ToCreateWithdrawProposalArguments(args CreateWithdrawProposalArguments) []interface{}
+	ToCreateWithdrawProposalV2Arguments(args CreateWithdrawProposalV2Arguments) []interface{}
 	ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguments) []interface{}
 	ToWithdrawFromPoolArguments(args WithdrawFromPoolArguments) []interface{}
 	ToEditWithdrawDaoRateArguements(args EditWithdrawDaoRateArguements) []interface{}
@@ -60,6 +70,7 @@ type IModulePool interface {
 	GetFunctionDonateToLocalPool() string
 	GetFunctionWithdrawFromPool() string
 	GetFunctionCreateWithdrawProposal() string
+	GetFunctionCreateWithdrawProposalV2() string
 	GetFunctionVoteWithdrawProposal() string
 	GetFunctionEditWithdrawDaoRate() string
 }
@@ -83,6 +94,11 @@ func (m *modulePool) GetFunctionDonateToLocalPool() string {
 // GetFunctionCreateWithdrawProposal implements IModulePool.
 func (m *modulePool) GetFunctionCreateWithdrawProposal() string {
 	return sui.CREATE_WITHDRAW_PROPOSAL_FUNCTION
+}
+
+// GetFunctionCreateWithdrawProposalV2 implements IModulePool.
+func (m *modulePool) GetFunctionCreateWithdrawProposalV2() string {
+	return sui.CREATE_WITHDRAW_PROPOSAL_V2_FUNCTION
 }
 
 // GetFunctionVoteWithdrawProposal implements IModulePool.
@@ -128,6 +144,21 @@ func (m *modulePool) ToCreateWithdrawProposalArguments(args CreateWithdrawPropos
 		args.Description,
 		args.IsFromLocalPool,
 		uint64(args.ClosedAt),
+		sui.CLOCK_OBJECT_ID,
+	}
+}
+
+// ToCreateWithdrawProposalV2Arguments implements IModulePool.
+func (m *modulePool) ToCreateWithdrawProposalV2Arguments(args CreateWithdrawProposalV2Arguments) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		os.Getenv(env.POOL_ID),
+		args.LocalPoolId,
+		uint64(args.WithdrawAmount),
+		args.Description,
+		args.IsFromLocalPool,
+		uint64(args.ClosedAt),
+		args.Creator,
 		sui.CLOCK_OBJECT_ID,
 	}
 }

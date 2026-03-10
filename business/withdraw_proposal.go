@@ -99,24 +99,21 @@ const (
 
 // CreateWithdrawProposal implements business.IWithdrawProposalService.
 func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithdrawProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	// if !utils.IsValidSuiAddress(models.SuiAddress(req.PoolID)) || !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
+	// 	return response.BuildTransactionResponse{}, genericErr
+	// }
 
-	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(req.PoolID)) || !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
-
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 	var client = w.clients[constant.SuiTestnet]
-	manageObj, _ := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
 		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
 		ErrLogger: w.errLogger,
 	}, ctx)
-	if manageObj == nil {
-		return response.BuildTransactionResponse{}, internalErr
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
 	}
 
+	var sender string = ctx.Value("address").(string)
 	var isAdmin bool = slices.Contains(manageObj.AdminIds, sender)
 	var isLeader bool = slices.Contains(manageObj.LocalLeaderIds, sender)
 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
@@ -134,6 +131,7 @@ func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithd
 	}
 
 	var poolNotEnoughBalenceErr error = errors.New(noti.POOL_CURRENTLY_NOT_ENOUGH_BALENCE)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 	var localPoolId string
 	if !isMainPoolRequested {
 		localPool, _ := on_chain.GetOnChainObject[entities.LocalPool](on_chain.GetOnChainObjectRequest{
@@ -230,7 +228,7 @@ func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithd
 			ProposalId: proposalId,
 		}, w.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
 			ID:        proposalId,
-			Purpose:   "Withdraw",
+			Purpose:   string(entities.WITHDRAW_PURPOSE),
 			Target:    req.PoolID,
 			CreatedAt: time.Now(),
 		}, ctx)
@@ -790,6 +788,6 @@ func (w *withdrawProposalService) getGetWithdrawProposalsRedisKey(req request.Ge
 		sortCriteria = req.SortCriteria
 	}
 
-	return fmt.Sprintf("withdraw_proposal:kw:%s:of:%s:min:%s:max:%s:executed:%s:closed:%s:sc:%s:o:%s:s:%d:p:%d",
+	return fmt.Sprintf("off_withdraw_proposal:kw:%s:of:%s:min:%s:max:%s:executed:%s:closed:%s:sc:%s:o:%s:s:%d:p:%d",
 		keyword, creator, minAmount, maxAmount, isExecuted, isClosed, sortCriteria, req.SortOrder, req.PageSize, req.Page)
 }

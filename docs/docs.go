@@ -2669,6 +2669,321 @@ const docTemplate = `{
                 }
             }
         },
+        "/pending-withdraw-proposals": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a list of pending withdraw proposals with optional query filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pending Withdrawal"
+                ],
+                "summary": "List pending withdraw proposals",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "creator",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "max_amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "min_amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "reviewer",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_criteria",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new pending withdraw proposal",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pending Withdrawal"
+                ],
+                "summary": "Create a new pending withdraw proposal",
+                "parameters": [
+                    {
+                        "description": "Pending Withdraw Proposal details (e.g., ",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreatePendingWithdrawProposalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pending-withdraw-proposals/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve details of a specific pending withdraw proposal by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pending Withdrawal"
+                ],
+                "summary": "Get a pending withdraw proposal",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pending Withdraw Proposal ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entities.PendingWithdrawProposal"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pending-withdraw-proposals/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Approve a pending withdraw proposal to prepare and build a transaction to publish this proposal on chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pending Withdrawal"
+                ],
+                "summary": "Approve a pending withdraw proposal",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Oending Withdraw Proposal ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pending-withdraw-proposals/{id}/refuse": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Refuse a pending withdraw proposal",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Refuse a pending withdraw proposal",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Oending Withdraw Proposal ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/profiles/{id}": {
             "post": {
                 "security": [
@@ -4058,6 +4373,73 @@ const docTemplate = `{
                 }
             }
         },
+        "entities.ChildGuardianProfile": {
+            "type": "object",
+            "properties": {
+                "fullName": {
+                    "type": "string"
+                },
+                "identityCardBlobID": {
+                    "type": "string"
+                },
+                "phoneNumber": {
+                    "type": "string"
+                },
+                "relation": {
+                    "type": "string"
+                }
+            }
+        },
+        "entities.PendingWithdrawProposal": {
+            "type": "object",
+            "properties": {
+                "aievaluation": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "creator": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "poolID": {
+                    "type": "string"
+                },
+                "poolName": {
+                    "type": "string"
+                },
+                "profileID": {
+                    "type": "string"
+                },
+                "proofBlobID": {
+                    "type": "string"
+                },
+                "purpose": {
+                    "type": "string"
+                },
+                "reviewedBy": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "withdrawAmount": {
+                    "type": "integer"
+                }
+            }
+        },
         "entities.RegistrationRequest": {
             "type": "object",
             "properties": {
@@ -4158,10 +4540,16 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "profileID": {
+                    "type": "string"
+                },
                 "region": {
                     "type": "string"
                 },
-                "sub": {
+                "reviewedBy": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 },
                 "updatedAt": {
@@ -4180,6 +4568,9 @@ const docTemplate = `{
                 "region"
             ],
             "properties": {
+                "ai_evaluation": {
+                    "type": "string"
+                },
                 "approvers": {
                     "type": "array",
                     "items": {
@@ -4201,10 +4592,19 @@ const docTemplate = `{
                 "date_of_birth": {
                     "type": "string"
                 },
+                "first_guardian_profile": {
+                    "$ref": "#/definitions/entities.ChildGuardianProfile"
+                },
                 "first_name": {
                     "type": "string"
                 },
                 "gender": {
+                    "type": "string"
+                },
+                "home_address": {
+                    "type": "string"
+                },
+                "home_blob_id": {
                     "type": "string"
                 },
                 "id": {
@@ -4238,6 +4638,16 @@ const docTemplate = `{
                 "region": {
                     "type": "string"
                 },
+                "review_status": {
+                    "description": "e.g. \"Pending\", \"Approved\", \"Refused\"",
+                    "type": "string"
+                },
+                "reviewed_by": {
+                    "type": "string"
+                },
+                "second_guardian_profile": {
+                    "$ref": "#/definitions/entities.ChildGuardianProfile"
+                },
                 "status": {
                     "description": "e.g. \"Pending\", \"Approved\", \"Refused\"",
                     "type": "string"
@@ -4258,6 +4668,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.ChildGuardianProfile": {
+            "type": "object",
+            "required": [
+                "guardian_full_name",
+                "guardian_phone_number",
+                "guardian_relation",
+                "identity_card_blob_id"
+            ],
+            "properties": {
+                "guardian_full_name": {
+                    "type": "string"
+                },
+                "guardian_phone_number": {
+                    "type": "string"
+                },
+                "guardian_relation": {
+                    "type": "string"
+                },
+                "identity_card_blob_id": {
                     "type": "string"
                 }
             }
@@ -4386,6 +4819,30 @@ const docTemplate = `{
                 }
             }
         },
+        "request.CreatePendingWithdrawProposalRequest": {
+            "type": "object",
+            "required": [
+                "description",
+                "pool_id",
+                "withdraw_amount"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "pool_id": {
+                    "type": "string"
+                },
+                "proof_blob_id": {
+                    "type": "string"
+                },
+                "withdraw_amount": {
+                    "type": "integer",
+                    "maximum": 20000000,
+                    "minimum": 10000
+                }
+            }
+        },
         "request.CreateRegistrationRequest": {
             "type": "object",
             "required": [
@@ -4466,6 +4923,7 @@ const docTemplate = `{
         "request.CreateWithdrawProposalRequest": {
             "type": "object",
             "required": [
+                "description",
                 "pool_id",
                 "withdraw_amount"
             ],
@@ -4474,6 +4932,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "pool_id": {
+                    "type": "string"
+                },
+                "proof_blob_id": {
                     "type": "string"
                 },
                 "withdraw_amount": {
@@ -4668,8 +5129,11 @@ const docTemplate = `{
             "required": [
                 "avatar_blob_id",
                 "date_of_birth",
+                "first_guardian",
                 "first_name",
                 "gender",
+                "home_address",
+                "home_blob_id",
                 "identity_code",
                 "last_name",
                 "region"
@@ -4681,10 +5145,19 @@ const docTemplate = `{
                 "date_of_birth": {
                     "type": "string"
                 },
+                "first_guardian": {
+                    "$ref": "#/definitions/request.ChildGuardianProfile"
+                },
                 "first_name": {
                     "type": "string"
                 },
                 "gender": {
+                    "type": "string"
+                },
+                "home_address": {
+                    "type": "string"
+                },
+                "home_blob_id": {
                     "type": "string"
                 },
                 "identity_code": {
@@ -4695,6 +5168,9 @@ const docTemplate = `{
                 },
                 "region": {
                     "type": "string"
+                },
+                "second_guardian": {
+                    "$ref": "#/definitions/request.ChildGuardianProfile"
                 }
             }
         },

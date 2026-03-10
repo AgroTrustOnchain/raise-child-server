@@ -24,9 +24,10 @@ type Payment struct {
 type PaymentPurpose string
 
 const (
-	DONATE_PURPOSE       PaymentPurpose = "Donate"
-	WITHDRAW_PURPOSE     PaymentPurpose = "Withdraw"
-	BOOKS_NEED_PURPOSE   PaymentPurpose = "Child Books Need"
-	MEAL_NEED_PURPOSE    PaymentPurpose = "Child Meal Need"
-	SPECIAL_NEED_PURPOSE PaymentPurpose = "Child Special Need"
+	DONATE_PURPOSE                PaymentPurpose = "Donate"
+	WITHDRAW_PURPOSE              PaymentPurpose = "Withdraw"
+	BOOKS_NEED_PURPOSE            PaymentPurpose = "Child Books Need"
+	MEAL_NEED_PURPOSE             PaymentPurpose = "Child Meal Need"
+	SPECIAL_NEED_PURPOSE          PaymentPurpose = "Child Special Need"
+	HEALTH_INSURANCE_NEED_PURPOSE PaymentPurpose = "Child Health Insurance Need"
 )

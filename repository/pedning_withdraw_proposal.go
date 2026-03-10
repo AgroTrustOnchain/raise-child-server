@@ -33,9 +33,9 @@ func InitializePendingWithdrawProposalRepo(db *sql.DB, errLogger *log.Logger) re
 func (p *pendingWithdrawProposalRepo) CreatePendingWithdrawProposal(proposal entities.PendingWithdrawProposal, ctx context.Context) error {
 	var query string = "INSERT INTO " + pending_withdraw_proposal_table +
 		" (id, profile_id, creator, pool_id, pool_name, " +
-		"withdraw_amount, proof_blob_id, description, " +
+		"purpose, target, withdraw_amount, proof_blob_id, description, " +
 		"status, ai_evaluation, created_at, updated_at) " +
-		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
+		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PENDING_WITHDRAW_PROPOSAL_REPOSITORY) + "CreatePendingWithdrawProposal - "
 	if _, err := p.db.ExecContext(ctx, query, proposal.ID, proposal.ProfileID, proposal.Creator, proposal.PoolID, proposal.PoolName,
@@ -57,7 +57,7 @@ func (p *pendingWithdrawProposalRepo) GetPendingWithdrawProposal(id string, ctx 
 	var res entities.PendingWithdrawProposal
 	if err := p.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.ProfileID, &res.Creator, &res.PoolID, &res.PoolName,
-		&res.WithdrawAmount, &res.ProofBlobID, &res.Description,
+		&res.Purpose, &res.Target, &res.WithdrawAmount, &res.ProofBlobID, &res.Description,
 		&res.Status, &res.AIEvaluation, &res.ReviewedBy, &res.CreatedAt, &res.UpdatedAt,
 	); err != nil {
 		if err == sql.ErrNoRows {
@@ -161,7 +161,7 @@ func (p *pendingWithdrawProposalRepo) GetPendingWithdrawProposals(req request.Ge
 		var x entities.PendingWithdrawProposal
 		if err := rows.Scan(
 			&x.ID, &x.ProfileID, &x.Creator, &x.PoolID, &x.PoolName,
-			&x.WithdrawAmount, &x.ProofBlobID, &x.Description,
+			&x.Purpose, &x.Target, &x.WithdrawAmount, &x.ProofBlobID, &x.Description,
 			&x.Status, &x.AIEvaluation, &x.ReviewedBy, &x.CreatedAt, &x.UpdatedAt,
 		); err != nil {
 

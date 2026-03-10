@@ -69,6 +69,50 @@ definitions:
       updated_at:
         type: string
     type: object
+  entities.ChildGuardianProfile:
+    properties:
+      fullName:
+        type: string
+      identityCardBlobID:
+        type: string
+      phoneNumber:
+        type: string
+      relation:
+        type: string
+    type: object
+  entities.PendingWithdrawProposal:
+    properties:
+      aievaluation:
+        type: string
+      createdAt:
+        type: string
+      creator:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      poolID:
+        type: string
+      poolName:
+        type: string
+      profileID:
+        type: string
+      proofBlobID:
+        type: string
+      purpose:
+        type: string
+      reviewedBy:
+        type: string
+      status:
+        type: string
+      target:
+        type: string
+      updatedAt:
+        type: string
+      withdrawAmount:
+        type: integer
+    type: object
   entities.RegistrationRequest:
     properties:
       approvers:
@@ -137,15 +181,21 @@ definitions:
         type: string
       id:
         type: string
+      profileID:
+        type: string
       region:
         type: string
-      sub:
+      reviewedBy:
+        type: string
+      status:
         type: string
       updatedAt:
         type: string
     type: object
   entities.UploadChildRequest:
     properties:
+      ai_evaluation:
+        type: string
       approvers:
         items:
           type: string
@@ -160,9 +210,15 @@ definitions:
         type: string
       date_of_birth:
         type: string
+      first_guardian_profile:
+        $ref: '#/definitions/entities.ChildGuardianProfile'
       first_name:
         type: string
       gender:
+        type: string
+      home_address:
+        type: string
+      home_blob_id:
         type: string
       id:
         type: string
@@ -186,6 +242,13 @@ definitions:
         type: array
       region:
         type: string
+      review_status:
+        description: e.g. "Pending", "Approved", "Refused"
+        type: string
+      reviewed_by:
+        type: string
+      second_guardian_profile:
+        $ref: '#/definitions/entities.ChildGuardianProfile'
       status:
         description: e.g. "Pending", "Approved", "Refused"
         type: string
@@ -208,6 +271,22 @@ definitions:
     required:
     - key
     - value
+    type: object
+  request.ChildGuardianProfile:
+    properties:
+      guardian_full_name:
+        type: string
+      guardian_phone_number:
+        type: string
+      guardian_relation:
+        type: string
+      identity_card_blob_id:
+        type: string
+    required:
+    - guardian_full_name
+    - guardian_phone_number
+    - guardian_relation
+    - identity_card_blob_id
     type: object
   request.ConfirmProvideMealForChildRequest:
     properties:
@@ -294,6 +373,23 @@ definitions:
     required:
     - need_id
     type: object
+  request.CreatePendingWithdrawProposalRequest:
+    properties:
+      description:
+        type: string
+      pool_id:
+        type: string
+      proof_blob_id:
+        type: string
+      withdraw_amount:
+        maximum: 20000000
+        minimum: 10000
+        type: integer
+    required:
+    - description
+    - pool_id
+    - withdraw_amount
+    type: object
   request.CreateRegistrationRequest:
     properties:
       avatar_blob_id:
@@ -353,11 +449,14 @@ definitions:
         type: string
       pool_id:
         type: string
+      proof_blob_id:
+        type: string
       withdraw_amount:
         maximum: 20000000
         minimum: 10000
         type: integer
     required:
+    - description
     - pool_id
     - withdraw_amount
     type: object
@@ -491,9 +590,15 @@ definitions:
         type: string
       date_of_birth:
         type: string
+      first_guardian:
+        $ref: '#/definitions/request.ChildGuardianProfile'
       first_name:
         type: string
       gender:
+        type: string
+      home_address:
+        type: string
+      home_blob_id:
         type: string
       identity_code:
         type: string
@@ -501,11 +606,16 @@ definitions:
         type: string
       region:
         type: string
+      second_guardian:
+        $ref: '#/definitions/request.ChildGuardianProfile'
     required:
     - avatar_blob_id
     - date_of_birth
+    - first_guardian
     - first_name
     - gender
+    - home_address
+    - home_blob_id
     - identity_code
     - last_name
     - region
@@ -2654,6 +2764,212 @@ paths:
       summary: Process a donation
       tags:
       - payment
+  /pending-withdraw-proposals:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of pending withdraw proposals with optional query
+        filters
+      parameters:
+      - in: query
+        name: creator
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: max_amount
+        type: integer
+      - in: query
+        name: min_amount
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: reviewer
+        type: string
+      - in: query
+        name: sort_criteria
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: List pending withdraw proposals
+      tags:
+      - Pending Withdrawal
+    post:
+      consumes:
+      - application/json
+      description: Create a new pending withdraw proposal
+      parameters:
+      - description: 'Pending Withdraw Proposal details (e.g., '
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreatePendingWithdrawProposalRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new pending withdraw proposal
+      tags:
+      - Pending Withdrawal
+  /pending-withdraw-proposals/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific pending withdraw proposal by its
+        ID
+      parameters:
+      - description: Pending Withdraw Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.PendingWithdrawProposal'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a pending withdraw proposal
+      tags:
+      - Pending Withdrawal
+  /pending-withdraw-proposals/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Approve a pending withdraw proposal to prepare and build a transaction
+        to publish this proposal on chain
+      parameters:
+      - description: Oending Withdraw Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Approve a pending withdraw proposal
+      tags:
+      - Pending Withdrawal
+  /pending-withdraw-proposals/{id}/refuse:
+    post:
+      consumes:
+      - application/json
+      description: Refuse a pending withdraw proposal
+      parameters:
+      - description: Oending Withdraw Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Refuse a pending withdraw proposal
   /profiles/{id}:
     post:
       consumes:

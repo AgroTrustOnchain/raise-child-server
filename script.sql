@@ -201,6 +201,8 @@ CREATE TABLE pending_withdraw_proposals (
     creator character varying(100) NOT NULL,
     pool_id character varying(100) NOT NULL,
     pool_name character varying(30) NOT NULL,
+    purpose character varying(30) NOT NULL,
+    target character varying(100) NOT NULL,
     withdraw_amount BIGINT NOT NULL,
     proof_blob_id character varying(100),
     description TEXT NOT NULL,

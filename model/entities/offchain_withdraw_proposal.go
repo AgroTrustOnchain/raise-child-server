@@ -16,6 +16,8 @@ type PendingWithdrawProposal struct {
 	Creator        string
 	PoolID         string
 	PoolName       string
+	Purpose        string
+	Target         string
 	WithdrawAmount int64
 	ProofBlobID    *string
 	Description    string
