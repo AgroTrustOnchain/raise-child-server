@@ -41,7 +41,7 @@ const (
 const (
 	request_pending_status  string = "Pending"
 	request_refused_status  string = "Refused"
-	request_approved_status string = "Aprroved"
+	request_approved_status string = "Approved"
 )
 
 const (

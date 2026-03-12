@@ -27,7 +27,7 @@ func GetWallets() map[string]string {
 func setLogin(sub, addr string) {
 	_shareMu.Lock()
 	defer _shareMu.Unlock()
-	_wallets[sub] = addr
+	_wallets[sub] = addr // mapping profileID -> address
 }
 
 func logoutWallet(sub string) {

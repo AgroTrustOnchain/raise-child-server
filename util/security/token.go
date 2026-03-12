@@ -100,16 +100,16 @@ func ExtractDataFromToken(tokenString string, logger *log.Logger) (string, strin
 		return "", "", "", time.Time{}, errRes
 	}
 
-	// Extract nonce
+	// Extract sub
 	sub, ok := claims["sub"].(string)
 	if !ok || sub == "" {
 		logger.Println(errLogMsg + "missing or invalid sub claim")
 		return "", "", "", time.Time{}, errRes
 	}
 
-	// Extract nonce
+	// Extract role
 	role, ok := claims["role"].(string)
-	if !ok || sub == "" {
+	if !ok || role == "" {
 		logger.Println(errLogMsg + "missing or invalid role claim")
 		return "", "", "", time.Time{}, errRes
 	}
