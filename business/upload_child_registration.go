@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -37,14 +36,6 @@ type uploadChildRequestService struct {
 	errLogger              *log.Logger
 }
 
-func InitializeUploadChildRequestService(db *sql.DB, errLogger *log.Logger) business.IUploadChildRequestService {
-	return &uploadChildRequestService{
-		uploadChildRequestRepo: repository.InitializeUploadChildRequestRepo(db, errLogger),
-		clients:                _networkAliases,
-		errLogger:              errLogger,
-	}
-}
-
 func initializeUploadChildRequestService(
 	uploadChildRequestRepo i_repository.IUploadChildRequestRepository,
 	clients map[string]sui.ISuiAPI,
@@ -65,8 +56,6 @@ func GenerateUploadChildRequestService() (business.IUploadChildRequestService, e
 	if err != nil {
 		return nil, err
 	}
-
-	//return InitializeUploadChildRequestService(cnn, errLogger), nil
 
 	return initializeUploadChildRequestService(repository.InitializeUploadChildRequestRepo(cnn, errLogger), _networkAliases, errLogger), nil
 }
@@ -157,20 +146,39 @@ func (u *uploadChildRequestService) ConfirmUploadChildRequest(id string, ctx con
 	var res response.BuildTransactionResponse
 	var errRes error
 	if req.IsConfirmUpload {
+		var secondGuardianFullName, secondGuardianPhone, secondGuardianRelation, secondGuardianIdentityCardBlobID string
+		if req.SecondGuardianProfile != nil {
+			secondGuardianFullName = req.SecondGuardianProfile.FullName
+			secondGuardianPhone = req.SecondGuardianProfile.PhoneNumber
+			secondGuardianRelation = req.SecondGuardianProfile.Relation
+			secondGuardianIdentityCardBlobID = req.SecondGuardianProfile.IdentityCardBlobID
+		}
+
 		var module = on_chain.InitializeModuleChild()
 		txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
 			Client:    u.clients[constant.SuiTestnet],
-			Sender:    ctx.Value("address").(string),
+			Sender:    sender,
 			Module:    module.GetModule(),
 			Function:  module.GetFunctionAddChild(),
 			ErrLogger: u.errLogger,
 			Arguments: module.ToAddChildArguments(on_chain.AddChildArguments{
-				IdentityCode: req.IdentityCode,
-				FirstName:    req.FirstName,
-				LastName:     req.LastName,
-				Gender:       req.Gender,
-				DateOfBirth:  req.DateOfBirth,
-				AvatarBlobId: req.AvatarBlobId,
+				IdentityCode:                     req.IdentityCode,
+				FirstName:                        req.FirstName,
+				LastName:                         req.LastName,
+				Gender:                           req.Gender,
+				DateOfBirth:                      req.DateOfBirth,
+				HomeAddress:                      req.HomeAddress,
+				Region:                           req.Region,
+				AvatarBlobId:                     req.AvatarBlobId,
+				HomeBlobID:                       req.HomeBlobID,
+				FirstGuardianFullName:            req.FirstGuardianProfile.FullName,
+				FirstGuardianPhone:               req.FirstGuardianProfile.PhoneNumber,
+				FirstGuardianRelation:            req.FirstGuardianProfile.Relation,
+				FirstGuardianIdentityCardBlobID:  req.FirstGuardianProfile.IdentityCardBlobID,
+				SecondGuardianFullName:           secondGuardianFullName,
+				SecondGuardianPhone:              secondGuardianPhone,
+				SecondGuardianRelation:           secondGuardianRelation,
+				SecondGuardianIdentityCardBlobID: secondGuardianIdentityCardBlobID,
 			}),
 		}, ctx)
 

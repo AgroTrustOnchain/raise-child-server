@@ -31,3 +31,11 @@ func GetRequestDuration() time.Time {
 func GetBankTransactionDuration() time.Time {
 	return time.Now().Add(bank_request_duration)
 }
+
+func ToStartOfDate(date time.Time) time.Time {
+	return time.Date(date.Year(), date.Month(), date.Day(), 0, 1, 0, 0, date.Location())
+}
+
+func ToEndOfDate(date time.Time) time.Time {
+	return time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 99, 0, date.Location())
+}

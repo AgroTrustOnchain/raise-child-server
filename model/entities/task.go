@@ -2,16 +2,42 @@ package entities
 
 import "time"
 
-type VolunteerTask struct {
-	ID                string    `json:"id"`
-	AssignedProfileID string    `json:"assigned_profile_id"`
-	AssignedVolunteer string    `json:"assgined_volunteer"`
-	ChildID           string    `json:"child_id"`
-	Region            string    `json:"region"`
-	Content           string    `json:"content"`
-	StartPeriod       string    `json:"start_period"`
-	EndPeriod         string    `json:"end_period"`
-	IsEnd             bool      `json:"is_end"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
+type Task struct {
+	ID                  string    `json:"id"`
+	IsChildTask         bool      `json:"is_child_task"`
+	ChildTaskDetailID   *string   `json:"child_task_detail_id"`
+	CreatedBy           string    `json:"created_by"`
+	AssignedProfileID   *string   `json:"assigned_profile_id"`
+	AssignedStaff       *string   `json:"assgined_staff"`
+	ReviewProfileStatus string    `json:"review_profile_status"`
+	ReviewedBy          *string   `json:"reviewed_by"`
+	Region              string    `json:"region"`
+	Description         string    `json:"description"`
+	StartPeriod         time.Time `json:"start_period"`
+	EndPeriod           time.Time `json:"end_period"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+type ChildTaskDetail struct {
+	ID        string    `json:"id"`
+	ChildID   string    `json:"child_id"`
+	Purpose   string    `json:"purpose"`
+	Target    string    `json:"target"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type TaskProof struct {
+	ID             string    `json:"id"`
+	TaskID         string    `json:"task_id"`
+	Description    string    `json:"description"`
+	ActorProfileID string    `json:"actor_profile_id"`
+	ActorAddress   string    `json:"actor_address"`
+	ImageBlobID    string    `json:"image_blob_id"`
+	ReviewedBy     *string   `json:"reviewed_by"`
+	AIEvaluation   string    `json:"ai_evaluation"`
+	ReviewStatus   string    `json:"review_status"`
+	RawSubmitDate  string    `json:"raw_submit_date"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }

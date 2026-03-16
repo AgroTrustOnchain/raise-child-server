@@ -9,7 +9,7 @@ import (
 
 type CenterRequest struct {
 	ID                   string    `json:"id"`
-	Sub                  string    `json:"sub"`
+	ProfileID            string    `json:"profile_id"`
 	Region               string    `json:"region"`
 	Address              string    `json:"address"`
 	PhoneNumber          string    `json:"phone_number"`
@@ -32,8 +32,10 @@ type Center struct {
 	CenterAddress     string   `json:"center_address"`
 	CenterPhoneNumber string   `json:"center_phone_number"`
 	ImageBlobIDs      []string `json:"image_blob_ids"`
+	ChildIDs          []string `json:"child_ids"`
 	Gifts             []string `json:"gifts"`
 	AllGifts          []string `json:"all_gifts"`
+	TaskProofs        []string `json:"task_proofs"`
 	UploadedAt        string   `json:"uploaded_at"`
 	UpdatedAt         string   `json:"updated_at"`
 }

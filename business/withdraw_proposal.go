@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -44,17 +43,6 @@ type withdrawProposalService struct {
 	errLogger       *log.Logger
 }
 
-func InitializeWithdrawProposalService(db *sql.DB, errLogger *log.Logger) business.IWithdrawProposalService {
-	return &withdrawProposalService{
-		paymentRepo:     repository.InitializePaymentRepository(db, errLogger),
-		bankProfileRepo: repository.InitializeBankProfileRepository(db, errLogger),
-		withdrawRepo:    repository.InitializeOffChainWithdrawProposalRepository(db, errLogger),
-		redisCache:      cache.InitializeRedisCache(),
-		clients:         _networkAliases,
-		errLogger:       errLogger,
-	}
-}
-
 func initializeWithdrawProposalService(
 	paymentRepo i_repository.IPaymentRepository,
 	bankProfileRepo i_repository.IBankProfileRepository,
@@ -79,8 +67,6 @@ func GenerateWithdrawProposalService() (business.IWithdrawProposalService, error
 	if err != nil {
 		return nil, err
 	}
-
-	//return InitializeWithdrawProposalService(cnn, errLogger), nil
 
 	return initializeWithdrawProposalService(
 		repository.InitializePaymentRepository(cnn, errLogger),
@@ -360,7 +346,8 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 
 	var paymentId string = util.GenerateId()
 	var orderCode int = util.GenerateNumber()
-	var callbackUrl string = fmt.Sprintf("%s/%s/%d", os.Getenv(payment.PAYMENT_CALLBACK_URL), paymentId, orderCode)
+	//var callbackUrl string = fmt.Sprintf("%s/%s/%d", os.Getenv(payment.PAYMENT_CALLBACK_URL), paymentId, orderCode)
+	var callbackUrl string = os.Getenv(payment.PAYMENT_CALLBACK_URL) + paymentId
 	var curTime time.Time = time.Now()
 	var expiredAt time.Time
 	var paymentMethod string
@@ -405,16 +392,16 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 		res["description"] = proposal.Description
 	}
 
-	detail, err := w.withdrawRepo.GetOffChainWithdrawProposalByProposal(id, ctx)
-	if err != nil {
-		return nil, err
-	}
+	// detail, err := w.withdrawRepo.GetOffChainWithdrawProposalByProposal(id, ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return res, w.paymentRepo.CreatePayment(entities.Payment{
 		ID:            paymentId,
 		Actor:         sender,
 		ProfileID:     ctx.Value("sub").(string),
-		ProposalID:    &detail.ID,
+		ProposalID:    &offChainProposal.ID,
 		IsDonateTx:    false,
 		TransactionId: fmt.Sprint(orderCode),
 		Amount:        withdrawAmount,

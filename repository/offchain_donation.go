@@ -31,12 +31,12 @@ func InitializeOffChainDonationRepository(db *sql.DB, errLogger *log.Logger) rep
 // CreateDonation implements repository.IOffChainDonationRepository.
 func (o *offChainDonationRepo) CreateDonation(donation entities.OffChainDonation, ctx context.Context) error {
 	var query string = "INSERT INTO " + offchain_donation_table +
-		" (id, purpose, target, start_period, end_period, created_at) " +
-		"values ($1, $2, $3, $4, $5, $6)"
+		" (id, purpose, target, meal_duration_id, created_at) " +
+		"values ($1, $2, $3, $4, $5)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.OFFCHAIN_DONATION_REPOSITORY) + "CreateDonation - "
 
-	if _, err := o.db.ExecContext(ctx, query, donation.ID, donation.Purpose, donation.Target, donation.StartPeriod, donation.EndPeriod, donation.CreatedAt); err != nil {
+	if _, err := o.db.ExecContext(ctx, query, donation.ID, donation.Purpose, donation.Target, donation.MealDurationID, donation.CreatedAt); err != nil {
 
 		o.errLogger.Println(errLogMsg + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
@@ -52,7 +52,7 @@ func (o *offChainDonationRepo) GetDonation(id string, ctx context.Context) (*ent
 
 	var res entities.OffChainDonation
 	if err := o.db.QueryRowContext(ctx, query, id).Scan(
-		&res.ID, &res.Purpose, &res.Target, &res.StartPeriod, &res.EndPeriod, &res.CreatedAt); err != nil {
+		&res.ID, &res.Purpose, &res.Target, &res.MealDurationID, &res.CreatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
 			return nil, nil

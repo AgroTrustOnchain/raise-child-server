@@ -12,6 +12,7 @@ type SpecialNeedCampaign struct {
 	Creator           string   `json:"creator"`
 	Target            string   `json:"target"`
 	Description       string   `json:"description"`
+	ProofBlobID       string   `json:"proof_blob_id"`
 	TotalDonated      string   `json:"total_donated"`
 	WithdrawAmount    string   `json:"withdraw_amount"`
 	Donations         []string `json:"donations"`
@@ -38,6 +39,7 @@ func (s SpecialNeedCampaign) ToSpecialNeedCampaignResponse() response.SpecialNee
 		Creator:           s.Creator,
 		Target:            target,
 		Description:       s.Description,
+		ProofBlobID:       s.ProofBlobID,
 		TotalDonated:      totalDonated,
 		WithdrawAmount:    withdrawAmount,
 		Donations:         s.Donations,

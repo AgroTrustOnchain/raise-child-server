@@ -71,13 +71,42 @@ definitions:
     type: object
   entities.ChildGuardianProfile:
     properties:
-      fullName:
+      full_name:
         type: string
-      identityCardBlobID:
+      identity_card_blob_id:
         type: string
-      phoneNumber:
+      phone_number:
         type: string
       relation:
+        type: string
+    type: object
+  entities.PendingChildSpecialNeedProposal:
+    properties:
+      actor_address:
+        type: string
+      actor_profile_id:
+        type: string
+      ai_evaluation:
+        type: string
+      child_id:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      proof_blob_id:
+        type: string
+      region:
+        type: string
+      review_status:
+        type: string
+      reviewed_by:
+        type: string
+      target:
+        type: integer
+      updated_at:
         type: string
     type: object
   entities.PendingWithdrawProposal:
@@ -370,6 +399,8 @@ definitions:
     properties:
       need_id:
         type: string
+      proof_blob_id:
+        type: string
     required:
     - need_id
     type: object
@@ -412,7 +443,10 @@ definitions:
         type: string
       description:
         type: string
+      proof_blob_id:
+        type: string
       target:
+        minimum: 100000
         type: integer
     required:
     - child_id
@@ -427,6 +461,8 @@ definitions:
       campaign_id:
         type: string
       description:
+        type: string
+      proof_blob_id:
         type: string
     required:
     - amount
@@ -501,26 +537,6 @@ definitions:
     - address
     - sub
     type: object
-  request.MoneyActionRequest:
-    properties:
-      action_type:
-        description: '"donate" || "withdraw"'
-        type: string
-      amoun:
-        minimum: 1
-        type: integer
-      coin_type:
-        description: e.g. "SUI", "USDC"
-        type: string
-      message:
-        type: string
-      sender:
-        type: string
-    required:
-    - action_type
-    - amoun
-    - sender
-    type: object
   request.SupportMealNeadRequest:
     properties:
       months:
@@ -535,8 +551,11 @@ definitions:
       amount:
         minimum: 2000
         type: integer
+      description:
+        type: string
     required:
     - amount
+    - description
     type: object
   request.UpdateBankProfileRequest:
     properties:
@@ -1709,6 +1728,45 @@ paths:
       summary: Confirm and store a child information to Sui Blockhain
       tags:
       - Child Upload Request
+  /child-upload-reqs/{id}/review:
+    post:
+      consumes:
+      - application/json
+      description: Submit an approval or refusal vote for reviewing a specific child
+        upload request using its ID.
+      parameters:
+      - description: Upload Child Request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Voting details (e.g., vote type, comments)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.VoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Review an upload-child request
+      tags:
+      - Child Upload Request
   /child-upload-reqs/{id}/vote:
     post:
       consumes:
@@ -1944,8 +2002,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for supporting books need for
-        a child on-chain
+      description: Support books need for a child
       parameters:
       - description: Books Need ID
         in: path
@@ -1981,8 +2038,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for creating a new withdraw proposal
-        from child's books need on-chain
+      description: Create books need withdraw proposal from a child and wait for admin
+        to review the proposal
       parameters:
       - description: Create Books Need Withdraw Proposal Detail
         in: body
@@ -1993,10 +2050,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/entities.PendingWithdrawProposal'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2015,12 +2072,85 @@ paths:
       summary: Create books need withdraw proposal
       tags:
       - children
+  /children/health-insurance-need/{id}/support:
+    post:
+      consumes:
+      - application/json
+      description: Support health insurance need for a child
+      parameters:
+      - description: Health Insurance Need ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.UrlAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Support health insurance need for a child
+      tags:
+      - children
+  /children/health-insurance-need/withdraw-proposal:
+    post:
+      consumes:
+      - application/json
+      description: Create health insurance need withdraw proposal from a child and
+        wait for admin to review the proposal
+      parameters:
+      - description: Create Health Insurance Need Withdraw Proposal Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateNormalNeedWithdrawProposalRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.PendingWithdrawProposal'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create health insurance need withdraw proposal
+      tags:
+      - children
   /children/meal-need/{id}/support:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for supporting meal need for
-        a child on-chain
+      description: Support meal need for a child
       parameters:
       - description: Meal Need ID
         in: path
@@ -2062,8 +2192,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for creating a new withdraw proposal
-        from child's meal need on-chain
+      description: Create meal need withdraw proposal from a child and wait for admin
+        to review the proposal
       parameters:
       - description: Create Meal Need Withdraw Proposal Detail
         in: body
@@ -2074,10 +2204,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/entities.PendingWithdrawProposal'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2176,8 +2306,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for supporting special need campaign
-        of a child on-chain
+      description: Support special need campaign of a child
       parameters:
       - description: Campaign ID
         in: path
@@ -2219,8 +2348,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for creating a new special need
-        proposal for a child on-chain
+      description: Create special need proposal for a child and wait for admin to
+        review the proposal
       parameters:
       - description: Create Special Need Campaign Withdraw Proposal Detail
         in: body
@@ -2231,10 +2360,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/entities.PendingChildSpecialNeedProposal'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2337,8 +2466,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for creating a new withdraw proposal
-        from child's special need campaign on-chain
+      description: Create special need withdraw proposal from a child and wait for
+        admin to review the proposal
       parameters:
       - description: Create Special Need Campaign Withdraw Proposal Detail
         in: body
@@ -2349,10 +2478,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/entities.PendingWithdrawProposal'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2595,30 +2724,6 @@ paths:
       summary: List gifts of a child
       tags:
       - gift
-  /mints:
-    post:
-      consumes:
-      - application/json
-      description: Processes a transaction request and executes it on the Sui Network
-        blockchain
-      produces:
-      - application/json
-      responses: {}
-      summary: Execute an on-chain transaction
-      tags:
-      - mints
-  /mints/caps:
-    post:
-      consumes:
-      - application/json
-      description: Processes a transaction request and executes it on the Sui Network
-        blockchain
-      produces:
-      - application/json
-      responses: {}
-      summary: Execute an on-chain transaction
-      tags:
-      - mints
   /notis/user/{id}:
     get:
       consumes:
@@ -2764,6 +2869,181 @@ paths:
       summary: Process a donation
       tags:
       - payment
+  /pending-special-needs:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of child pending special need proposals based
+        on filter criteria
+      parameters:
+      - in: query
+        name: creator
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: max_amount
+        type: integer
+      - in: query
+        name: min_amount
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: reviewer
+        type: string
+      - in: query
+        name: sort_criteria
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: List Child Pending Special Need Proposals
+      tags:
+      - pending-special-needs
+  /pending-special-needs/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves child pending special need proposal information by its
+        unique ID
+      parameters:
+      - description: Pending Child Special Need Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.PendingChildSpecialNeedProposal'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Child Pending Special Need Proposal Detail
+      tags:
+      - pending-special-needs
+  /pending-special-needs/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for approve and upload child
+        pending special need proposal on-chain
+      parameters:
+      - description: Pending Child Special Need Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Approve a Child Pending Special Need Proposal and upload to Sui Blockchain
+      tags:
+      - pending-special-needs
+  /pending-special-needs/{id}/refuse:
+    post:
+      consumes:
+      - application/json
+      description: Refuse a Child Pending Special Need Proposal
+      parameters:
+      - description: Pending Child Special Need Proposal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Refuse a Child Pending Special Need Proposal
+      tags:
+      - pending-special-needs
   /pending-withdraw-proposals:
     get:
       consumes:
@@ -3036,7 +3316,38 @@ paths:
       summary: Get list of regions
       tags:
       - regions
-  /regions/supported-proposal:
+  /regions/admin/supported-suggestions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of supported region proposals based on filter
+        criteria as actor is admin
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Admin gets a list of supported region proposals
+      tags:
+      - regions
+  /regions/supported-suggestions:
     get:
       consumes:
       - application/json
@@ -3113,7 +3424,7 @@ paths:
       summary: Create a new supported region proposal
       tags:
       - regions
-  /regions/supported-proposal/{id}:
+  /regions/supported-suggestions/{id}:
     get:
       consumes:
       - application/json
@@ -3143,12 +3454,49 @@ paths:
       summary: Get a supported region proposal detail
       tags:
       - regions
-  /regions/supported-proposal/user/{id}:
+  /regions/supported-suggestions/{id}/review:
+    post:
+      consumes:
+      - application/json
+      description: Review a supported region proposal.
+      parameters:
+      - description: Review Region Suggestion Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.VoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Review supported region proposal
+      tags:
+      - regions
+  /regions/user/{id}/supported-suggestions:
     get:
       consumes:
       - application/json
-      description: Retrieves a list of supported region proposals based on filter
-        criteria from a user
+      description: Retrieves a list of supported region proposals of a user based
+        on filter criteria
       parameters:
       - description: User Wallet Address
         in: path
@@ -3181,12 +3529,18 @@ paths:
           description: Invalid data. Please try again.
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
         "500":
           description: There is something wrong in the system during the process.
             Please try again later.
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
-      summary: Get list of supported region proposals from a user
+      security:
+      - BearerAuth: []
+      summary: Get list of supported region proposals created by a user
       tags:
       - regions
   /registrations:
@@ -3503,19 +3857,94 @@ paths:
       summary: Get staff details
       tags:
       - staffs
-  /tx/build/money:
+  /task-proofs:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of task proofs with optional query filters
+      parameters:
+      - in: query
+        name: actor_address
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: reviewed_by
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List task proofs
+      tags:
+      - task-proofs
+  /task-proofs/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a task proof by its ID
+      parameters:
+      - description: Task Proof ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get a task proof
+      tags:
+      - task-proofs
+  /task-proofs/{id}/approve:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for money actions (e.g., donate,
-        withdraw) on-chain
+      description: Prepare and build a transaction for approve and upload a task proof
+        on chain
       parameters:
-      - description: Money action details (e.g., amount, sender)
-        in: body
-        name: request
+      - description: Task Proof ID
+        in: path
+        name: id
         required: true
-        schema:
-          $ref: '#/definitions/request.MoneyActionRequest'
+        type: string
       produces:
       - application/json
       responses:
@@ -3538,9 +3967,289 @@ paths:
             $ref: '#/definitions/response.MessageAPIResponse'
       security:
       - BearerAuth: []
-      summary: Build a money-related transaction
+      summary: Approve a task proof
       tags:
-      - transactions
+      - task-proofs
+  /task-proofs/{id}/refuse:
+    post:
+      consumes:
+      - application/json
+      description: Refuse a task proof
+      parameters:
+      - description: Task Proof ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sucsess
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Refuse a task proof
+      tags:
+      - task-proofs
+  /task-proofs/task/{id}/submit:
+    post:
+      consumes:
+      - application/json
+      description: Submit task proof for a task
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - in: query
+        name: image_blob_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sucsess
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit task proof for a task
+      tags:
+      - task-proofs
+  /tasks:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of tasks with optional query filters
+      parameters:
+      - in: query
+        name: assgined_staff
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: reviewed_by
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List tasks
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Create a task
+      parameters:
+      - in: query
+        name: description
+        required: true
+        type: string
+      - in: query
+        name: end_period
+        required: true
+        type: string
+      - in: query
+        name: region
+        required: true
+        type: string
+      - in: query
+        name: start_period
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a task
+      tags:
+      - tasks
+  /tasks/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a task by its ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get a task
+      tags:
+      - tasks
+  /tasks/{id}/claim:
+    post:
+      consumes:
+      - application/json
+      description: Claim a task
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Claim a task
+      tags:
+      - tasks
+  /tasks/{id}/review:
+    post:
+      consumes:
+      - application/json
+      description: Review a task
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - in: query
+        name: is_vote_yes
+        required: true
+        type: boolean
+      - in: query
+        name: refuse_reason
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Review a task
+      tags:
+      - tasks
   /tx/execute:
     post:
       consumes:

@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"raise-child/constants/shared"
 	"raise-child/interfaces/business"
@@ -25,12 +24,18 @@ type backgroundService struct {
 	errLogger               *log.Logger
 }
 
-func InitializeBackgroundService(db *sql.DB, errLogger *log.Logger) business.IBackgroundService {
+func initializeBackgroundService(
+	registrationRequestRepo i_repository.IRegistrationRequestRepository,
+	centerRequestRepo i_repository.ICenterRequestRepository,
+	uploadChildRequestRepo i_repository.IUploadChildRequestRepository,
+	clients map[string]sui.ISuiAPI,
+	errLogger *log.Logger,
+) business.IBackgroundService {
 	return &backgroundService{
-		registrationRequestRepo: repository.InitializeRegistrationRequestRepo(db, errLogger),
-		centerRequestRepo:       repository.InitializeCenterRequestRepository(db, errLogger),
-		uploadChildRequestRepo:  repository.InitializeUploadChildRequestRepo(db, errLogger),
-		clients:                 _networkAliases,
+		registrationRequestRepo: registrationRequestRepo,
+		centerRequestRepo:       centerRequestRepo,
+		uploadChildRequestRepo:  uploadChildRequestRepo,
+		clients:                 clients,
 		errLogger:               errLogger,
 	}
 }
@@ -43,7 +48,13 @@ func GenerateBackgroundService() (business.IBackgroundService, error) {
 		return nil, err
 	}
 
-	return InitializeBackgroundService(cnn, errLogger), nil
+	return initializeBackgroundService(
+		repository.InitializeRegistrationRequestRepo(cnn, errLogger),
+		repository.InitializeCenterRequestRepository(cnn, errLogger),
+		repository.InitializeUploadChildRequestRepo(cnn, errLogger),
+		_networkAliases,
+		errLogger,
+	), nil
 }
 
 // ProcessBackgroundCenterRequests implements business.IBackgroundService.

@@ -11,8 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var packageMintID string = "0xf0dfc8a33728fb311f4d84b42791345bd025e49196b557539be573a8167233fa"
-var capID string = "0xdd5133a84a18dc00442c91e74fcf092dc4bad0be946945b5c0ac1cbd282a6ceb"
+var packageMintID string = ""
+var capID string = ""
 var privateKey string = ""
 var addresses []string = []string{
 	address, // Original
@@ -20,13 +20,6 @@ var addresses []string = []string{
 	"",
 }
 
-// MintCap godoc
-// @Summary      Execute an on-chain transaction
-// @Description  Processes a transaction request and executes it on the Sui Network blockchain
-// @Tags         mints
-// @Accept       json
-// @Produce      json
-// @Router       /mints [post]
 func MintCap(ctx *gin.Context) {
 	signer, err := signer.NewSignerWithSecretKey(privateKey)
 	if err != nil {
@@ -89,13 +82,6 @@ func MintCap(ctx *gin.Context) {
 	})
 }
 
-// MintCaps godoc
-// @Summary      Execute an on-chain transaction
-// @Description  Processes a transaction request and executes it on the Sui Network blockchain
-// @Tags         mints
-// @Accept       json
-// @Produce      json
-// @Router       /mints/caps [post]
 func MintCaps(ctx *gin.Context) {
 	signer, err := signer.NewSignerWithSecretKey(privateKey)
 	if err != nil {

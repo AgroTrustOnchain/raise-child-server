@@ -11,4 +11,5 @@ type IPendingWithdrawProposalRepository interface {
 	GetPendingWithdrawProposals(req request.GetPendingWithdrawProposalsRequest, ctx context.Context) ([]entities.PendingWithdrawProposal, int, error)
 	CreatePendingWithdrawProposal(proposal entities.PendingWithdrawProposal, ctx context.Context) error
 	UpdatePendingWithdrawProposal(proposal entities.PendingWithdrawProposal, ctx context.Context) error
+	IsPendingWithdrawProposalProposedWithSpecificInfo(purpose, target, description string, withdrawAmount int64, ctx context.Context) (bool, error)
 }

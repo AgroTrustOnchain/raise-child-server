@@ -31,8 +31,8 @@ type UploadChildRequest struct {
 }
 
 type ChildGuardianProfile struct {
-	FullName           string
-	PhoneNumber        string
-	Relation           string
-	IdentityCardBlobID string
+	FullName           string `json:"full_name"`
+	PhoneNumber        string `json:"phone_number"`
+	Relation           string `json:"relation"`
+	IdentityCardBlobID string `json:"identity_card_blob_id"`
 }

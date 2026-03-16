@@ -8,24 +8,26 @@ import (
 )
 
 type WithdrawProposal struct {
-	ID              ID       `json:"id"`
-	PoolID          string   `json:"pool_id"`
-	PoolName        string   `json:"pool_name"`
-	Creator         string   `json:"creator"`
-	WithdrawAmount  string   `json:"withdraw_amount"`
-	Description     string   `json:"description"`
-	Approvers       []string `json:"approvers"`
-	Refusers        []string `json:"refusers"`
-	ApproveWeight   string   `json:"approve_weight"`
-	RefuseWeight    string   `json:"refuse_weight"`
-	RefuseReasons   []string `json:"refuse_reasons"`
-	IsExecuted      bool     `json:"is_executed"`
-	IsFromLocalPool bool     `json:"is_from_local_pool"`
-	AprrovedPeriods []string `json:"approved_periods"`
-	RefusedPeriods  []string `json:"refused_periods"`
-	CreatedAt       string   `json:"created_at"`
-	UpdatedAt       string   `json:"updated_at"`
-	ClosedAt        string   `json:"closed_at"`
+	ID                  ID       `json:"id"`
+	PoolID              string   `json:"pool_id"`
+	PoolName            string   `json:"pool_name"`
+	Creator             string   `json:"creator"`
+	WithdrawAmount      string   `json:"withdraw_amount"`
+	Description         string   `json:"description"`
+	ProofBlobID         string   `json:"proof_blob_id"`
+	Approvers           []string `json:"approvers"`
+	Refusers            []string `json:"refusers"`
+	ApproveWeight       string   `json:"approve_weight"`
+	RefuseWeight        string   `json:"refuse_weight"`
+	RefuseReasons       []string `json:"refuse_reasons"`
+	IsExecuted          bool     `json:"is_executed"`
+	IsFromLocalPool     bool     `json:"is_from_local_pool"`
+	AprrovedPeriods     []string `json:"approved_periods"`
+	RefusedPeriods      []string `json:"refused_periods"`
+	TransactionRecordID *string  `json:"transaction_record_id"`
+	CreatedAt           string   `json:"created_at"`
+	UpdatedAt           string   `json:"updated_at"`
+	ClosedAt            string   `json:"closed_at"`
 }
 
 type SpecialNeedProposal struct {
@@ -34,6 +36,7 @@ type SpecialNeedProposal struct {
 	Creator         string   `json:"creator"`
 	Target          string   `json:"target"`
 	Description     string   `json:"description"`
+	ProofBlobID     string   `json:"proof_blob_id"`
 	Approvers       []string `json:"approvers"`
 	Refusers        []string `json:"refusers"`
 	ApproveWeight   string   `json:"approve_weight"`
@@ -60,11 +63,12 @@ func (w WithdrawProposal) ToMinimumWithdrawProposalResponse() response.WithdrawP
 	closedAt, _ := strconv.ParseInt(w.ClosedAt, 10, 64)
 
 	return response.WithdrawProposalResponse{
-		ID:              w.ID.ID,
-		PoolName:        w.PoolName,
-		Creator:         w.Creator,
-		WithdrawAmount:  withdrawAmount,
-		Description:     w.Description,
+		ID:             w.ID.ID,
+		PoolName:       w.PoolName,
+		Creator:        w.Creator,
+		WithdrawAmount: withdrawAmount,
+		Description:    w.Description,
+
 		Approvers:       w.Approvers,
 		Refusers:        w.Refusers,
 		ApproveWeight:   approveWeight,

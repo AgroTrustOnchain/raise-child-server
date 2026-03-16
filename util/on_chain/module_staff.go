@@ -55,8 +55,8 @@ type IModuleStaff interface {
 	ToRegisterAdminArguments(args RegisterAdminArguments) []interface{}
 	ToRegisterVolunteerArguments(args RegisterVolunteerArguments) []interface{}
 	ToRegisterLeaderArguments(args RegisterLeaderArguments) []interface{}
-	ToRegisterNormalStaffArguments(args RegisterNormalStaffArguments) []interface{}
-	GetFunctionRegisterStaff() string
+	ToRegisterNormalStaffArguments(args RegisterNormalStaffArguments) []interface{} // Bỏ
+	GetFunctionRegisterStaff() string                                               // Bỏ
 	GetFunctionRegisterVolunteer() string
 	GetFunctionRegisterLeader() string
 	GetFunctionRegisterAdmin() string

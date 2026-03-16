@@ -13,6 +13,11 @@ type leaderNotiMockRepo struct {
 	mock.Mock
 }
 
+// GetNotiByNeed implements repository.ILeaderNotiRepository.
+func (l *leaderNotiMockRepo) GetNotiByNeed(id string, ctx context.Context) (*entities.LeaderNoti, error) {
+	panic("unimplemented")
+}
+
 func InializeLeaderNotiMockRepo() repository.ILeaderNotiRepository {
 	return &leaderNotiMockRepo{}
 }

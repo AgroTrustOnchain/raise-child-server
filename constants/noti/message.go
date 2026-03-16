@@ -81,6 +81,28 @@ const (
 	CHILD_NOT_IN_MEAL_SUPPORT string = "This child currently doesn't have meal support."
 
 	REQUEST_REVIEWED_MESSAGE string = "This request has been reviewed."
+
+	TASK_ENDED_MESSAGE string = "This task has been ended."
+
+	TASK_CLAIMED_MESSAGE string = "This task has been claimed."
+
+	TASK_NOT_CLAIMED_MESSAGE string = "This task has not been claimed."
+
+	NOT_STAFF_OF_REGION_MESSAGE string = "You are not a staff of this region to execute this request."
+
+	CURRENTLY_SUSPENDED_MESSAGE string = "You are currently suspended."
+
+	REGION_NOT_ESTABLISHED_MESSAGE string = "This region is not established yet."
+
+	TASK_NOT_OF_STAFF_MESSAGE string = "This task is assigned for another staff."
+
+	TASK_PROOF_SUBMITTED_MESSAGE string = "You have submitted proof for this task."
+
+	TASK_PROOF_REVIEWED_MESSAGE string = "This task proof has been reviewed."
+
+	LEADER_NOT_OF_REGION_MESSAGE string = "Leader is not of this region."
+
+	NOT_WITHDRAW_EXPECTED_DATE_MESSAGE string = "Still not date to create withdraw proposal for this need."
 )
 
 const (

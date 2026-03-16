@@ -34,6 +34,18 @@ func InitializeProfileService(db *sql.DB, errLogger *log.Logger) business.IProfi
 	}
 }
 
+func initializeProfileService(
+	profileRepo i_repository.IProfileRepository,
+	clients map[string]sui.ISuiAPI,
+	errLogger *log.Logger,
+) business.IProfileService {
+	return &profileService{
+		profileRepo: profileRepo,
+		clients:     clients,
+		errLogger:   errLogger,
+	}
+}
+
 func GenerateProfileService() (business.IProfileService, error) {
 	var errLogger = util.GetLogConfig(shared.ERROR_LEVEL)
 

@@ -50,7 +50,8 @@ type SupportMealNeadRequest struct {
 
 // childs/special-need/{id}/support
 type SupportSpecialNeedRequest struct {
-	Amount int64 `json:"amount" validate:"required,min=2000"`
+	Amount      int64  `json:"amount" validate:"required,min=2000"`
+	Description string `json:"description" validate:"required"`
 }
 
 type ConfirmProvideMealForChildRequest struct {
@@ -60,21 +61,24 @@ type ConfirmProvideMealForChildRequest struct {
 // childs/books-need/withdraw-proposal
 // childs/meal-need/withdraw-proposal
 type CreateNormalNeedWithdrawProposalRequest struct {
-	NeedID string `json:"need_id" validate:"required"`
+	NeedID      string  `json:"need_id" validate:"required"`
+	ProofBlobID *string `json:"proof_blob_id"`
 }
 
 // childs/special-need/withdraw-proposal
 type CreateSpecialNeedWithdrawProposalRequest struct {
-	CampaignID  string `json:"campaign_id" validate:"required"`
-	Amount      int64  `json:"amount" validate:"required,min=2000"`
-	Description string `json:"description" validate:"required"`
+	CampaignID  string  `json:"campaign_id" validate:"required"`
+	Amount      int64   `json:"amount" validate:"required,min=2000"`
+	Description string  `json:"description" validate:"required"`
+	ProofBlobID *string `json:"proof_blob_id"`
 }
 
 // childs/special-need/proposal
 type CreateSpecialNeedProposalRequest struct { // For create special need campaign
-	ChildID     string `json:"child_id" validate:"required"`
-	Target      int64  `json:"target" validate:"required"`
-	Description string `json:"description" validate:"required"`
+	ChildID     string  `json:"child_id" validate:"required"`
+	Target      int64   `json:"target" validate:"required,min=100000"`
+	Description string  `json:"description" validate:"required"`
+	ProofBlobID *string `json:"proof_blob_id"`
 }
 
 // childs/special-need/proposal/{id}/confirm

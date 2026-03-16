@@ -40,7 +40,7 @@ func GetRegions(ctx *gin.Context) {
 // @Success      200  {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /regions/supported-proposal [get]
+// @Router       /regions/supported-suggestions [get]
 func GetSupportedRegionSuggestions(ctx *gin.Context) {
 	var request request.GetSupportedRegionSuggestionsRequest
 	if ctx.ShouldBindQuery(&request) != nil {
@@ -65,19 +65,59 @@ func GetSupportedRegionSuggestions(ctx *gin.Context) {
 	})
 }
 
-// GetUserSupportedRegionSuggestions godoc
-// @Summary      Get list of supported region proposals from a user
-// @Description  Retrieves a list of supported region proposals based on filter criteria from a user
+// GetWalletSupportedRegionSuggestions godoc
+// @Summary      Get list of supported region proposals created by a user
+// @Description  Retrieves a list of supported region proposals of a user based on filter criteria
 // @Tags         regions
 // @Accept       json
 // @Produce      json
+// @Security     BearerAuth
 // @Param        id       path      string  true  "User Wallet Address"
 // @Param        request  query     request.GetSupportedRegionSuggestionsRequest  true  "Filter Criteria"
-// @Success      200  {object}  response.PaginationDataResponse
+// @Success      200      {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /regions/supported-proposal/user/{id} [get]
-func GetUserSupportedRegionSuggestions(ctx *gin.Context) {
+// @Router       /regions/user/{id}/supported-suggestions [get]
+func GetWalletSupportedRegionSuggestions(ctx *gin.Context) {
+	var request request.GetSupportedRegionSuggestionsRequest
+	if ctx.ShouldBindQuery(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateRegionService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	request.CreatedBy = ctx.Param("id")
+
+	res, err := service.GetWalletSupportedRegionSuggestions(request, ctx)
+
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
+
+// AdminGetSupportedRegionSuggestions godoc
+// @Summary      Admin gets a list of supported region proposals
+// @Description  Retrieves a list of supported region proposals based on filter criteria as actor is admin
+// @Tags         regions
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200      {object}  response.PaginationDataResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /regions/admin/supported-suggestions [get]
+func AdminGetSupportedRegionSuggestions(ctx *gin.Context) {
 	var request request.GetSupportedRegionSuggestionsRequest
 	if ctx.ShouldBindQuery(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
@@ -92,7 +132,7 @@ func GetUserSupportedRegionSuggestions(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.GetSupportedRegionSuggestions(request, ctx)
+	res, err := service.AdminGetSupportedRegionSuggestions(request, ctx)
 
 	util.ProcessResponse(response.APIResponse{
 		Data1:    res,
@@ -113,7 +153,7 @@ func GetUserSupportedRegionSuggestions(ctx *gin.Context) {
 // @Success      200  {object}  entities.SupportedRegionSuggestion
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /regions/supported-proposal/{id} [get]
+// @Router       /regions/supported-suggestions/{id} [get]
 func GetSupportedRegionSuggestion(ctx *gin.Context) {
 	service, err := business.GenerateRegionService()
 	if err != nil {
@@ -144,7 +184,7 @@ func GetSupportedRegionSuggestion(ctx *gin.Context) {
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /regions/supported-proposal [post]
+// @Router       /regions/supported-suggestions [post]
 func CreateSupportedRegionSuggestion(ctx *gin.Context) {
 	var request request.CreateSupportedRegionSuggestionsRequest
 	if ctx.ShouldBindJSON(&request) != nil {
@@ -166,5 +206,38 @@ func CreateSupportedRegionSuggestion(ctx *gin.Context) {
 		ErrMsg:   err,
 		Context:  ctx,
 		PostType: action_type.CREATE_ACTION,
+	})
+}
+
+// ReviewRegionSuggestion godoc
+// @Summary      Review supported region proposal
+// @Description  Review a supported region proposal.
+// @Tags         regions
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request  body      request.VoteRequest  true  "Review Region Suggestion Detail"
+// @Success      200      {object}  response.MessageAPIResponse "Success"
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /regions/supported-suggestions/{id}/review [post]
+func ReviewRegionSuggestion(ctx *gin.Context) {
+	var request request.VoteRequest
+	if ctx.ShouldBindJSON(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateRegionService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	util.ProcessResponse(response.APIResponse{
+		ErrMsg:   service.ReviewRegionSuggestion(ctx.Param("id"), request, ctx),
+		Context:  ctx,
+		PostType: action_type.NON_POST,
 	})
 }

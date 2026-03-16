@@ -33,16 +33,16 @@ type staffService struct {
 	errLogger  *log.Logger
 }
 
-func InitializeStaffService(errLogger *log.Logger) business.IStaffService {
+func initializeStaffService(clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IStaffService {
 	return &staffService{
 		redisCache: cache.InitializeRedisCache(),
-		clients:    _networkAliases,
+		clients:    clients,
 		errLogger:  errLogger,
 	}
 }
 
 func GenerateStaffService() (business.IStaffService, error) {
-	return InitializeStaffService(util.GetLogConfig(shared.ERROR_LEVEL)), nil
+	return initializeStaffService(_networkAliases, util.GetLogConfig(shared.ERROR_LEVEL)), nil
 }
 
 const (

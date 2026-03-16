@@ -40,7 +40,7 @@ func (p *paymentRepo) CreatePayment(payment entities.Payment, ctx context.Contex
 		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "CreatePayment - "
 
-	if _, err := p.db.ExecContext(ctx, query, payment.ID, payment.ProfileID, payment.Actor, payment.ProfileID, payment.ProposalID, payment.DonationID, payment.IsDonateTx, payment.TransactionId,
+	if _, err := p.db.ExecContext(ctx, query, payment.ID, payment.Actor, payment.ProfileID, payment.ProposalID, payment.DonationID, payment.IsDonateTx, payment.TransactionId,
 		payment.Amount, payment.Currency, payment.Status, payment.Method, payment.CancelReason,
 		payment.Message, payment.ExpiredAt, payment.CreatedAt, payment.UpdatedAt); err != nil {
 

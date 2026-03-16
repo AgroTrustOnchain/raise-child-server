@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -33,14 +32,6 @@ type bankProfileService struct {
 	bankProfileRepo i_repository.IBankProfileRepository
 	clients         map[string]sui.ISuiAPI
 	errLogger       *log.Logger
-}
-
-func InitializeBankProfileService(db *sql.DB, errLogger *log.Logger) business.IBankProfileService {
-	return &bankProfileService{
-		bankProfileRepo: repository.InitializeBankProfileRepository(db, errLogger),
-		clients:         _networkAliases,
-		errLogger:       errLogger,
-	}
 }
 
 func initializeBankProfileService(bankProfileRepo i_repository.IBankProfileRepository, clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IBankProfileService {

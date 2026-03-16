@@ -7,7 +7,7 @@ import (
 )
 
 type ISupportedRegionSuggestionRepository interface {
-	GetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, ctx context.Context) ([]entities.SupportedRegionSuggestion, int, error)
+	GetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, isGuestView bool, ctx context.Context) ([]entities.SupportedRegionSuggestion, int, error)
 	GetSupportedRegionSuggestion(id string, ctx context.Context) (*entities.SupportedRegionSuggestion, error)
 	CreateSupportedRegionSuggestion(proposal entities.SupportedRegionSuggestion, ctx context.Context) error
 	UpdateSupportedRegionSuggestion(proposal entities.SupportedRegionSuggestion, ctx context.Context) error

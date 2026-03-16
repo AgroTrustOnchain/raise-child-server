@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -10,7 +9,6 @@ import (
 	"raise-child/interfaces/business"
 	i_repository "raise-child/interfaces/repository"
 	"raise-child/model/dtos/request"
-	"raise-child/model/dtos/response"
 	"raise-child/repository"
 	"raise-child/util"
 	"raise-child/util/db"
@@ -19,7 +17,6 @@ import (
 
 	"raise-child/constants/env"
 	"raise-child/constants/noti"
-	internal_sui "raise-child/constants/on-chain/sui"
 	"raise-child/constants/shared"
 
 	"github.com/block-vision/sui-go-sdk/constant"
@@ -27,37 +24,32 @@ import (
 )
 
 type onChainService struct {
-	withdrawRepo      i_repository.IOffChainWithdrawProposalRepository
-	centerRepo        i_repository.ICenterRequestRepository
-	uploadChildRepo   i_repository.IUploadChildRequestRepository
-	registrationRepo  i_repository.IRegistrationRequestRepository
-	volunteerNotiRepo i_repository.IVolunteerNotiRepository
-	leaderNotiRepo    i_repository.ILeaderNotiRepository
-	clients           map[string]sui.ISuiAPI
-	errLogger         *log.Logger
+	withdrawRepo     i_repository.IOffChainWithdrawProposalRepository
+	centerRepo       i_repository.ICenterRequestRepository
+	uploadChildRepo  i_repository.IUploadChildRequestRepository
+	registrationRepo i_repository.IRegistrationRequestRepository
+	leaderNotiRepo   i_repository.ILeaderNotiRepository
+	clients          map[string]sui.ISuiAPI
+	errLogger        *log.Logger
 }
 
-// GetCurrentWalletNotis implements business.INotiService.
-func (o *onChainService) GetCurrentWalletNotis(wallet string, req request.GetNotisRequest, ctx context.Context) (response.PaginationDataResponse, error) {
-	panic("unimplemented")
-}
-
-// Money actions
-const (
-	withdraw_action string = "withdraw"
-	donate_action   string = "action"
-)
-
-func InitializeOnChainService(db *sql.DB, errLogger *log.Logger) business.IOnChainService {
+func initializeOnChainService(
+	withdrawRepo i_repository.IOffChainWithdrawProposalRepository,
+	centerRepo i_repository.ICenterRequestRepository,
+	uploadChildRepo i_repository.IUploadChildRequestRepository,
+	registrationRepo i_repository.IRegistrationRequestRepository,
+	leaderNotiRepo i_repository.ILeaderNotiRepository,
+	clients map[string]sui.ISuiAPI,
+	errLogger *log.Logger,
+) business.IOnChainService {
 	return &onChainService{
-		withdrawRepo:      repository.InitializeOffChainWithdrawProposalRepository(db, errLogger),
-		centerRepo:        repository.InitializeCenterRequestRepository(db, errLogger),
-		uploadChildRepo:   repository.InitializeUploadChildRequestRepo(db, errLogger),
-		registrationRepo:  repository.InitializeRegistrationRequestRepo(db, errLogger),
-		volunteerNotiRepo: repository.InitializeVolunteerNotiRepository(db, errLogger),
-		leaderNotiRepo:    repository.InitializeLeaderNotiRepository(db, errLogger),
-		clients:           _networkAliases,
-		errLogger:         errLogger,
+		withdrawRepo:     withdrawRepo,
+		centerRepo:       centerRepo,
+		uploadChildRepo:  uploadChildRepo,
+		registrationRepo: registrationRepo,
+		leaderNotiRepo:   leaderNotiRepo,
+		clients:          clients,
+		errLogger:        errLogger,
 	}
 }
 
@@ -69,7 +61,15 @@ func GenerateOnChainService() (business.IOnChainService, error) {
 		return nil, err
 	}
 
-	return InitializeOnChainService(cnn, errLogger), nil
+	return initializeOnChainService(
+		repository.InitializeOffChainWithdrawProposalRepository(cnn, errLogger),
+		repository.InitializeCenterRequestRepository(cnn, errLogger),
+		repository.InitializeUploadChildRequestRepo(cnn, errLogger),
+		repository.InitializeRegistrationRequestRepo(cnn, errLogger),
+		repository.InitializeLeaderNotiRepository(cnn, errLogger),
+		_networkAliases,
+		errLogger,
+	), nil
 }
 
 // ExecuteTransaction implements business.IOnChainService.
@@ -82,7 +82,7 @@ func (o *onChainService) ExecuteTransaction(req request.ExecuteTransactionReques
 			return err
 		}
 
-		if proposal.ProposalID != "" {
+		if proposal.ProposalID != nil {
 			return genericErr
 		}
 	}
@@ -156,74 +156,10 @@ func (o *onChainService) ExecuteTransaction(req request.ExecuteTransactionReques
 
 		o.registrationRepo.UpdateRegistrationRequest(*req, ctx)
 
-		if req.RegisterRole == volunteer_role {
-			o.volunteerNotiRepo.AssignVolunteer(req.CreatedBy, req.Region, ctx)
-		} else if req.RegisterRole == local_leader_role {
+		if req.RegisterRole == local_leader_role {
 			o.leaderNotiRepo.AssignLeader(req.CreatedBy, req.Region, ctx)
 		}
 	}
 
 	return nil
-}
-
-// BuildMoneyTransaction implements business.IOnChainService.
-func (o *onChainService) BuildMoneyTransaction(req request.MoneyActionRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	// Not logged in
-	if info := getSecurityInfo(req.Sender); !info.isLoggedIn {
-		return response.BuildTransactionResponse{}, genericErr
-	}
-
-	// Invalid action
-	if req.ActionType != withdraw_action && req.ActionType != donate_action {
-		return response.BuildTransactionResponse{}, genericErr
-	}
-
-	if req.CoinType == "" {
-		req.CoinType = internal_sui.SUI_COIN_TYPE
-	}
-
-	if req.Message == "" {
-		req.Message = req.ActionType
-	}
-
-	if req.ActionType == donate_action {
-		txBytes, err := on_chain.BuildDonateTransaction(on_chain.DonateTransactionRequest{
-			Client:    o.clients[constant.SuiTestnet],
-			Sender:    req.Sender,
-			CoinType:  req.CoinType,
-			Amount:    on_chain.StandarizeToSuiMist(req.Amount),
-			Message:   req.Message,
-			ErrLogger: o.errLogger,
-		}, ctx)
-
-		return response.BuildTransactionResponse{
-			TxBytes: txBytes,
-		}, err
-	}
-
-	// // Not admin
-	// if req.Sender != os.Getenv(env.ADMIN) {
-	// 	return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	// }
-
-	var module = on_chain.InitializeModuleManage()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:   o.clients[constant.SuiTestnet],
-		Sender:   req.Sender,
-		Module:   module.GetModule(),
-		Function: module.GetFunctionWithdrawSuiPool(),
-		Arguments: []interface{}{
-			os.Getenv(env.POOL_ID),
-			on_chain.StandarizeToSuiMist(req.Amount),
-			internal_sui.CLOCK_OBJECT_ID,
-			req.Message,
-		},
-		ErrLogger: o.errLogger,
-	}, ctx)
-
-	return response.BuildTransactionResponse{
-		TxBytes: txBytes,
-	}, err
 }

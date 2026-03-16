@@ -8,25 +8,33 @@ import (
 )
 
 type Child struct {
-	ID                   ID       `json:"id"`
-	IdentityCode         string   `json:"identity_code"`
-	FirstName            string   `json:"first_name"`
-	LastName             string   `json:"last_name"`
-	Gender               string   `json:"gender"`
-	DateOfBirth          string   `json:"date_of_birth"`
-	Region               string   `json:"region"`
-	AvatarBlobId         string   `json:"avatar_blob_id"`
-	ImageBlobIds         []string `json:"image_blob_ids"`
-	UploadImagePeriods   []string `json:"upload_image_periods"`
-	DynamicFields        []string `json:"dynamic_fields"`
-	BooksNeeds           []string `json:"books_needs"`
-	MealNeed             string   `json:"meal_need"`
-	SpecialNeedProposals []string `json:"special_need_proposals"`
-	SpecialNeedCampaigns []string `json:"special_need_campaigns"`
-	Gifts                []string `json:"gifts"`
-	UploadedBy           string   `json:"uploaded_by"`
-	UploadedAt           string   `json:"uploaded_at"`
-	UpdatedAt            string   `json:"updated_at"`
+	ID                   ID                            `json:"id"`
+	IdentityCode         string                        `json:"identity_code"`
+	FirstName            string                        `json:"first_name"`
+	LastName             string                        `json:"last_name"`
+	Gender               string                        `json:"gender"`
+	DateOfBirth          string                        `json:"date_of_birth"`
+	HomeAddress          string                        `json:"home_address"`
+	Region               string                        `json:"region"`
+	AvatarBlobId         string                        `json:"avatar_blob_id"`
+	HomeBlobID           string                        `json:"home_blob_id"`
+	GuardianProfiles     []OnChainChildGuardianProfile `json:"guardian_profiles"`
+	ImageBlobIds         []string                      `json:"image_blob_ids"`
+	UploadImagePeriods   []string                      `json:"upload_image_periods"`
+	DynamicFields        []string                      `json:"dynamic_fields"`
+	BooksNeeds           []string                      `json:"books_needs"`
+	MealNeed             string                        `json:"meal_need"`
+	HealthInsuranceNeed  string                        `json:"health_insurance_need"`
+	SpecialNeedProposals []string                      `json:"special_need_proposals"`
+	SpecialNeedCampaigns []string                      `json:"special_need_campaigns"`
+	Gifts                []string                      `json:"gifts"`
+	UploadedBy           string                        `json:"uploaded_by"`
+	UploadedAt           string                        `json:"uploaded_at"`
+	UpdatedAt            string                        `json:"updated_at"`
+}
+
+type OnChainChildGuardianProfile struct {
+	Fields ChildGuardianProfile `json:"fields"`
 }
 
 type ID struct {

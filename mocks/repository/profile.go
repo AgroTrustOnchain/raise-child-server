@@ -12,6 +12,11 @@ type profileMockRepo struct {
 	mock.Mock
 }
 
+// GetProfileOfFirsts implements repository.IProfileRepository.
+func (p *profileMockRepo) GetProfileOfFirsts(position int, ctx context.Context) (*entities.Profile, error) {
+	panic("unimplemented")
+}
+
 func InializeProfileMockRepo() repository.IProfileRepository {
 	return &profileMockRepo{}
 }

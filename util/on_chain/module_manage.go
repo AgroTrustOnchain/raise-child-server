@@ -7,6 +7,8 @@ import (
 )
 
 type UpdatePublisherNftArguments struct {
+	AdminCap           string
+	AdminNft           string
 	IdentityCode       string
 	IdentityCardBlobID string
 	AvatarBlobID       string
@@ -125,8 +127,8 @@ func (m *moduleManage) GetFunctionUpdatePublisherNft() string {
 // ToUpdatePublisherNftArguments implements IModuleManage.
 func (m *moduleManage) ToUpdatePublisherNftArguments(args UpdatePublisherNftArguments) []interface{} {
 	return []interface{}{
-		os.Getenv(env.UPDATE_ADMIN_INFO_CAP_ID),
-		os.Getenv(env.PUBLISHER_NFT_ID),
+		args.AdminCap,
+		args.AdminNft,
 		args.IdentityCode,
 		args.IdentityCardBlobID,
 		args.AvatarBlobID,

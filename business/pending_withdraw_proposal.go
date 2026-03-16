@@ -59,7 +59,12 @@ func GeneratePendingWithdrawProposalService() (business.IPendingWithdrawProposal
 		return nil, err
 	}
 
-	return initializePendingWithdrawProposalService(repository.InitializePendingWithdrawProposalRepo(cnn, errLogger), repository.InitializeBankProfileRepository(cnn, errLogger), _networkAliases, errLogger), nil
+	return initializePendingWithdrawProposalService(
+		repository.InitializePendingWithdrawProposalRepo(cnn, errLogger),
+		repository.InitializeBankProfileRepository(cnn, errLogger),
+		_networkAliases,
+		errLogger,
+	), nil
 }
 
 // ApprovePendingWithdrawProposal implements business.IPendingWithdrawProposalService.
@@ -81,7 +86,7 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 	var reviewer string = ctx.Value("address").(string)
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
-		ObjectId:  os.Getenv(env.PACKAGE_ID),
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
 		ErrLogger: p.errLogger,
 	}, ctx)
 	if err != nil {
@@ -92,50 +97,145 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
 
+	var module, function string
+	var args []interface{}
+	var closedAt int64 = util.ToMilliseconds(util.GetRequestDuration())
+	if proposal.Purpose == string(entities.WITHDRAW_PURPOSE) {
+		var poolModule = on_chain.InitializeModulePool()
+		module = poolModule.GetModule()
+		function = poolModule.GetFunctionCreateWithdrawProposalV2()
+		//localPoolId = proposal.PoolID
+		// if localPoolId == os.Getenv(env.POOL_ID) {
+		// 	localPoolId = os.Getenv(env.SHARED_LOCAL_POOL_ID)
+		// }
+
+		args = poolModule.ToCreateWithdrawProposalV2Arguments(on_chain.CreateWithdrawProposalV2Arguments{
+			LocalPoolId:     proposal.PoolID,
+			WithdrawAmount:  proposal.WithdrawAmount,
+			Description:     proposal.Description,
+			ProofBlobID:     proposal.ProofBlobID,
+			IsFromLocalPool: proposal.PoolID != os.Getenv(env.POOL_ID),
+			ClosedAt:        util.ToMilliseconds(util.GetRequestDuration()),
+			Creator:         proposal.Creator,
+		})
+	} else {
+		var childModule = on_chain.InitializeModuleChild()
+		module = childModule.GetModule()
+
+		switch proposal.Purpose {
+		case string(entities.BOOKS_NEED_PURPOSE):
+			need, err := on_chain.GetOnChainObject[entities.BooksNeed](on_chain.GetOnChainObjectRequest{
+				Client:    client,
+				ObjectId:  proposal.Target,
+				ErrLogger: p.errLogger,
+			}, ctx)
+			if err != nil {
+				return response.BuildTransactionResponse{}, err
+			}
+
+			function = childModule.GetFunctionCreateChildBooksNeedWithdrawProposalV2()
+			args = childModule.ToCreateChildNormalNeedWithdrawProposalArgumentsV2(on_chain.CreateChildNormalNeedWithdrawProposalArgumentsV2{
+				NeedID:      proposal.Target,
+				ChildID:     need.ChildID,
+				LocalPool:   proposal.PoolID,
+				Description: proposal.Description,
+				ProofBlobID: proposal.ProofBlobID,
+				ClosedAt:    closedAt,
+				Creator:     proposal.Creator,
+			})
+		case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
+			need, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeed](on_chain.GetOnChainObjectRequest{
+				Client:    client,
+				ObjectId:  proposal.Target,
+				ErrLogger: p.errLogger,
+			}, ctx)
+			if err != nil {
+				return response.BuildTransactionResponse{}, err
+			}
+
+			function = childModule.GetFunctionCreateChildHealthInsuranceNeedWithdrawProposalV2()
+			args = childModule.ToCreateChildNormalNeedWithdrawProposalArgumentsV2(on_chain.CreateChildNormalNeedWithdrawProposalArgumentsV2{
+				NeedID:      proposal.Target,
+				ChildID:     need.ChildID,
+				LocalPool:   proposal.PoolID,
+				Description: proposal.Description,
+				ProofBlobID: proposal.ProofBlobID,
+				ClosedAt:    closedAt,
+				Creator:     proposal.Creator,
+			})
+
+		case string(entities.MEAL_NEED_PURPOSE):
+			need, err := on_chain.GetOnChainObject[entities.MealNeed](on_chain.GetOnChainObjectRequest{
+				Client:    client,
+				ObjectId:  proposal.Target,
+				ErrLogger: p.errLogger,
+			}, ctx)
+			if err != nil {
+				return response.BuildTransactionResponse{}, err
+			}
+
+			function = childModule.GetFunctionCreateChildMealNeedWithdrawProposalV2()
+			args = childModule.ToCreateChildNormalNeedWithdrawProposalArgumentsV2(on_chain.CreateChildNormalNeedWithdrawProposalArgumentsV2{
+				NeedID:      proposal.Target,
+				ChildID:     need.ChildID,
+				LocalPool:   proposal.PoolID,
+				Description: proposal.Description,
+				ProofBlobID: proposal.ProofBlobID,
+				ClosedAt:    closedAt,
+				Creator:     proposal.Creator,
+			})
+		case string(entities.SPECIAL_NEED_PURPOSE):
+			campaign, err := on_chain.GetOnChainObject[entities.SpecialNeedCampaign](on_chain.GetOnChainObjectRequest{
+				Client:    client,
+				ObjectId:  proposal.Target,
+				ErrLogger: p.errLogger,
+			}, ctx)
+			if err != nil {
+				return response.BuildTransactionResponse{}, err
+			}
+
+			function = childModule.GetFunctionCreateChildSpecialNeedWithdrawProposalV2()
+			args = childModule.ToCreateChildSpecialNeedWithdrawProposalArgumentsV2(on_chain.CreateChildSpecialNeedWithdrawProposalArgumentsV2{
+				CampaignID:     proposal.Target,
+				LocalPool:      proposal.PoolID,
+				ChildID:        campaign.ChildID,
+				WithdrawAmount: proposal.WithdrawAmount,
+				Description:    proposal.Description,
+				ProofBlobID:    proposal.ProofBlobID,
+				ClosedAt:       closedAt,
+				Creator:        proposal.Creator,
+			})
+		}
+	}
+
+	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+		Client:    client,
+		Sender:    reviewer,
+		Module:    module,
+		Function:  function,
+		ErrLogger: p.errLogger,
+		Arguments: args,
+	}, ctx)
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
+	}
+
 	proposal.ReviewedBy = &reviewer
 	proposal.Status = request_approved_status
 	if err := p.pendingWithdrawProposalRepo.UpdatePendingWithdrawProposal(*proposal, ctx); err != nil {
 		return response.BuildTransactionResponse{}, err
 	}
 
-	var proposalid string = util.GenerateId()
-
-	var isFromLocalPool bool = proposal.PoolID != os.Getenv(env.POOL_ID)
-	var localPoolId string
-	if isFromLocalPool {
-		localPoolId = proposal.PoolID
-	} else {
-		localPoolId = os.Getenv(env.SHARED_LOCAL_POOL_ID)
-	}
-
-	var module = on_chain.InitializeModulePool()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    p.clients[constant.SuiTestnet],
-		Sender:    reviewer,
-		Module:    module.GetModule(),
-		Function:  module.GetFunctionCreateWithdrawProposalV2(),
-		ErrLogger: p.errLogger,
-		Arguments: module.ToCreateWithdrawProposalV2Arguments(on_chain.CreateWithdrawProposalV2Arguments{
-			LocalPoolId:     localPoolId,
-			WithdrawAmount:  proposal.WithdrawAmount,
-			Description:     proposal.Description,
-			IsFromLocalPool: isFromLocalPool,
-			ClosedAt:        util.ToMilliseconds(util.GetRequestDuration()),
-			Creator:         proposal.Creator,
-		}),
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
-
+	var proposalId string = util.GenerateId()
 	return response.BuildTransactionResponse{
 			TxBytes:    txBytes,
-			ProposalId: proposalid,
+			ProposalId: proposalId,
 		}, p.offWithdrawProposalRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
-			ID:        proposalid,
-			Purpose:   proposal.Purpose,
-			Target:    proposal.PoolID,
-			CreatedAt: time.Now(),
+			ID:          proposalId,
+			Purpose:     proposal.Purpose,
+			Target:      proposal.Target,
+			LocalPoolID: proposal.PoolID,
+			CreatedAt:   time.Now(),
 		}, ctx)
 }
 
@@ -158,20 +258,18 @@ func (p *pendingWithdrawProposalService) CreatePendingWithdrawProposal(req reque
 		return nil, genericRightErr
 	}
 
-	var mainPoolId string = os.Getenv(env.POOL_ID)
-	var reqPoolId string = strings.TrimSpace(req.PoolID)
-	var isMainPoolRequested bool = mainPoolId == reqPoolId
-	var poolName string
-	if isMainPoolRequested {
+	var poolName, poolId string
+	if os.Getenv(env.POOL_ID) == req.PoolID {
 		if isLeader {
 			return nil, genericRightErr
 		}
 
+		poolId = os.Getenv(env.SHARED_LOCAL_POOL_ID)
 		poolName = "Main Pool"
 	} else {
 		localPool, err := on_chain.GetOnChainObject[entities.LocalPool](on_chain.GetOnChainObjectRequest{
 			Client:    client,
-			ObjectId:  reqPoolId,
+			ObjectId:  req.PoolID,
 			ErrLogger: p.errLogger,
 		}, ctx)
 		if err != nil {
@@ -197,6 +295,7 @@ func (p *pendingWithdrawProposalService) CreatePendingWithdrawProposal(req reque
 			}
 		}
 
+		poolId = req.PoolID
 		poolName = localPool.Region
 	}
 
@@ -206,10 +305,10 @@ func (p *pendingWithdrawProposalService) CreatePendingWithdrawProposal(req reque
 		ID:             util.GenerateId(),
 		ProfileID:      ctx.Value("sub").(string),
 		Creator:        sender,
-		PoolID:         reqPoolId,
+		PoolID:         poolId,
 		PoolName:       poolName,
 		Purpose:        string(entities.WITHDRAW_PURPOSE),
-		Target:         reqPoolId,
+		Target:         req.PoolID,
 		WithdrawAmount: req.WithdrawAmount,
 		ProofBlobID:    req.ProofBlobID,
 		Description:    strings.TrimSpace(req.Description),
@@ -237,7 +336,7 @@ func (p *pendingWithdrawProposalService) GetPendingWithdrawProposal(id string, c
 	if res.Creator != sender {
 		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 			Client:    p.clients[constant.SuiTestnet],
-			ObjectId:  os.Getenv(env.PACKAGE_ID),
+			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
 			ErrLogger: p.errLogger,
 		}, ctx)
 		if err != nil {
@@ -256,43 +355,49 @@ func (p *pendingWithdrawProposalService) GetPendingWithdrawProposal(id string, c
 func (p *pendingWithdrawProposalService) GetPendingWithdrawProposals(req request.GetPendingWithdrawProposalsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 
-	req.Creator = strings.TrimSpace(req.Creator)
 	if req.Creator != "" {
 		if !util.IsValidSuiAddressStrict(req.Creator) {
 			return response.PaginationDataResponse{}, genericErr
 		}
 	}
 
-	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-		Client:    p.clients[constant.SuiTestnet],
-		ObjectId:  os.Getenv(env.PACKAGE_ID),
-		ErrLogger: p.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.PaginationDataResponse{}, err
-	}
-
-	var sender string = ctx.Value("address").(string)
-	if !slices.Contains(manageObj.AdminIds, sender) {
-		if sender != req.Creator {
-			return response.PaginationDataResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-		}
-	}
-
-	req.Reviewer = strings.TrimSpace(req.Reviewer)
 	if req.Reviewer != "" {
 		if !util.IsValidSuiAddressStrict(req.Reviewer) {
 			return response.PaginationDataResponse{}, genericErr
 		}
 	}
 
-	if req.MaxAmount != nil {
-		if *req.MaxAmount < min_withdraw_proposal_amount_value {
-			return response.PaginationDataResponse{}, nil
+	var sender string = ctx.Value("address").(string)
+	if sender != req.Creator {
+		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+			Client:    p.clients[constant.SuiTestnet],
+			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+			ErrLogger: p.errLogger,
+		}, ctx)
+		if err != nil {
+			return response.PaginationDataResponse{}, err
 		}
 
-		if req.MinAmount != nil {
-			if *req.MaxAmount <= *req.MinAmount {
+		if !slices.Contains(manageObj.AdminIds, sender) {
+			if sender != req.Creator {
+				return response.PaginationDataResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+			}
+		}
+	}
+
+	if req.MaxAmount != nil {
+		if *req.MaxAmount < 0 {
+			return response.PaginationDataResponse{}, nil
+		}
+	}
+
+	if req.MinAmount != nil {
+		if req.MaxAmount != nil {
+			if *req.MinAmount > *req.MaxAmount {
+				return response.PaginationDataResponse{}, nil
+			}
+		} else {
+			if *req.MinAmount < 0 {
 				return response.PaginationDataResponse{}, nil
 			}
 		}
@@ -357,7 +462,7 @@ func (p *pendingWithdrawProposalService) RefusePendingWithdrawProposal(id string
 	var reviewer string = ctx.Value("address").(string)
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
-		ObjectId:  os.Getenv(env.PACKAGE_ID),
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
 		ErrLogger: p.errLogger,
 	}, ctx)
 	if err != nil {

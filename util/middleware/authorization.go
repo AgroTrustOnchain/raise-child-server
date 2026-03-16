@@ -5,7 +5,7 @@ import (
 	"raise-child/constants/shared"
 	"raise-child/util"
 	"raise-child/util/security"
-	"strings"
+	"slices"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,9 +20,9 @@ func Authorize(ctx *gin.Context) {
 		return
 	}
 
-	var token string = strings.TrimPrefix(authHeader, "Bearer ")
+	//var token string = strings.TrimPrefix(authHeader, "Bearer ")
 
-	address, sub, role, exp, err := security.ExtractDataFromToken(token, util.GetLogConfig(shared.ERROR_LEVEL))
+	address, sub, roles, exp, err := security.ExtractDataFromTokenV2(authHeader, util.GetLogConfig(shared.ERROR_LEVEL))
 	if err != nil {
 		util.ProcessResponse(unAuthBodyResponse)
 		ctx.Abort()
@@ -49,14 +49,58 @@ func Authorize(ctx *gin.Context) {
 		return
 	}
 
+	if roles == nil || len(roles) == 0 {
+		util.ProcessResponse(unAuthBodyResponse)
+		ctx.Abort()
+		return
+	}
+
 	ctx.Set("address", address)
 	ctx.Set("sub", sub)
-	ctx.Set("role", role)
+	ctx.Set("roles", roles)
 	ctx.Next()
 }
 
 func AdminAuthorize(ctx *gin.Context) {
-	if ctx.Value("role").(string) != "Admin" {
+	val, exists := ctx.Get("roles")
+	if !exists {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	roles, ok := val.([]string)
+	if !ok {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	if !slices.Contains(roles, "Admin") {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	ctx.Next()
+}
+
+func LeaderAuthorize(ctx *gin.Context) {
+	val, exists := ctx.Get("roles")
+	if !exists {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	roles, ok := val.([]string)
+	if !ok {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	if !slices.Contains(roles, "Local Leader") {
 		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
 		ctx.Abort()
 		return
@@ -66,8 +110,21 @@ func AdminAuthorize(ctx *gin.Context) {
 }
 
 func ManagerRoleAuthorize(ctx *gin.Context) {
-	var role string = ctx.Value("role").(string)
-	if role != "Admin" && role != "Local Leader" {
+	val, exists := ctx.Get("roles")
+	if !exists {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	roles, ok := val.([]string)
+	if !ok {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	if !slices.Contains(roles, "Admin") && !slices.Contains(roles, "Local Leader") {
 		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
 		ctx.Abort()
 		return
@@ -77,8 +134,21 @@ func ManagerRoleAuthorize(ctx *gin.Context) {
 }
 
 func StaffRoleAuthorize(ctx *gin.Context) {
-	var role string = ctx.Value("role").(string)
-	if role != "Staff" && role != "Local Leader" && role != "Volunteer" {
+	val, exists := ctx.Get("roles")
+	if !exists {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	roles, ok := val.([]string)
+	if !ok {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	if !slices.Contains(roles, "Volunteer") && !slices.Contains(roles, "Local Leader") {
 		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
 		ctx.Abort()
 		return

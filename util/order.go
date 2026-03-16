@@ -14,3 +14,18 @@ func StanderizeSortOrder(order string) string {
 
 	return res
 }
+
+func StanderizeSortCriteria(sc string) string {
+	var res string
+	sc = StanderizeString(sc)
+	switch sc {
+	case "created_at":
+		res = sc
+	case "target", "withdraw_amount", "amount":
+		res = sc
+	default:
+		sc = "created_at"
+	}
+
+	return res
+}

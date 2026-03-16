@@ -1,7 +1,7 @@
 CREATE TABLE profiles (
     id character varying(100) PRIMARY KEY,
     salt character varying(30) NOT NULL UNIQUE,
-    status character varying(10) NOT NULL DEFAULT 'Active'.
+    status character varying(10) NOT NULL DEFAULT 'Active',
     identity_code character varying(20) UNIQUE,
     first_name character varying(20),
     last_name character varying(50),
@@ -67,15 +67,16 @@ CREATE TABLE donations (
 CREATE TABLE withdraw_proposals (
     id character varying(100) PRIMARY KEY,
     purpose character varying(20) NOT NULL,
-    proposal_id character varying(100) UNIQUE NOT NULL,
+    proposal_id character varying(100) UNIQUE,
     target character varying(100) NOT NULL,
+    local_pool_id character varying(100) NOT NULL,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE payments (
     id character varying(100) PRIMARY KEY,
     actor character varying(100) NOT NULL,
-    profile_id character varying(20) NOT NULL,
+    profile_id character varying(100) NOT NULL,
     proposal_id character varying(100),
     donation_id character varying(100),
     is_donate_tx BOOLEAN NOT NULL,
@@ -100,7 +101,7 @@ CREATE TABLE payments (
 
 CREATE TABLE registration_requests (
     id                    character varying(100) PRIMARY KEY,
-    profile_id                   character varying(100) NOT NULL,
+    profile_id            character varying(100) NOT NULL,
     register_role         character varying(15) NOT NULL,
     identity_code         character varying(20) NOT NULL,
     identity_card_blob_id character varying(100) NOT NULL,
@@ -125,28 +126,6 @@ CREATE TABLE registration_requests (
     CONSTRAINT fk_registration_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
--- CREATE TABLE upload_child_requests (
---     id                    character varying(100) PRIMARY KEY,
---     profile_id                   character varying(100) NOT NULL,
---     identity_code         character varying(20) NOT NULL,
---     avatar_blob_id        character varying(100) NOT NULL,
---     region                character varying(30) NOT NULL,
---     first_name            character varying(10) NOT NULL,
---     last_name             character varying(50) NOT NULL,
---     gender                character varying(10) NOT NULL,
---     date_of_birth         character varying(10) NOT NULL,
---     approvers             TEXT[] DEFAULT '{}' NOT NULL,
---     refusers              TEXT[] DEFAULT '{}' NOT NULL,
---     refuse_reasons        TEXT[] DEFAULT '{}' NOT NULL,
---     status                character varying(10) NOT NULL DEFAULT 'Pending',
---     is_confirm_upload     BOOLEAN NOT NULL DEFAULT FALSE,
---     created_by            character varying(100) NOT NULL,
---     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
---     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
---     closed_at timestamptz NOT NULL,
---     CONSTRAINT fk_upload_child_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
--- );
-
 CREATE TABLE upload_child_requests (
     id                    character varying(100) PRIMARY KEY,
     profile_id            character varying(100) NOT NULL,
@@ -170,7 +149,7 @@ CREATE TABLE upload_child_requests (
     approvers             TEXT[] DEFAULT '{}' NOT NULL,
     refusers              TEXT[] DEFAULT '{}' NOT NULL,
     refuse_reasons        TEXT[] DEFAULT '{}' NOT NULL,
-    ai_evaluation         character varying(20) NOT NULL DEFAULT 'Pending',
+    ai_evaluation         character varying(50) NOT NULL,
     status                character varying(10) NOT NULL DEFAULT 'Pending',
     review_status         character varying(10) NOT NULL DEFAULT 'Pending',
     is_confirm_upload     BOOLEAN NOT NULL DEFAULT FALSE,
@@ -214,14 +193,21 @@ CREATE TABLE pending_withdraw_proposals (
     CONSTRAINT fk_proposal_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
-CREATE TABLE nft_profiles (
+CREATE TABLE pending_child_special_need_proposals(
     id character varying(100) PRIMARY KEY,
-    profile_id character varying(100) NOT NULL,
-    nft_id character varying(100) UNIQUE,
-    role character varying(15) NOT NULL,
+    child_id character varying(100) NOT NULL,
+    region character varying(30) NOT NULL,
+    actor_profile_id character varying(100) NOT NULL,
+    actor_address character varying(100) NOT NULL,
+    target BIGINT NOT NULL,
+    description TEXT[] NOT NULL,
+    proof_blob_id character varying(100),
+    ai_evaluation character varying(50) NOT NULL,
+    review_status character varying(10) NOT NULL DEFAULT 'Pending',
+    reviewed_by character varying(100),
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL, 
-    CONSTRAINT fk_nft_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT fk_special_need_profile FOREIGN KEY (actor_profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
 CREATE TABLE volunteer_tasks (
@@ -239,28 +225,58 @@ CREATE TABLE volunteer_tasks (
     CONSTRAINT fk_volunteer_task_profile FOREIGN KEY (assigned_profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
-CREATE TABLE volunteer_notis (
-    id character varying(100) PRIMARY KEY,
-    child_id character varying(100) NOT NULL,
-    region character varying(30) NOT NULL,
-    assigned_volunteers TEXT[] DEFAULT '{}' NOT NULL,
-    content TEXT NOT NULL,
-    start_period character varying(10) NOT NULL,
-    end_period character varying(10) NOT NULL,
-    created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
-
 CREATE TABLE leader_notis (
     id character varying(100) PRIMARY KEY,
-    meal_need_id character varying(100) NOT NULL UNIQUE,
+    need_id character varying(100) NOT NULL UNIQUE,
+    need_type character varying(20) NOT NULL,
     child_id character varying(100) NOT NULL UNIQUE,
     region character varying(30) NOT NULL,
     assigned_leaders TEXT[] DEFAULT '{}' NOT NULL,
     expected_withdraw_periods TEXT[] DEFAULT '{}' NOT NULL,
-    content TEXT NOT NULL,
+    contents TEXT[] NOT NULL,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE TABLE child_task_details (
+    id character varying(100) PRIMARY KEY,
+    child_id character varying(100) NOT NULL,
+    purpose character varying(20) NOT NULL,
+    target character varying(100) NOT NULL,
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE TABLE tasks (
+    id character varying(100) PRIMARY KEY,
+    is_child_task BOOLEAN NOT NULL,
+    child_task_id character varying(100),
+    created_by character varying(100) NOT NULL,
+    assigned_profile_id character varying(100),
+    assgined_staff character varying(100),
+    review_profile_status character varying(10) NOT NULL DEFAULT 'Pending',
+    reviewed_by character varying(100),
+    region character varying(30) NOT NULL,
+    description TEXT[] NOT NULL,
+    start_period timestamptz NOT NULL,
+    end_period timestamptz NOT NULL,
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT fk_task_profile FOREIGN KEY (assigned_profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+);
+
+CREATE TABLE task_proofs (
+    id character varying(100) PRIMARY KEY,
+    task_id character varying(100) NOT NULL,
+    description TEXT[] NOT NULL,
+    actor_profile_id character varying(100) NOT NULL,
+    actor_address character varying(100) NOT NULL,
+    image_blob_id character varying(100) NOT NULL,
+    reviewed_by character varying(100),
+    review_status character varying(10) NOT NULL DEFAULT 'Pending',
+    raw_submit_date character varying(10) NOT NULL,
+     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT fk_proof_profile FOREIGN KEY (actor_profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
 -- Index for performance on common lookups
@@ -269,22 +285,4 @@ CREATE INDEX idx_registration_email ON registration_requests(email);
 CREATE INDEX idx_center_status ON center_requests(status);
 
 
--- CREATE TABLE registration_requests (
---     id                    character varying(100) PRIMARY KEY,
---     identity_code         character varying(20) NOT NULL,
---     avatar_blob_id        character varying(100) NOT NULL,
---     region                character varying(30),
---     first_name            character varying(10) NOT NULL,
---     last_name             character varying(50) NOT NULL,
---     gender                character varying(10) NOT NULL,
---     date_of_birth         character varying(10) NOT NULL,
---     approvers             TEXT[] DEFAULT '{}' NOT NULL,
---     refusers              TEXT[] DEFAULT '{}' NOT NULL,
---     refuse_reasons        TEXT[] DEFAULT '{}' NOT NULL,
---     status                character varying(50) NOT NULL DEFAULT 'Pending',
---     is_confirm_upload BOOLEAN NOT NULL DEFAULT FALSE,
---     created_by            character varying(100) NOT NULL,
---     created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
---     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP,
---     closed_at timestamptz
--- );
+

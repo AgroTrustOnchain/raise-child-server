@@ -30,7 +30,7 @@ func TestGetAdmins(t *testing.T) {
 			},
 		}, nil)
 
-	var service = initializeAdminServiceV2(
+	var service = initializeAdminService(
 		repo,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,

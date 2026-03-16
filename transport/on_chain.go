@@ -42,39 +42,3 @@ func ExecuteTransaction(ctx *gin.Context) {
 		PostType: action_type.NON_POST,
 	})
 }
-
-// BuildMoneyTransaction godoc
-// @Summary      Build a money-related transaction
-// @Description  Prepares and builds a transaction for money actions (e.g., donate, withdraw) on-chain
-// @Tags         transactions
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        request  body      request.MoneyActionRequest   true  "Money action details (e.g., amount, sender)"
-// @Success      200      {object}  response.BuildTransactionResponse
-// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
-// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
-// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /tx/build/money [post]
-func BuildMoneyTransaction(ctx *gin.Context) {
-	var request request.MoneyActionRequest
-	if ctx.ShouldBindJSON(&request) != nil {
-		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
-		return
-	}
-
-	service, err := business.GenerateOnChainService()
-	if err != nil {
-		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
-		return
-	}
-
-	res, err := service.BuildMoneyTransaction(request, ctx)
-	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.NON_POST,
-	})
-}

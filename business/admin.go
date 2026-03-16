@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -26,10 +25,7 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
-	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 type adminService struct {
@@ -39,16 +35,7 @@ type adminService struct {
 	errLogger   *log.Logger
 }
 
-func InitializeAdminService(db *sql.DB, errLogger *log.Logger) business.IAdminService {
-	return &adminService{
-		profileRepo: repository.InitializeProfileRepository(db, errLogger),
-		redisCache:  cache.InitializeRedisCache(),
-		clients:     _networkAliases,
-		errLogger:   errLogger,
-	}
-}
-
-func initializeAdminServiceV2(profileRepo i_repository.IProfileRepository, clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IAdminService {
+func initializeAdminService(profileRepo i_repository.IProfileRepository, clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IAdminService {
 	return &adminService{
 		profileRepo: profileRepo,
 		redisCache:  cache.InitializeRedisCache(),
@@ -67,7 +54,7 @@ func GenerateAdminService() (business.IAdminService, error) {
 
 	//return InitializeAdminService(cnn, errLogger), nil
 
-	return initializeAdminServiceV2(
+	return initializeAdminService(
 		repository.InitializeProfileRepository(cnn, errLogger),
 		_networkAliases,
 		errLogger,
@@ -185,25 +172,29 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 
 // UpdatePublisherInfo implements business.IAdminService.
 func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+	var profileId string = ctx.Value("sub").(string)
+	var profile *entities.Profile
+	var errRes error
+	var isFoundAdmin bool = false
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 
-	signer, _ := signer.NewSignerWithSecretKey("")
-	a.clients[""].SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
-		PriKey: signer.PriKey,
-	})
+	for i := 1; i <= 3; i++ {
+		profile, errRes = a.profileRepo.GetProfileOfFirsts(i, ctx)
+		if errRes != nil {
+			return response.BuildTransactionResponse{}, errRes
+		}
 
-	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return response.BuildTransactionResponse{}, genericErr
+		if profileId == profile.ID {
+			if profile.IdentityCode != "" {
+				return response.BuildTransactionResponse{}, genericErr
+			}
+
+			isFoundAdmin = true
+			break
+		}
 	}
 
-	var profileId string = ctx.Value("sub").(string)
-	profile, err := a.profileRepo.GetFirstProfile(ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
-
-	if profile == nil || profileId != profile.ID || profile.IdentityCode != "" {
+	if !isFoundAdmin {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
@@ -222,6 +213,29 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
+	var client = a.clients[constant.SuiTestnet]
+	var sender string = ctx.Value("address").(string)
+	var manangeModule = on_chain.InitializeModuleManage()
+	nfts, err := on_chain.GetOnChainOwnedObjects[entities.AdminNft](on_chain.GetOnChainOwnedObjectsRequest{
+		Client:       client,
+		OwnerAddress: sender,
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manangeModule.GetModule(), manangeModule.GetAdminNftStruct()),
+		ErrLogger:    a.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
+	}
+
+	editProfileCaps, err := on_chain.GetOnChainOwnedObjects[entities.Cap](on_chain.GetOnChainOwnedObjectsRequest{
+		Client:       client,
+		OwnerAddress: sender,
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manangeModule.GetModule(), manangeModule.GetUpdateAdminInfoCapStruct()),
+		ErrLogger:    a.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.BuildTransactionResponse{}, err
+	}
+
 	var identityCode string = strings.TrimSpace(req.IdentityCode)
 	var firstName string = strings.TrimSpace(req.FirstName)
 	var lastName string = strings.TrimSpace(req.LastName)
@@ -230,12 +244,14 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 	// todo: validate identity code
 	var module = on_chain.InitializeModuleManage()
 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    a.clients[constant.SuiTestnet],
+		Client:    client,
 		Sender:    sender,
 		Module:    module.GetModule(),
 		Function:  module.GetFunctionUpdatePublisherNft(),
 		ErrLogger: a.errLogger,
 		Arguments: module.ToUpdatePublisherNftArguments(on_chain.UpdatePublisherNftArguments{
+			AdminCap:           editProfileCaps[0].ID.ID,
+			AdminNft:           nfts[0].ID.ID,
 			IdentityCode:       identityCode,
 			IdentityCardBlobID: strings.TrimSpace(req.IdentityCardBlobID),
 			AvatarBlobID:       strings.TrimSpace(req.AvatarBlobID),

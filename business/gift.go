@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -35,15 +34,6 @@ type giftService struct {
 	redisCache  cache.IRedisCache
 	clients     map[string]sui.ISuiAPI
 	errLogger   *log.Logger
-}
-
-func InitializeGiftService(db *sql.DB, errLogger *log.Logger) business.IGiftService {
-	return &giftService{
-		profileRepo: repository.InitializeProfileRepository(db, errLogger),
-		redisCache:  cache.InitializeRedisCache(),
-		clients:     _networkAliases,
-		errLogger:   errLogger,
-	}
 }
 
 func initializeGiftService(profileRepo i_repository.IProfileRepository, clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IGiftService {

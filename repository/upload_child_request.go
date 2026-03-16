@@ -105,7 +105,7 @@ func (u *uploadChildRepo) GetUploadChildRequest(id string, ctx context.Context) 
 
 // GetUploadChildRequests implements repository.IUploadChildRequestRepository.
 func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildRequests, ctx context.Context) ([]entities.UploadChildRequest, int, error) {
-	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "GetWalletRegistrationRequests - "
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "GetUploadChildRequests - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
@@ -275,10 +275,10 @@ func (u *uploadChildRepo) GetWalletUploadChildRequests(id string, page int, ctx 
 
 // IsChildRequested implements repository.IUploadChildRequestRepository.
 func (u *uploadChildRepo) IsChildRequested(identityCode string, ctx context.Context) (bool, error) {
-	var query string = "SELECT * FROM " + upload_child_request_table + " WHERE identity_code = $1 AND (status = 'Pending' OR status = 'Approved') LIMIT 1"
+	var query string = "SELECT id FROM " + upload_child_request_table + " WHERE identity_code = $1 AND (status = 'Pending' OR status = 'Approved') LIMIT 1"
 
 	var id string
-	if err := u.db.QueryRowContext(ctx, query).Scan(&id); err != nil {
+	if err := u.db.QueryRowContext(ctx, query, identityCode).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
 		}

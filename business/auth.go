@@ -57,31 +57,38 @@ func GenerateAuthService() (business.IAuthService, error) {
 // LoginV2 implements business.IAuthService.
 func (a *authService) LoginV2(req request.LoginRequestV2, ctx context.Context) (response.LoginResponse, error) {
 	var address string = strings.TrimSpace(req.Address)
-	on_chain.FaucetTestnetBalance(a.clients[constant.SuiTestnet], address, a.errLogger, ctx)
+	var client = a.clients[constant.SuiTestnet]
+	on_chain.FaucetTestnetBalance(client, address, a.errLogger, ctx)
 
 	var sub string = strings.TrimSpace(req.Sub)
-	var client = a.clients[constant.SuiTestnet]
-	var role string
 	manageObj, _ := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
-		ObjectId:  os.Getenv(env.PACKAGE_ID),
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
 		ErrLogger: a.errLogger,
 	}, ctx)
+
+	var roles []string
 	if manageObj != nil {
 		if slices.Contains(manageObj.AdminIds, address) {
-			role = admin_role
-		} else if slices.Contains(manageObj.LocalLeaderIds, address) {
-			role = local_leader_role
-		} else if slices.Contains(manageObj.VolunteerIds, address) {
-			role = volunteer_role
-		} else if slices.Contains(manageObj.DonorIds, address) {
-			role = donor_role
+			roles = append(roles, admin_role)
+		}
+
+		if slices.Contains(manageObj.LocalLeaderIds, address) {
+			roles = append(roles, local_leader_role)
+		}
+
+		if slices.Contains(manageObj.VolunteerIds, address) {
+			roles = append(roles, volunteer_role)
+		}
+
+		if slices.Contains(manageObj.DonorIds, address) {
+			roles = append(roles, donor_role)
 		} else {
-			role = user_role
+			roles = append(roles, user_role)
 		}
 	}
 
-	token, _, err := security.GenerateActionToken(address, sub, role, a.errLogger)
+	token, _, err := security.GenerateActionTokenV2(address, sub, roles, a.errLogger)
 	if err != nil {
 		return response.LoginResponse{}, err
 	}

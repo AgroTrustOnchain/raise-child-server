@@ -36,10 +36,10 @@ func InitializeCenterRequestRepository(db *sql.DB, errLogger *log.Logger) reposi
 // CreateRegistrationRequest implements repository.ICenterRequestRepository.
 func (c *centerRequestRepo) CreateRegistrationRequest(req entities.CenterRequest, ctx context.Context) error {
 	var query string = "INSERT INTO " + center_request_table +
-		" (id, sub, region, address, phone_number, image_blob_id, " +
+		" (id, profile_id, region, address, phone_number, image_blob_id, " +
 		"approvers, refusers, refuse_reasons, status, " +
 		" is_available_to_confirm, is_confirm_register, " +
-		"created_by, created_at, updated_at, closed_at, is_closed) " +
+		"created_by, created_at, updated_at, closed_at) " +
 		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.CENTER_REQUEST_REPOSITORY) + "CreateRegistrationRequest - "
@@ -54,7 +54,7 @@ func (c *centerRequestRepo) CreateRegistrationRequest(req entities.CenterRequest
 	// 	return errors.New(noti.INTERNALL_ERR_MSG)
 	// }
 
-	if _, err := c.db.ExecContext(ctx, query, req.ID, req.Sub, req.Region, req.Address, req.PhoneNumber, req.ImageBlobID,
+	if _, err := c.db.ExecContext(ctx, query, req.ID, req.ProfileID, req.Region, req.Address, req.PhoneNumber, req.ImageBlobID,
 		pq.Array(req.Approvers), pq.Array(req.Refusers), pq.Array(req.RefuseReasons), req.Status,
 		req.IsAvailableToConfirm, req.IsConfirmRegister,
 		req.CreatedBy, req.CreatedAt, req.UpdatedAt, req.ClosedAt); err != nil {
@@ -160,7 +160,7 @@ func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequest
 
 		var x entities.CenterRequest
 		if err := rows.Scan(
-			&x.ID, &x.Sub, &x.Region, &x.Address, &x.PhoneNumber, &x.ImageBlobID,
+			&x.ID, &x.ProfileID, &x.Region, &x.Address, &x.PhoneNumber, &x.ImageBlobID,
 			pq.Array(&x.Approvers), pq.Array(&x.Refusers), pq.Array(&x.RefuseReasons), &x.Status,
 			&x.IsAvailableToConfirm, &x.IsConfirmRegister,
 			&x.CreatedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt); err != nil {
@@ -185,7 +185,7 @@ func (c *centerRequestRepo) GetRequest(id string, ctx context.Context) (*entitie
 
 	var res entities.CenterRequest
 	if err := c.db.QueryRowContext(ctx, query, id).Scan(
-		&res.ID, &res.Sub, &res.Region, &res.Address, &res.PhoneNumber, &res.ImageBlobID,
+		&res.ID, &res.ProfileID, &res.Region, &res.Address, &res.PhoneNumber, &res.ImageBlobID,
 		pq.Array(&res.Approvers), pq.Array(&res.Refusers), pq.Array(&res.RefuseReasons), &res.Status,
 		&res.IsAvailableToConfirm, &res.IsConfirmRegister,
 		&res.CreatedBy, &res.CreatedAt, &res.UpdatedAt, &res.ClosedAt); err != nil {
@@ -217,7 +217,7 @@ func (c *centerRequestRepo) GetWalletRegistrationRequests(id string, ctx context
 	for rows.Next() {
 		var x entities.CenterRequest
 		if err := rows.Scan(
-			&x.ID, &x.Sub, &x.Region, &x.Address, &x.PhoneNumber, &x.ImageBlobID,
+			&x.ID, &x.ProfileID, &x.Region, &x.Address, &x.PhoneNumber, &x.ImageBlobID,
 			pq.Array(&x.Approvers), pq.Array(&x.Refusers), pq.Array(&x.RefuseReasons), &x.Status,
 			&x.IsAvailableToConfirm, &x.IsConfirmRegister,
 			&x.CreatedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt); err != nil {

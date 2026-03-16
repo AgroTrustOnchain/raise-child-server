@@ -34,6 +34,7 @@ type CreateWithdrawProposalV2Arguments struct {
 	LocalPoolId     string
 	WithdrawAmount  int64
 	Description     string
+	ProofBlobID     *string
 	IsFromLocalPool bool
 	ClosedAt        int64
 	Creator         string
@@ -128,7 +129,6 @@ func (m *modulePool) ToWithdrawFromPoolArguments(args WithdrawFromPoolArguments)
 		os.Getenv(env.POOL_ID),
 		args.LocalPoolId,
 		args.WithdrawProposalId,
-		os.Getenv(env.TREASURY_CAP),
 		os.Getenv(env.POOL_WITHDRAW_DAO_OBJECT_ID),
 		sui.CLOCK_OBJECT_ID,
 	}
@@ -150,12 +150,18 @@ func (m *modulePool) ToCreateWithdrawProposalArguments(args CreateWithdrawPropos
 
 // ToCreateWithdrawProposalV2Arguments implements IModulePool.
 func (m *modulePool) ToCreateWithdrawProposalV2Arguments(args CreateWithdrawProposalV2Arguments) []interface{} {
+	var proofBlobId string = ""
+	if args.ProofBlobID != nil {
+		proofBlobId = *args.ProofBlobID
+	}
+
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
 		args.LocalPoolId,
 		uint64(args.WithdrawAmount),
 		args.Description,
+		proofBlobId,
 		args.IsFromLocalPool,
 		uint64(args.ClosedAt),
 		args.Creator,

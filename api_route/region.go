@@ -15,15 +15,21 @@ func InitializeRegionRoutes(server *gin.Engine) {
 	// Rate limits
 	var listLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/2), 15)
 	var viewLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/5), 20)
-	var createLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute), 2)
+	var postLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/2), 2)
 
 	// Normal group
 	var norGroup = server.Group(contextPath)
 	norGroup.GET("", middleware.RateLimitMiddleware(listLimit), transport.GetRegions)
-	norGroup.GET("/supported-proposal", middleware.RateLimitMiddleware(listLimit), transport.GetSupportedRegionSuggestions)
-	norGroup.GET("/supported-proposal/user/:id", middleware.RateLimitMiddleware(listLimit), transport.GetUserSupportedRegionSuggestions)
-	norGroup.GET("/supported-proposal/:id", middleware.RateLimitMiddleware(viewLimit), transport.GetSupportedRegionSuggestion)
+	norGroup.GET("/supported-suggestions", middleware.RateLimitMiddleware(listLimit), transport.GetSupportedRegionSuggestions)
+	norGroup.GET("/supported-suggestions/:id", middleware.RateLimitMiddleware(viewLimit), transport.GetSupportedRegionSuggestion)
 
-	var authGroup = server.Group(contextPath, middleware.Authorize, middleware.ManagerRoleAuthorize)
-	authGroup.POST("/supported-proposal", middleware.RateLimitMiddleware(createLimit), transport.CreateSupportedRegionSuggestion)
+	// Auth group
+	var authGroup = server.Group(contextPath, middleware.Authorize)
+	norGroup.GET("/user/:id/supported-suggestions", middleware.RateLimitMiddleware(listLimit), transport.GetWalletSupportedRegionSuggestions)
+	authGroup.POST("/supported-suggestions", middleware.RateLimitMiddleware(postLimit), transport.CreateSupportedRegionSuggestion)
+
+	// Admin group
+	var adminGroup = server.Group(contextPath, middleware.Authorize, middleware.AdminAuthorize)
+	adminGroup.GET("/admin/supported-suggestions", middleware.RateLimitMiddleware(viewLimit), transport.AdminGetSupportedRegionSuggestions)
+	adminGroup.POST("/supported-suggestions/:id/review", middleware.RateLimitMiddleware(postLimit), transport.ReviewRegionSuggestion)
 }

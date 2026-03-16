@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -46,12 +45,17 @@ var (
 	min_region_staffs int = 5
 )
 
-func InitializeCenterRequestService(db *sql.DB, errLogger *log.Logger) business.ICenterRequestService {
+func initializeCenterRequestService(
+	centerRequestRepo i_repository.ICenterRequestRepository,
+	profileRepo i_repository.IProfileRepository,
+	clients map[string]sui.ISuiAPI,
+	errLogger *log.Logger,
+) business.ICenterRequestService {
 	return &centerRequestService{
-		centerRequestRepo: repository.InitializeCenterRequestRepository(db, errLogger),
-		profileRepo:       repository.InitializeProfileRepository(db, errLogger),
+		centerRequestRepo: centerRequestRepo,
+		profileRepo:       profileRepo,
 		redisCache:        cache.InitializeRedisCache(),
-		clients:           _networkAliases,
+		clients:           clients,
 		errLogger:         errLogger,
 	}
 }
@@ -64,7 +68,12 @@ func GenerateCenterRequestService() (business.ICenterRequestService, error) {
 		return nil, err
 	}
 
-	return InitializeCenterRequestService(cnn, errLogger), nil
+	return initializeCenterRequestService(
+		repository.InitializeCenterRequestRepository(cnn, errLogger),
+		repository.InitializeProfileRepository(cnn, errLogger),
+		_networkAliases,
+		errLogger,
+	), nil
 }
 
 // ConfirmRequest implements business.ICenterRequestService.
@@ -291,7 +300,7 @@ func (c *centerRequestService) CreateRequest(req request.CreateCenterRequest, ct
 	var curTime time.Time = time.Now()
 	var request = entities.CenterRequest{
 		ID:          util.GenerateId(),
-		Sub:         ctx.Value("sub").(string),
+		ProfileID:   ctx.Value("sub").(string),
 		Region:      req.Region,
 		Address:     address,
 		PhoneNumber: phoneNumber,

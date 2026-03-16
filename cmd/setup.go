@@ -54,7 +54,7 @@ func setupApiRoutes(server *gin.Engine) {
 	// Admin API endpoints
 	api_route.InitializeAdminRoute(server)
 
-	// Center API endpoints
+	// Center Request API endpoints
 	api_route.InitializeCenterRequestRoute(server)
 
 	// Gift API endpoints
@@ -65,6 +65,15 @@ func setupApiRoutes(server *gin.Engine) {
 
 	// Pending Withdraw Proposal API endpoints
 	api_route.InitializePendingWithdrawProposalRoute(server)
+
+	// Child Pending Special Need Proposal APi endpoints
+	api_route.InitializeChildPendingSpecialNeedProposalRoutes(server)
+
+	// Task API endpoints
+	api_route.InitializeTaskRoutes(server)
+
+	// Task Proof API endpoints
+	api_route.InitializeTaskProofRoutes(server)
 
 	// Default route to Swagger documentation
 	server.GET("/", func(ctx *gin.Context) {

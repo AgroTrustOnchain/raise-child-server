@@ -39,7 +39,7 @@ func (p *pendingWithdrawProposalRepo) CreatePendingWithdrawProposal(proposal ent
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PENDING_WITHDRAW_PROPOSAL_REPOSITORY) + "CreatePendingWithdrawProposal - "
 	if _, err := p.db.ExecContext(ctx, query, proposal.ID, proposal.ProfileID, proposal.Creator, proposal.PoolID, proposal.PoolName,
-		proposal.WithdrawAmount, proposal.ProofBlobID, proposal.Description,
+		proposal.Purpose, proposal.Target, proposal.WithdrawAmount, proposal.ProofBlobID, proposal.Description,
 		proposal.Status, proposal.AIEvaluation, proposal.CreatedAt, proposal.UpdatedAt); err != nil {
 
 		p.errLogger.Println(errLogMsg + err.Error())
@@ -204,4 +204,21 @@ func (p *pendingWithdrawProposalRepo) UpdatePendingWithdrawProposal(proposal ent
 	}
 
 	return nil
+}
+
+// IsPendingWithdrawProposalProposedWithSpecificInfo implements repository.IPendingWithdrawProposalRepository.
+func (p *pendingWithdrawProposalRepo) IsPendingWithdrawProposalProposedWithSpecificInfo(purpose string, target string, description string, withdrawAmount int64, ctx context.Context) (bool, error) {
+	var query string = "SELECT id FROM " + leader_noti_table + " WHERE purpose = $1 AND target = $2 AND description = $3 AND withdraw_amount = $4 AND (status = 'Pending' OR status = 'Approved') LIMIT 1"
+
+	var id string
+	if err := p.db.QueryRowContext(ctx, query, purpose, target, description, withdrawAmount).Scan(&id); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+
+		p.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.PENDING_WITHDRAW_PROPOSAL_REPOSITORY) + "IsPendingWithdrawProposalProposedWithSpecificInfo - " + err.Error())
+		return false, errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	return id != "", nil
 }

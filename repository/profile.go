@@ -179,7 +179,7 @@ func (p *profileRepo) GetProfile(id string, ctx context.Context) (*entities.Prof
 
 	var res entities.Profile
 	if err := p.db.QueryRowContext(ctx, query, id).Scan(
-		&res.ID, &res.Salt, &res.IdentityCode, &res.FirstName, &res.LastName,
+		&res.ID, &res.Salt, &res.Status, &res.IdentityCode, &res.FirstName, &res.LastName,
 		&res.Gender, res.DateOfBirth, &res.PhoneNumber, &res.Email,
 		&res.Token, &res.UpdatedAt, &res.CreatedAt); err != nil {
 
@@ -196,12 +196,34 @@ func (p *profileRepo) GetProfile(id string, ctx context.Context) (*entities.Prof
 
 // GetFirstProfile implements repository.IProfileRepository.
 func (p *profileRepo) GetFirstProfile(ctx context.Context) (*entities.Profile, error) {
-	var query string = "SELECT * FROM " + profile_table + " ORDER BY id ASC LIMIT 1"
+	var query string = "SELECT * FROM " + profile_table + " ORDER BY created_at ASC LIMIT 1"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "GetFirstProfile - "
 
 	var res entities.Profile
 	if err := p.db.QueryRowContext(ctx, query).Scan(
-		&res.ID, &res.Salt, &res.IdentityCode, &res.FirstName, &res.LastName,
+		&res.ID, &res.Salt, &res.Status, &res.IdentityCode, &res.FirstName, &res.LastName,
+		&res.Gender, res.DateOfBirth, &res.PhoneNumber, &res.Email,
+		&res.Token, &res.UpdatedAt, &res.CreatedAt); err != nil {
+
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		p.errLogger.Println(errLogMsg + err.Error())
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	return &res, nil
+}
+
+// GetProfileOfFirsts implements repository.IProfileRepository.
+func (p *profileRepo) GetProfileOfFirsts(position int, ctx context.Context) (*entities.Profile, error) {
+	var query string = fmt.Sprintf("SELECT * FROM %s ORDER BY created_at ASC OFFSET %d LIMIT 1", profile_table, (position - 1))
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "GetProfileOfFirsts - "
+
+	var res entities.Profile
+	if err := p.db.QueryRowContext(ctx, query).Scan(
+		&res.ID, &res.Salt, &res.Status, &res.IdentityCode, &res.FirstName, &res.LastName,
 		&res.Gender, res.DateOfBirth, &res.PhoneNumber, &res.Email,
 		&res.Token, &res.UpdatedAt, &res.CreatedAt); err != nil {
 

@@ -99,22 +99,17 @@ func GenerateRegistrationRequestService() (business.IRegistrationRequestService,
 
 // ConfirmRegistrationRequest implements business.IRegistrationRequestService.
 func (r *registrationRequestService) ConfirmRegistrationRequest(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
-
 	req, err := r.registrationRequestRepo.GetRegistrationRequest(id, ctx)
 	if err != nil {
 		return response.BuildTransactionResponse{}, err
 	}
 
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if req == nil {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
+	var sender string = ctx.Value("address").(string)
 	if req.CreatedBy != sender {
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
@@ -237,7 +232,8 @@ func (r *registrationRequestService) ConfirmRegistrationRequest(id string, ctx c
 	}, ctx)
 
 	return response.BuildTransactionResponse{
-		TxBytes: txBytes,
+		TxBytes:        txBytes,
+		RegistraionReq: id,
 	}, err
 }
 

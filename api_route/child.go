@@ -48,6 +48,7 @@ func InitializeChildRoutes(server *gin.Engine) {
 	authGroup.PUT("/metadata/number/:id", middleware.RateLimitMiddleware(metadataLimit), transport.AddChildNumberMetadata)
 	authGroup.POST("", middleware.RateLimitMiddleware(uploadLimit), transport.UploadChild)
 	authGroup.POST("/books-need/:id/support", middleware.RateLimitMiddleware(donateLimit), transport.SupportBooksNeed)
+	authGroup.POST("/health-insurance-need/:id/support", middleware.RateLimitMiddleware(donateLimit), transport.SupportHealthInsuranceNeed)
 	authGroup.POST("/meal-need/:id/support", middleware.RateLimitMiddleware(donateLimit), transport.SupportMealNeed)
 	authGroup.POST("/special-need/:id/support", middleware.RateLimitMiddleware(donateLimit), transport.SupportSpecialNeed)
 	authGroup.POST("/special-need/proposal/:id/vote", middleware.RateLimitMiddleware(voteLimit), transport.VoteSpecialNeedProposal)
@@ -55,6 +56,7 @@ func InitializeChildRoutes(server *gin.Engine) {
 	// Manager group
 	var managerGroup = server.Group(contextPath, middleware.Authorize, middleware.ManagerRoleAuthorize)
 	managerGroup.POST("/books-need/withdraw-proposal", middleware.RateLimitMiddleware(proposalLimit), transport.CreateBooksNeedWithdrawProposal)
+	managerGroup.POST("/health-insurance-need/withdraw-proposal", middleware.RateLimitMiddleware(proposalLimit), transport.CreateHealthInsuranceNeedWithdrawProposal)
 	managerGroup.POST("/meal-need/withdraw-proposal", middleware.RateLimitMiddleware(proposalLimit), transport.CreateMealNeedWithdrawProposal)
 	managerGroup.POST("/special-need/withdraw-proposal", middleware.RateLimitMiddleware(proposalLimit), transport.CreateSpecialNeedWithdrawProposal)
 	managerGroup.POST("/special-need/proposal", middleware.RateLimitMiddleware(proposalLimit), transport.CreateSpecialNeedProposal)

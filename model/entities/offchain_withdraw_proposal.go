@@ -3,11 +3,12 @@ package entities
 import "time"
 
 type OffChainWithdrawProposal struct {
-	ID         string
-	Purpose    string
-	ProposalID string
-	Target     string
-	CreatedAt  time.Time
+	ID          string
+	Purpose     string
+	ProposalID  *string
+	Target      string
+	LocalPoolID string
+	CreatedAt   time.Time
 }
 
 type PendingWithdrawProposal struct {

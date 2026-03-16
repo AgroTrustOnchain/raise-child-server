@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -17,28 +16,31 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 type notiService struct {
-	volunteerNotiRepo i_repository.IVolunteerNotiRepository
-	leaderNotiRepo    i_repository.ILeaderNotiRepository
-	clients           map[string]sui.ISuiAPI
-	errLogger         *log.Logger
+	leaderNotiRepo i_repository.ILeaderNotiRepository
+	redisCache     cache.IRedisCache
+	clients        map[string]sui.ISuiAPI
+	errLogger      *log.Logger
 }
 
-func InitializeNotiService(db *sql.DB, errLogger *log.Logger) business.INotiService {
+func initializeNotiService(
+	leaderNotiRepo i_repository.ILeaderNotiRepository,
+	clients map[string]sui.ISuiAPI,
+	errLogger *log.Logger,
+) business.INotiService {
 	return &notiService{
-		volunteerNotiRepo: repository.InitializeVolunteerNotiRepository(db, errLogger),
-		leaderNotiRepo:    repository.InitializeLeaderNotiRepository(db, errLogger),
-		clients:           _networkAliases,
-		errLogger:         errLogger,
+		leaderNotiRepo: leaderNotiRepo,
+		redisCache:     cache.InitializeRedisCache(),
+		clients:        clients,
+		errLogger:      errLogger,
 	}
 }
 
@@ -50,12 +52,16 @@ func GenerateNotiService() (business.INotiService, error) {
 		return nil, err
 	}
 
-	return InitializeNotiService(cnn, errLogger), nil
+	return initializeNotiService(
+		repository.InitializeLeaderNotiRepository(cnn, errLogger),
+		_networkAliases,
+		errLogger,
+	), nil
 }
 
 // GetCurrentWalletNotis implements business.INotiService.
 func (n *notiService) GetCurrentWalletNotis(wallet string, req request.GetNotisRequest, ctx context.Context) (response.PaginationDataResponse, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(wallet)) {
+	if !util.IsValidSuiAddressStrict(wallet) {
 		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -70,6 +76,23 @@ func (n *notiService) GetCurrentWalletNotis(wallet string, req request.GetNotisR
 		return response.PaginationDataResponse{}, err
 	}
 
+	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	if nfts == nil || len(nfts) == 0 {
+		return response.PaginationDataResponse{}, genericRightErr
+	}
+
+	var isLeader bool = false
+	for _, nft := range nfts {
+		if nft.Role == local_leader_role {
+			isLeader = true
+			break
+		}
+	}
+
+	if !isLeader {
+		return response.PaginationDataResponse{}, genericRightErr
+	}
+
 	if req.Page < 1 {
 		req.Page = 1
 	}
@@ -78,59 +101,27 @@ func (n *notiService) GetCurrentWalletNotis(wallet string, req request.GetNotisR
 		req.PageSize = default_page_size
 	}
 
-	var role string = ctx.Value("role").(string)
-	var data []response.NotiResponse
-	var isFound bool = false
-	for _, nft := range nfts {
-		if nft.Role == role {
-			if role == volunteer_role {
-				notis, err := n.volunteerNotiRepo.GetCurrentVolunteerNotis(req, wallet, ctx)
-				if err != nil {
-					return response.PaginationDataResponse{}, err
-				}
-
-				if notis != nil && len(notis) > 0 {
-					var notiType string = "Volunteer Notification"
-					for _, noti := range notis {
-						data = append(data, response.NotiResponse{
-							ID:      noti.ID,
-							Content: noti.Content,
-							Type:    notiType,
-						})
-					}
-				}
-
-				isFound = true
-				break
-			} else if role == local_leader_role {
-				notis, err := n.leaderNotiRepo.GetCurrentLeaderNotis(req, wallet, ctx)
-				if err != nil {
-					return response.PaginationDataResponse{}, err
-				}
-
-				if notis != nil && len(notis) > 0 {
-					var notiType string = "Leader Notification"
-					for _, noti := range notis {
-						data = append(data, response.NotiResponse{
-							ID:      noti.ID,
-							Content: noti.Content,
-							Type:    notiType,
-						})
-					}
-				}
-
-				isFound = true
-				break
-			}
-		}
+	var res response.PaginationDataResponse
+	var redisKey string = n.getGetCurrentWalletNotisRedisKey(wallet, req)
+	if n.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
 	}
 
-	if !isFound {
-		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	data, err := n.leaderNotiRepo.GetCurrentLeaderNotis(req, wallet, ctx)
+	var amount int
+	if data == nil || len(data) == 0 {
+		amount = 0
+	} else {
+		amount = len(data)
 	}
 
 	return response.PaginationDataResponse{
-		Data: data,
-		Page: req.Page,
+		Data:   data,
+		Amount: amount,
+		Page:   req.Page,
 	}, nil
+}
+
+func (n *notiService) getGetCurrentWalletNotisRedisKey(wallet string, req request.GetNotisRequest) string {
+	return fmt.Sprintf("noti:of:%s:s:%d:p:%d", wallet, req.PageSize, req.Page)
 }

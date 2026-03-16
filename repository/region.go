@@ -52,7 +52,7 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestion(id string, ct
 	var res entities.SupportedRegionSuggestion
 	if err := s.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.ProfileID, &res.Region, &res.Content, &res.Status,
-		&res.ReviewedBy, &res.CreatedBy, &res.CreatedAt, &res.UpdatedAt); err != nil {
+		&res.CreatedBy, &res.ReviewedBy, &res.CreatedAt, &res.UpdatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -66,13 +66,22 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestion(id string, ct
 }
 
 // GetSupportedRegionSuggestions implements repository.ISupportedRegionSuggestionRepository.
-func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, ctx context.Context) ([]entities.SupportedRegionSuggestion, int, error) {
+func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, isGuestView bool, ctx context.Context) ([]entities.SupportedRegionSuggestion, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "GetPayments - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
 	var isHavePreviosCondition bool = false
+	if isGuestView {
+		queryCondition += "status = 'Approved'"
+		isHavePreviosCondition = true
+	}
+
 	if req.Keyword != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
 		queryCondition += fmt.Sprintf("(LOWER(region) LIKE LOWER('%%%%%s%%%%') OR LOWER(content) LIKE LOWER('%%%%%s%%%%'))", req.Keyword, req.Keyword)
 		isHavePreviosCondition = true
 	}
@@ -127,10 +136,10 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.
 
 // IsRegionRequested implements repository.ISupportedRegionSuggestionRepository.
 func (s *supportedRegionProposalRepo) IsRegionRequested(region string, ctx context.Context) (bool, error) {
-	var query string = "SELECT id FROM " + supported_region_proposal_table + " WHERE LOWER(region) = LOWER(" + region + ") LIMIT 1"
+	var query string = "SELECT id FROM " + supported_region_proposal_table + " WHERE LOWER(region) = LOWER($1) ADN (status = 'Pending' OR status 'Approved') LIMIT 1"
 
 	var id string
-	if err := s.db.QueryRowContext(ctx, query).Scan(&id); err != nil {
+	if err := s.db.QueryRowContext(ctx, query, region).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
 		}
@@ -145,7 +154,7 @@ func (s *supportedRegionProposalRepo) IsRegionRequested(region string, ctx conte
 // UpdateSupportedRegionSuggestion implements repository.ISupportedRegionSuggestionRepository.
 func (s *supportedRegionProposalRepo) UpdateSupportedRegionSuggestion(proposal entities.SupportedRegionSuggestion, ctx context.Context) error {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.SUPPORTED_REGION_PROPOSAL) + "UpdateSupportedRegionSuggestion - "
-	var query string = "UPDATE " + volunteer_noti_table + " SET content = $1, status = $2, reviewed_by = $3  WHERE id = $4"
+	var query string = "UPDATE " + volunteer_noti_table + " SET content = $1, status = $2, reviewed_by = $3 WHERE id = $4"
 
 	res, err := s.db.ExecContext(ctx, query, proposal.Content, proposal.Status, proposal.ReviewedBy, proposal.ID)
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)

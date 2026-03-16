@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
+	"raise-child/constants/env"
 	"raise-child/constants/noti"
 	"raise-child/constants/shared"
 	"raise-child/interfaces/business"
@@ -16,10 +18,13 @@ import (
 	"raise-child/util"
 	"raise-child/util/cache"
 	"raise-child/util/db"
+	on_chain "raise-child/util/on_chain"
+	"strings"
 	"time"
 
 	"slices"
 
+	"github.com/block-vision/sui-go-sdk/constant"
 	"github.com/block-vision/sui-go-sdk/sui"
 )
 
@@ -33,10 +38,12 @@ type regionService struct {
 
 var _regions []string
 
-func initalizeRegionService(regionRepo i_repository.ISupportedRegionSuggestionRepository,
+func initalizeRegionService(
+	regionRepo i_repository.ISupportedRegionSuggestionRepository,
 	clients map[string]sui.ISuiAPI,
 	regions []string,
-	errLogger *log.Logger) business.IRegionService {
+	errLogger *log.Logger,
+) business.IRegionService {
 	return &regionService{
 		regionRepo: regionRepo,
 		redisCache: cache.InitializeRedisCache(),
@@ -164,9 +171,77 @@ func (r *regionService) CreateSupportedRegionSuggestion(req request.CreateSuppor
 	return &proposal, r.regionRepo.CreateSupportedRegionSuggestion(proposal, ctx)
 }
 
+// ReviewRegionSuggestion implements business.IRegionService.
+func (r *regionService) ReviewRegionSuggestion(id string, req request.VoteRequest, ctx context.Context) error {
+	suggestion, err := r.regionRepo.GetSupportedRegionSuggestion(id, ctx)
+	if err != nil {
+		return err
+	}
+
+	if suggestion == nil {
+		return errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	if suggestion.Status != request_pending_status || suggestion.ReviewedBy != nil {
+		return errors.New(noti.REQUEST_REVIEWED_MESSAGE)
+	}
+
+	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    r.clients[constant.SuiTestnet],
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: r.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var sender string = ctx.Value("address").(string)
+	if !slices.Contains(manageObj.AdminIds, sender) {
+		return errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	}
+
+	suggestion.ReviewedBy = &sender
+	if req.IsVoteYes {
+		suggestion.Status = request_approved_status
+	} else {
+		suggestion.Status = request_refused_status
+	}
+
+	return r.regionRepo.UpdateSupportedRegionSuggestion(*suggestion, ctx)
+}
+
 // GetSupportedRegionSuggestion implements business.IRegionService.
 func (r *regionService) GetSupportedRegionSuggestion(id string, ctx context.Context) (*entities.SupportedRegionSuggestion, error) {
-	return r.regionRepo.GetSupportedRegionSuggestion(id, ctx)
+	res, err := r.regionRepo.GetSupportedRegionSuggestion(id, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.Status == request_pending_status || res.Status == request_refused_status {
+		var addressValue = ctx.Value("address")
+		var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+		if addressValue == nil {
+			return nil, genericRightErr
+		}
+
+		address, _ := addressValue.(string)
+		if res.CreatedBy != address {
+			manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+				Client:    r.clients[constant.SuiTestnet],
+				ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+				ErrLogger: r.errLogger,
+			}, ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			if !slices.Contains(manageObj.AdminIds, address) {
+				return nil, genericRightErr
+			}
+		}
+	}
+
+	return res, nil
 }
 
 // GetSupportedRegionSuggestions implements business.IRegionService.
@@ -178,6 +253,7 @@ func (r *regionService) GetSupportedRegionSuggestions(req request.GetSupportedRe
 	}
 
 	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Keyword = strings.TrimSpace(req.Keyword)
 	if req.PageSize < 1 {
 		req.PageSize = default_page_size
 	}
@@ -192,7 +268,108 @@ func (r *regionService) GetSupportedRegionSuggestions(req request.GetSupportedRe
 		return res, nil
 	}
 
-	data, pages, err := r.regionRepo.GetSupportedRegionSuggestions(req, ctx)
+	data, pages, err := r.regionRepo.GetSupportedRegionSuggestions(req, true, ctx)
+	var amount int
+	if data == nil || len(data) == 0 {
+		amount = 0
+	} else {
+		amount = len(data)
+	}
+
+	res = response.PaginationDataResponse{
+		Data:       data,
+		Amount:     amount,
+		Page:       req.Page,
+		TotalPages: pages,
+	}
+
+	r.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, err
+}
+
+// AdminGetSupportedRegionSuggestions implements business.IRegionService.
+func (r *regionService) AdminGetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	//var address string = ctx.Value("address").(string)
+	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    r.clients[constant.SuiTestnet],
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: r.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.PaginationDataResponse{}, err
+	}
+
+	if !slices.Contains(manageObj.AdminIds, ctx.Value("address").(string)) {
+		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	}
+
+	if req.CreatedBy != "" {
+		if !util.IsValidSuiAddressStrict(req.CreatedBy) {
+			return response.PaginationDataResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+		}
+	}
+
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Keyword = strings.TrimSpace(req.Keyword)
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	var res response.PaginationDataResponse
+	var redisKey string = r.getGetAuthenticatedSupportedRegionSuggestionsRedisKey(req)
+	if r.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
+	data, pages, err := r.regionRepo.GetSupportedRegionSuggestions(req, false, ctx)
+	var amount int
+	if data == nil || len(data) == 0 {
+		amount = 0
+	} else {
+		amount = len(data)
+	}
+
+	res = response.PaginationDataResponse{
+		Data:       data,
+		Amount:     amount,
+		Page:       req.Page,
+		TotalPages: pages,
+	}
+
+	r.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, err
+}
+
+// GetWalletSupportedRegionSuggestions implements business.IRegionService.
+func (r *regionService) GetWalletSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	var address string = ctx.Value("address").(string)
+	if address != req.CreatedBy {
+		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	}
+
+	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Keyword = strings.TrimSpace(req.Keyword)
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	var res response.PaginationDataResponse
+	var redisKey string = r.getGetAuthenticatedSupportedRegionSuggestionsRedisKey(req)
+	if r.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
+	data, pages, err := r.regionRepo.GetSupportedRegionSuggestions(req, false, ctx)
 	var amount int
 	if data == nil || len(data) == 0 {
 		amount = 0
@@ -230,7 +407,22 @@ func (r *regionService) getGetSupportedRegionSuggestionsRedisKey(req request.Get
 		createdBy = req.CreatedBy
 	}
 
-	return fmt.Sprintf("region_proposal:kw:%s:of:%s:o:%s:s:%d:p:%d",
+	return fmt.Sprintf("region_suggestion:kw:%s:of:%s:o:%s:s:%d:p:%d",
+		keyword, createdBy, req.SortOrder, req.PageSize, req.Page)
+}
+
+func (r *regionService) getGetAuthenticatedSupportedRegionSuggestionsRedisKey(req request.GetSupportedRegionSuggestionsRequest) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	var createdBy string = "empty"
+	if req.CreatedBy != "" {
+		createdBy = req.CreatedBy
+	}
+
+	return fmt.Sprintf("auth_region_suggestion:kw:%s:of:%s:o:%s:s:%d:p:%d",
 		keyword, createdBy, req.SortOrder, req.PageSize, req.Page)
 }
 

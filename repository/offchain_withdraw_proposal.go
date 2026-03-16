@@ -31,12 +31,12 @@ func InitializeOffChainWithdrawProposalRepository(db *sql.DB, errLogger *log.Log
 // CreateOffChainWithdrawProposal implements repository.IOffChainWithdrawProposalRepository.
 func (o *offChainWithdrawProposalRepo) CreateOffChainWithdrawProposal(donation entities.OffChainWithdrawProposal, ctx context.Context) error {
 	var query string = "INSERT INTO " + offchain_withdraw_proposal_table +
-		" (id, purpose, proposal_id, target, created_at) " +
+		" (id, purpose, proposal_id, target, local_pool_id, created_at) " +
 		"values ($1, $2, $3, $4, $5)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.OFFCHAIN_WITHDRAW_PROPOSAL_REPOSITORY) + "CreateOffChainWithdrawProposal - "
 
-	if _, err := o.db.ExecContext(ctx, query, donation.ID, donation.Purpose, donation.ProposalID, donation.Target, donation.CreatedAt); err != nil {
+	if _, err := o.db.ExecContext(ctx, query, donation.ID, donation.Purpose, donation.ProposalID, donation.Target, donation.LocalPoolID, donation.CreatedAt); err != nil {
 
 		o.errLogger.Println(errLogMsg + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
@@ -52,7 +52,7 @@ func (o *offChainWithdrawProposalRepo) GetOffChainWithdrawProposal(id string, ct
 
 	var res entities.OffChainWithdrawProposal
 	if err := o.db.QueryRowContext(ctx, query, id).Scan(
-		&res.ID, &res.Purpose, &res.ProposalID, &res.Target, &res.CreatedAt); err != nil {
+		&res.ID, &res.Purpose, &res.ProposalID, &res.Target, &res.LocalPoolID, &res.CreatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -72,7 +72,7 @@ func (o *offChainWithdrawProposalRepo) GetOffChainWithdrawProposalByProposal(id 
 
 	var res entities.OffChainWithdrawProposal
 	if err := o.db.QueryRowContext(ctx, query, id).Scan(
-		&res.ID, &res.Purpose, &res.ProposalID, &res.Target, &res.CreatedAt); err != nil {
+		&res.ID, &res.Purpose, &res.ProposalID, &res.Target, &res.LocalPoolID, &res.CreatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
 			return nil, nil

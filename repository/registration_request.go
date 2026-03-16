@@ -22,7 +22,7 @@ type registratioRequestRepo struct {
 }
 
 const (
-	registraion_request_table        string = "registraion_requests"
+	registraion_request_table        string = "registration_requests"
 	registraion_request_limit_record int    = 10
 )
 
