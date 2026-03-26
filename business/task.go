@@ -91,7 +91,7 @@ func (t *taskService) ClaimTask(id string, ctx context.Context) error {
 	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       t.clients[constant.SuiTestnet],
 		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule, staffModule.GetStaffNftObjectStruct()),
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
 		ErrLogger:    t.errLogger,
 	}, ctx)
 	if err != nil {
@@ -159,7 +159,7 @@ func (t *taskService) CreateTask(req request.CreateTaskRequest, ctx context.Cont
 		staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
 			Client:       client,
 			OwnerAddress: sender,
-			StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule, staffModule.GetStaffNftObjectStruct()),
+			StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
 			ErrLogger:    t.errLogger,
 		}, ctx)
 		if err != nil {
@@ -304,7 +304,7 @@ func (t *taskService) ReviewAssignedProfileOfTask(id string, req request.VoteReq
 	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
 		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule, staffModule.GetStaffNftObjectStruct()),
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
 		ErrLogger:    t.errLogger,
 	}, ctx)
 	if err != nil {

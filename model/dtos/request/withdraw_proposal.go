@@ -1,16 +1,16 @@
 package request
 
 type GetWithdrawProposalsRequest struct {
-	Keyword      string `json:"keyword"` // Filter for pool ID, pool name, desc
-	Creator      string `json:"creator"`
-	MinAmount    *int64 `json:"min_amount"`
-	MaxAmount    *int64 `json:"max_amount"`
-	IsExecuted   *bool  `json:"is_executed"`
-	IsClosed     *bool  `json:"is_closed"`
-	SortCriteria string `json:"sort_criteria"`
-	SortOrder    string `json:"sort_order"`
-	PageSize     int    `json:"page_size"`
-	Page         int    `json:"page"`
+	Keyword      string `form:"keyword"` // Filter for pool ID, pool name, desc
+	Creator      string `form:"creator"`
+	MinAmount    *int64 `form:"min_amount"`
+	MaxAmount    *int64 `form:"max_amount"`
+	IsExecuted   *bool  `form:"is_executed"`
+	IsClosed     *bool  `form:"is_closed"`
+	SortCriteria string `form:"sort_criteria"`
+	SortOrder    string `form:"sort_order"`
+	PageSize     int    `form:"page_size"`
+	Page         int    `form:"page"`
 }
 
 type CreateWithdrawProposalRequest struct {
@@ -21,16 +21,16 @@ type CreateWithdrawProposalRequest struct {
 }
 
 type GetPendingWithdrawProposalsRequest struct {
-	Keyword      string `json:"keyword"`
-	Creator      string `json:"creator"`
-	Reviewer     string `json:"reviewer"`
-	MinAmount    *int64 `json:"min_amount"`
-	MaxAmount    *int64 `json:"max_amount"`
-	Status       string `json:"status"`
-	SortCriteria string `json:"sort_criteria"`
-	SortOrder    string `json:"sort_order"`
-	PageSize     int    `json:"page_size"`
-	Page         int    `json:"page"`
+	Keyword      string `form:"keyword"`
+	Creator      string `form:"creator"`
+	Reviewer     string `form:"reviewer"`
+	MinAmount    *int64 `form:"min_amount"`
+	MaxAmount    *int64 `form:"max_amount"`
+	Status       string `form:"status"`
+	SortCriteria string `form:"sort_criteria"`
+	SortOrder    string `form:"sort_order"`
+	PageSize     int    `form:"page_size"`
+	Page         int    `form:"page"`
 }
 
 type CreatePendingWithdrawProposalRequest struct {

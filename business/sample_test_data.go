@@ -67,7 +67,7 @@ var (
 		"phone_number":          "094901234567",
 		"email":                 "minh.nguyen@example.com",
 		"uploaded_at":           "1698397200000",
-		"name":                  "RaiseChild Admin NFT",
+		"name":                  "AgroTrust Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft2 = map[string]interface{}{
@@ -85,7 +85,7 @@ var (
 		"phone_number":          "+84912345678",
 		"email":                 "linh.tran@example.com",
 		"uploaded_at":           "1698397500000",
-		"name":                  "RaiseChild Admin NFT",
+		"name":                  "AgroTrust Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft3 = map[string]interface{}{
@@ -103,7 +103,7 @@ var (
 		"phone_number":          "+84923456789",
 		"email":                 "hoang.le@example.com",
 		"uploaded_at":           "1698397800000",
-		"name":                  "RaiseChild Admin NFT",
+		"name":                  "AgroTrust Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft4 = map[string]interface{}{
@@ -121,7 +121,7 @@ var (
 		"phone_number":          "+84934567890",
 		"email":                 "huong.pham@example.com",
 		"uploaded_at":           "1698398100000",
-		"name":                  "RaiseChild Admin NFT",
+		"name":                  "AgroTrust Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft5 = map[string]interface{}{
@@ -139,7 +139,7 @@ var (
 		"phone_number":          "+84945678901",
 		"email":                 "tuan.ngo@example.com",
 		"uploaded_at":           "1698398400000",
-		"name":                  "RaiseChild Admin NFT",
+		"name":                  "AgroTrust Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft6 = map[string]interface{}{
@@ -157,7 +157,7 @@ var (
 		"phone_number":          "+84956789012",
 		"email":                 "thao.vu@example.com",
 		"uploaded_at":           "1698398700000",
-		"name":                  "RaiseChild Admin NFT",
+		"name":                  "AgroTrust Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft7 = map[string]interface{}{
@@ -175,7 +175,7 @@ var (
 		"phone_number":          "+84978901234",
 		"email":                 "ngoc.bui@example.com",
 		"uploaded_at":           "1698399300000",
-		"name":                  "RaiseChild Admin NFT",
+		"name":                  "AgroTrust Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft8 = map[string]interface{}{
@@ -193,7 +193,7 @@ var (
 		"phone_number":          "+84934567890",
 		"email":                 "huong.pham@example.com",
 		"uploaded_at":           "1698398100000",
-		"name":                  "RaiseChild Admin NFT",
+		"name":                  "AgroTrust Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft9 = map[string]interface{}{
@@ -211,7 +211,7 @@ var (
 		"phone_number":          "+84989012345",
 		"email":                 "dung.do@example.com",
 		"uploaded_at":           "1698399600000",
-		"name":                  "RaiseChild Admin NFT",
+		"name":                  "AgroTrust Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft10 = map[string]interface{}{
@@ -229,7 +229,7 @@ var (
 		"phone_number":          "+84990123456",
 		"email":                 "trang.phan@example.com",
 		"uploaded_at":           "1698399900000",
-		"name":                  "RaiseChild Admin NFT",
+		"name":                  "AgroTrust Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 )
@@ -253,7 +253,7 @@ var (
 		"phone_number":          "+84912345678",
 		"email":                 "minh.nguyen@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Local Leader NFT",
+		"name":                  "AgroTrust Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft2 = map[string]interface{}{
@@ -273,7 +273,7 @@ var (
 		"phone_number":          "+84987654321",
 		"email":                 "linh.tran@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Local Leader NFT",
+		"name":                  "AgroTrust Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft3 = map[string]interface{}{
@@ -293,7 +293,7 @@ var (
 		"phone_number":          "+84901122334",
 		"email":                 "hoang.pham@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Local Leader NFT",
+		"name":                  "AgroTrust Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft4 = map[string]interface{}{
@@ -313,7 +313,7 @@ var (
 		"phone_number":          "+84933445566",
 		"email":                 "an.le@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Local Leader NFT",
+		"name":                  "AgroTrust Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft5 = map[string]interface{}{
@@ -333,7 +333,7 @@ var (
 		"phone_number":          "+84944556677",
 		"email":                 "bach.vu@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Local Leader NFT",
+		"name":                  "AgroTrust Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft6 = map[string]interface{}{
@@ -353,7 +353,7 @@ var (
 		"phone_number":          "+84955667788",
 		"email":                 "thao.do@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Local Leader NFT",
+		"name":                  "AgroTrust Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft7 = map[string]interface{}{
@@ -373,7 +373,7 @@ var (
 		"phone_number":          "+84966778899",
 		"email":                 "dung.bui@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Local Leader NFT",
+		"name":                  "AgroTrust Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft8 = map[string]interface{}{
@@ -393,7 +393,7 @@ var (
 		"phone_number":          "+84977889900",
 		"email":                 "nhi.phan@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Local Leader NFT",
+		"name":                  "AgroTrust Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft9 = map[string]interface{}{
@@ -413,7 +413,7 @@ var (
 		"phone_number":          "+84988990011",
 		"email":                 "kien.dang@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Local Leader NFT",
+		"name":                  "AgroTrust Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft10 = map[string]interface{}{
@@ -433,7 +433,7 @@ var (
 		"phone_number":          "+84999001122",
 		"email":                 "mai.hoang@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Local Leader NFT",
+		"name":                  "AgroTrust Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 )
@@ -457,7 +457,7 @@ var (
 		"phone_number":          "+84912345678",
 		"email":                 "minh.nguyen@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Volunteer NFT",
+		"name":                  "AgroTrust Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft2 = map[string]interface{}{
@@ -466,7 +466,7 @@ var (
 		},
 		"owner":                 sampleVolunteerIds[1],
 		"role":                  "Volunteer",
-		"region":                sampleLocalRegions[1],
+		"region":                sampleLocalRegions[0],
 		"identity_code":         "STF-002",
 		"identity_card_blob_id": "bafybeic...key2",
 		"avatar_blob_id":        "bafybeid...img2",
@@ -477,7 +477,7 @@ var (
 		"phone_number":          "+84987654321",
 		"email":                 "linh.tran@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Volunteer NFT",
+		"name":                  "AgroTrust Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft3 = map[string]interface{}{
@@ -486,7 +486,7 @@ var (
 		},
 		"owner":                 sampleVolunteerIds[2],
 		"role":                  "Volunteer",
-		"region":                sampleLocalRegions[2],
+		"region":                sampleLocalRegions[0],
 		"identity_code":         "STF-003",
 		"identity_card_blob_id": "bafybeic...key3",
 		"avatar_blob_id":        "bafybeid...img3",
@@ -497,7 +497,7 @@ var (
 		"phone_number":          "+84901122334",
 		"email":                 "hoang.pham@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Volunteer NFT",
+		"name":                  "AgroTrust Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft4 = map[string]interface{}{
@@ -506,7 +506,7 @@ var (
 		},
 		"owner":                 sampleVolunteerIds[3],
 		"role":                  "Volunteer",
-		"region":                sampleLocalRegions[3],
+		"region":                sampleLocalRegions[0],
 		"identity_code":         "STF-004",
 		"identity_card_blob_id": "bafybeic...key4",
 		"avatar_blob_id":        "bafybeid...img4",
@@ -517,7 +517,7 @@ var (
 		"phone_number":          "+84933445566",
 		"email":                 "an.le@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Volunteer NFT",
+		"name":                  "AgroTrust Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft5 = map[string]interface{}{
@@ -526,7 +526,7 @@ var (
 		},
 		"owner":                 sampleVolunteerIds[4],
 		"role":                  "Volunteer",
-		"region":                sampleLocalRegions[4],
+		"region":                sampleLocalRegions[0],
 		"identity_code":         "STF-005",
 		"identity_card_blob_id": "bafybeic...key5",
 		"avatar_blob_id":        "bafybeid...img5",
@@ -537,7 +537,7 @@ var (
 		"phone_number":          "+84944556677",
 		"email":                 "bach.vu@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Volunteer NFT",
+		"name":                  "AgroTrust Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft6 = map[string]interface{}{
@@ -557,7 +557,7 @@ var (
 		"phone_number":          "+84955667788",
 		"email":                 "thao.do@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Volunteer NFT",
+		"name":                  "AgroTrust Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft7 = map[string]interface{}{
@@ -577,7 +577,7 @@ var (
 		"phone_number":          "+84966778899",
 		"email":                 "dung.bui@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Volunteer NFT",
+		"name":                  "AgroTrust Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft8 = map[string]interface{}{
@@ -597,7 +597,7 @@ var (
 		"phone_number":          "+84977889900",
 		"email":                 "nhi.phan@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Volunteer NFT",
+		"name":                  "AgroTrust Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft9 = map[string]interface{}{
@@ -617,7 +617,7 @@ var (
 		"phone_number":          "+84988990011",
 		"email":                 "kien.dang@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Volunteer NFT",
+		"name":                  "AgroTrust Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft10 = map[string]interface{}{
@@ -637,10 +637,15 @@ var (
 		"phone_number":          "+84999001122",
 		"email":                 "mai.hoang@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "RaiseChild Volunteer NFT",
+		"name":                  "AgroTrust Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 )
+
+func getSampleCenterRequests(reqs int) []entities.CenterRequest {
+	var res = make([]entities.CenterRequest, reqs)
+	return res
+}
 
 const (
 	sampleManageObjId string = ""
@@ -656,7 +661,7 @@ var (
 	sampleLocalLeaderNfts       = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
 	sampleLocalRegions          = []string{shared.HA_NOI_REGION, shared.HO_CHI_MINH_REGION, "3", "4", "5", "6", "7", "8", "9", "10"}
 	sampleChildrenCenters       = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
-	sampleCenterConfirmStatuses = []bool{true, true, true, true, false, false, true, true, true, true}
+	sampleCenterConfirmStatuses = []bool{false, true, true, true, false, false, true, true, true, true}
 	sampleCreatedCenters        = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
 	sampleDonorIds              = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
 	sampleDonorNfts             = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
@@ -664,7 +669,8 @@ var (
 
 var (
 	sampleUploadedBankProfile = entities.BankProfile{
-		Owner:     "Owner",
+		ProfileID: sampleSub,
+		Owner:     sampleAddress,
 		BankOrg:   "Bank Owner",
 		OwnerName: "Owner Name",
 	}

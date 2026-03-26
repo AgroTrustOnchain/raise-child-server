@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"raise-child/interfaces/repository"
 	"raise-child/model/dtos/request"
 	"raise-child/model/entities"
 
@@ -13,7 +12,7 @@ type centerRequestMockRepo struct {
 	mock.Mock
 }
 
-func InializeCenterRequestMockRepo() repository.ICenterRequestRepository {
+func InitializeCenterRequestMockRepo() *centerRequestMockRepo {
 	return &centerRequestMockRepo{}
 }
 
@@ -65,10 +64,17 @@ func (c *centerRequestMockRepo) GetRegistrationRequests(req request.GetCenterReq
 	var mockData = c.Called(ctx)
 
 	var res1 []entities.CenterRequest
-	if mockFunc, ok := mockData.Get(0).(func(request.GetCenterRequests, context.Context) []entities.CenterRequest); ok {
-		res1 = mockFunc(req, ctx)
+	if val := mockData.Get(0); val != nil {
+		// 1. Check if it's a dynamic function
+		if mockFunc, ok := val.(func(request.GetCenterRequests, context.Context) []entities.CenterRequest); ok {
+			res1 = mockFunc(req, ctx)
+		} else {
+			// 2. Otherwise, assert it to the slice type
+			res1 = val.([]entities.CenterRequest)
+		}
 	} else {
-		res1 = mockData.Get(0).([]entities.CenterRequest)
+		// If it is nil, res1 remains the zero-value for a slice (which is nil)
+		res1 = nil
 	}
 
 	var res2 int
@@ -93,10 +99,17 @@ func (c *centerRequestMockRepo) GetRequest(id string, ctx context.Context) (*ent
 	var mockData = c.Called(id, ctx)
 
 	var res1 *entities.CenterRequest
-	if mockFunc, ok := mockData.Get(0).(func(string, context.Context) *entities.CenterRequest); ok {
-		res1 = mockFunc(id, ctx)
+	if val := mockData.Get(0); val != nil {
+		// 1. Check if it's a dynamic function
+		if mockFunc, ok := val.(func(string, context.Context) *entities.CenterRequest); ok {
+			res1 = mockFunc(id, ctx)
+		} else {
+			// 2. Otherwise, assert it to the slice type
+			res1 = val.(*entities.CenterRequest)
+		}
 	} else {
-		res1 = mockData.Get(0).(*entities.CenterRequest)
+		// If it is nil, res1 remains the zero-value for a slice (which is nil)
+		res1 = nil
 	}
 
 	var res2 error
@@ -114,10 +127,17 @@ func (c *centerRequestMockRepo) GetWalletRegistrationRequests(id string, ctx con
 	var mockData = c.Called(id, ctx)
 
 	var res1 []entities.CenterRequest
-	if mockFunc, ok := mockData.Get(0).(func(string, context.Context) []entities.CenterRequest); ok {
-		res1 = mockFunc(id, ctx)
+	if val := mockData.Get(0); val != nil {
+		// 1. Check if it's a dynamic function
+		if mockFunc, ok := val.(func(string, context.Context) []entities.CenterRequest); ok {
+			res1 = mockFunc(id, ctx)
+		} else {
+			// 2. Otherwise, assert it to the slice type
+			res1 = val.([]entities.CenterRequest)
+		}
 	} else {
-		res1 = mockData.Get(0).([]entities.CenterRequest)
+		// If it is nil, res1 remains the zero-value for a slice (which is nil)
+		res1 = nil
 	}
 
 	var res2 error

@@ -358,7 +358,7 @@ func (u *uploadChildRepo) GetPendingRequests(ctx context.Context) ([]entities.Ba
 func (u *uploadChildRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
 	var query string = "UPDATE " + upload_child_request_table + " SET status = 'Approved', is_available_to_confirm = true, updated_at = $1 WHERE "
 	for i, req := range reqs {
-		query += "id = " + req.ID
+		query += fmt.Sprintf("id = '%s'", req.ID)
 		if i < len(reqs)-1 {
 			query += " OR "
 		}
@@ -376,7 +376,7 @@ func (u *uploadChildRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord, 
 func (u *uploadChildRepo) SetRefusedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
 	var query string = "UPDATE " + upload_child_request_table + " SET status = 'Refused', updated_at = $1 WHERE "
 	for i, req := range reqs {
-		query += "id = " + req.ID
+		query += fmt.Sprintf("id = '%s'", req.ID)
 		if i < len(reqs)-1 {
 			query += " OR "
 		}

@@ -1,11 +1,11 @@
 package request
 
 type GetSupportedRegionSuggestionsRequest struct {
-	Keyword   string `json:"keyword"`
-	CreatedBy string `json:"created_by"`
-	SortOrder string `json:"sort_order"`
-	PageSize  int    `json:"page_size"`
-	Page      int    `json:"page"`
+	Keyword   string `form:"keyword"`
+	CreatedBy string `form:"created_by"`
+	SortOrder string `form:"sort_order"`
+	PageSize  int    `form:"page_size"`
+	Page      int    `form:"page"`
 }
 
 type CreateSupportedRegionSuggestionsRequest struct {

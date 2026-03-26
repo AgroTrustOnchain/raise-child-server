@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"raise-child/interfaces/repository"
 	"raise-child/model/entities"
 
 	"github.com/stretchr/testify/mock"
@@ -17,7 +16,7 @@ func (p *profileMockRepo) GetProfileOfFirsts(position int, ctx context.Context) 
 	panic("unimplemented")
 }
 
-func InializeProfileMockRepo() repository.IProfileRepository {
+func InitializeProfileMockRepo() *profileMockRepo {
 	return &profileMockRepo{}
 }
 

@@ -23,9 +23,7 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 type bankProfileService struct {
@@ -202,7 +200,7 @@ func (b *bankProfileService) UpdateBankProfile(id string, req request.UpdateBank
 	var genereicErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 
 	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
+	if !!util.IsValidSuiAddressStrict(sender) {
 		return nil, genereicErr
 	}
 

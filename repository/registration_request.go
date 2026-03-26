@@ -358,7 +358,7 @@ func (r *registratioRequestRepo) GetPendingRequests(ctx context.Context) ([]enti
 func (r *registratioRequestRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
 	var query string = "UPDATE " + registraion_request_table + " SET status = 'Approved', is_available_to_confirm = true, updated_at = $1 WHERE "
 	for i, req := range reqs {
-		query += "id = " + req.ID
+		query += fmt.Sprintf("id = '%s'", req.ID)
 		if i < len(reqs)-1 {
 			query += " OR "
 		}
@@ -376,7 +376,7 @@ func (r *registratioRequestRepo) SetApprovedStatuses(reqs []entities.BackgroundR
 func (r *registratioRequestRepo) SetRefusedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
 	var query string = "UPDATE " + registraion_request_table + " SET status = 'Refused', updated_at = $1 WHERE "
 	for i, req := range reqs {
-		query += "id = " + req.ID
+		query += fmt.Sprintf("id = '%s'", req.ID)
 		if i < len(reqs)-1 {
 			query += " OR "
 		}

@@ -1,13 +1,13 @@
 package request
 
 type GetChildrenRequest struct {
-	Keyword     string `json:"keyword"`
-	Region      string `json:"region"`
-	YearOfBirth *int   `json:"year_of_birth"`
-	SortOrder   string `json:"sort_order"`
-	Gender      string `json:"gender"`
-	PageSize    int    `json:"page_size"`
-	Page        int    `json:"page"`
+	Keyword     string `form:"keyword"`
+	Region      string `form:"region"`
+	YearOfBirth *int   `form:"year_of_birth"`
+	SortOrder   string `form:"sort_order"`
+	Gender      string `form:"gender"`
+	PageSize    int    `form:"page_size"`
+	Page        int    `form:"page"`
 }
 
 type UploadChildRequest struct {

@@ -23,9 +23,7 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 type leaderRequestService struct {
@@ -63,12 +61,7 @@ func (l *leaderRequestService) ConfirmRequest(id string, ctx context.Context) (r
 // CreateRequest implements business.ILocalLeaderRequestService.
 func (l *leaderRequestService) CreateRequest(req request.CreateRegistrationRequest, ctx context.Context) (*entities.LocalLeaderRegistrationRequest, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
 	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return nil, genericErr
-	}
-
 	reqs, err := l.leaderRequestRepo.GetWalletRegistrationRequests(sender, ctx)
 	if err != nil {
 		return nil, err
@@ -144,7 +137,7 @@ func (l *leaderRequestService) GetRequests(req request.GetNormalStaffRegistratio
 
 // GetWalletRequests implements business.ILocalLeaderRequestService.
 func (l *leaderRequestService) GetWalletRequests(id string, ctx context.Context) ([]entities.LocalLeaderRegistrationRequest, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return nil, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -153,18 +146,12 @@ func (l *leaderRequestService) GetWalletRequests(id string, ctx context.Context)
 
 // VoteRequest implements business.ILocalLeaderRequestService.
 func (l *leaderRequestService) VoteRequest(id string, req request.VoteRequest, ctx context.Context) error {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	var voter string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(voter)) {
-		return genericErr
-	}
-
 	request, err := l.leaderRequestRepo.GetRequest(id, ctx)
 	if err != nil {
 		return err
 	}
 
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if request == nil {
 		return genericErr
 	}
@@ -173,6 +160,7 @@ func (l *leaderRequestService) VoteRequest(id string, req request.VoteRequest, c
 		return errors.New(noti.REQUEST_CLOSED_MESSAGE)
 	}
 
+	var voter string = ctx.Value("address").(string)
 	if voter == request.CreatedBy {
 		return errors.New(noti.OWNER_VOTE_WARN_MSG)
 	}

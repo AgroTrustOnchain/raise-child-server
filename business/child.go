@@ -31,9 +31,7 @@ import (
 	i_repository "raise-child/interfaces/repository"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 	"github.com/payOSHQ/payos-lib-golang"
 )
 
@@ -239,6 +237,9 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 	var data []response.ChildResponse
 	for i := skippedRecords; i < len(filteredChildren); i++ {
 		data = append(data, filteredChildren[i].ToMinimumChildResponse())
+		if len(data) == req.PageSize {
+			break
+		}
 	}
 
 	res = response.PaginationDataResponse{
@@ -292,7 +293,7 @@ func (c *childService) UploadChild(req request.UploadChildRequest, ctx context.C
 
 // AddNumberMetada implements business.IChildService.
 func (c *childService) AddNumberMetada(id string, req request.AddChildNumberMetadaRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -329,7 +330,7 @@ func (c *childService) AddNumberMetada(id string, req request.AddChildNumberMeta
 
 // AddStringMetada implements business.IChildService.
 func (c *childService) AddStringMetada(id string, req request.AddChildStringMetadaRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -1245,7 +1246,7 @@ func (c *childService) CreateSpecialNeedWithdrawProposalV2(req request.CreateSpe
 // ConfirmSpecialNeedProposal implements business.IChildService.
 func (c *childService) ConfirmSpecialNeedProposal(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
@@ -2151,7 +2152,7 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 // VoteSpecialNeedProposal implements business.IChildService.
 func (c *childService) VoteSpecialNeedProposal(id string, req request.VoteRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 

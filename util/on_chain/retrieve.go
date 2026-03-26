@@ -9,6 +9,7 @@ import (
 	"raise-child/constants/noti"
 	"raise-child/model/dtos/response"
 	"raise-child/util"
+	"strings"
 
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
@@ -82,6 +83,10 @@ func GetOnChainObjects[T any](req GetOnChainObjectsRequest, ctx context.Context)
 
 	res, err := req.Client.SuiMultiGetObjects(ctx, retrieveReq)
 	if err != nil {
+		if strings.Contains(err.Error(), "no result") {
+			return nil, nil
+		}
+
 		req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
 		return nil, internalErr
 	}

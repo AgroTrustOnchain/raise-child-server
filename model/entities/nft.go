@@ -59,7 +59,8 @@ func (s StaffNft) ToStaffNftResponse() response.StaffNftResponse {
 
 	uploadedAt, _ := strconv.ParseInt(s.UploadedAt, 10, 64)
 	return response.StaffNftResponse{
-		ID:                 s.Owner,
+		ID:                 s.ID.ID,
+		Owner:              s.Owner,
 		Role:               s.Role,
 		IdentityCode:       s.IdentityCode,
 		IdentityCardBlobID: s.IdentityCardBlobID,

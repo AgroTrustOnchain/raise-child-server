@@ -1,13 +1,13 @@
 package request
 
 type GetPaymentsRequest struct {
-	Status     string `json:"status"`
-	Method     string `json:"method"`
-	Actor      string `json:"actor"`
-	FilterProp string `json:"filter_prop"`
-	SortOrder  string `json:"sort_order"`
-	PageSize   int    `json:"page_size"`
-	Page       int    `json:"page"`
+	Status     string `form:"status"`
+	Method     string `form:"method"`
+	Actor      string `form:"actor"`
+	FilterProp string `form:"filter_prop"`
+	SortOrder  string `form:"sort_order"`
+	PageSize   int    `form:"page_size"`
+	Page       int    `form:"page"`
 }
 
 type DonateRequest struct {

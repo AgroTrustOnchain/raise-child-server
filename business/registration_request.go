@@ -25,9 +25,7 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 const (
@@ -239,19 +237,14 @@ func (r *registrationRequestService) ConfirmRegistrationRequest(id string, ctx c
 
 // CreateRegistrationRequest implements business.IRegistrationRequestService.
 func (r *registrationRequestService) CreateRegistrationRequest(req request.CreateRegistrationRequest, ctx context.Context) (*entities.RegistrationRequest, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
 	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return nil, genericErr
-	}
-
 	reqs, err := r.registrationRequestRepo.GetWalletRegistrationRequests(sender, ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	var role string = strings.TrimSpace(req.RegisterRole)
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if reqs != nil && len(reqs) > 0 {
 		for _, req := range reqs {
 			if req.RegisterRole == role && (req.Status == request_pending_status || req.Status == request_approved_status) {
@@ -372,7 +365,7 @@ func (r *registrationRequestService) GetRegistrationRequests(req request.GetRegi
 
 // GetWalletRegistrationRequests implements business.IRegistrationRequestService.
 func (r *registrationRequestService) GetWalletRegistrationRequests(id string, ctx context.Context) ([]entities.RegistrationRequest, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return nil, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -381,18 +374,12 @@ func (r *registrationRequestService) GetWalletRegistrationRequests(id string, ct
 
 // VoteRegistrationRequest implements business.IRegistrationRequestService.
 func (r *registrationRequestService) VoteRegistrationRequest(id string, req request.VoteRequest, ctx context.Context) error {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	var voter string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(voter)) {
-		return genericErr
-	}
-
 	request, err := r.registrationRequestRepo.GetRegistrationRequest(id, ctx)
 	if err != nil {
 		return err
 	}
 
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if request == nil {
 		return genericErr
 	}
@@ -401,6 +388,7 @@ func (r *registrationRequestService) VoteRegistrationRequest(id string, req requ
 		return errors.New(noti.REQUEST_CLOSED_MESSAGE)
 	}
 
+	var voter string = ctx.Value("address").(string)
 	if voter == request.CreatedBy {
 		return errors.New(noti.OWNER_VOTE_WARN_MSG)
 	}

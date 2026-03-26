@@ -315,7 +315,7 @@ func (c *centerRequestRepo) GetPendingRequests(ctx context.Context) ([]entities.
 func (c *centerRequestRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
 	var query string = "UPDATE " + center_request_table + " SET status = 'Approved', is_available_to_confirm = true, updated_at = $1 WHERE "
 	for i, req := range reqs {
-		query += "id = " + req.ID
+		query += fmt.Sprintf("id = '%s'", req.ID)
 		if i < len(reqs)-1 {
 			query += " OR "
 		}
@@ -333,7 +333,7 @@ func (c *centerRequestRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord
 func (c *centerRequestRepo) SetRefusedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
 	var query string = "UPDATE " + center_request_table + " SET status = 'Refused', updated_at = $1 WHERE "
 	for i, req := range reqs {
-		query += "id = " + req.ID
+		query += fmt.Sprintf("id = '%s'", req.ID)
 		if i < len(reqs)-1 {
 			query += " OR "
 		}

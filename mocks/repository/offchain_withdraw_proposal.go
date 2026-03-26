@@ -12,7 +12,7 @@ type offChainWithdrawProposalMockRepo struct {
 	mock.Mock
 }
 
-func InializeOffChainWithdrawProposalMockRepo() repository.IOffChainWithdrawProposalRepository {
+func InitializeOffChainWithdrawProposalMockRepo() repository.IOffChainWithdrawProposalRepository {
 	return &offChainWithdrawProposalMockRepo{}
 }
 

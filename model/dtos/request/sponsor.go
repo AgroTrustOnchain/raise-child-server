@@ -1,8 +1,8 @@
 package request
 
 type GetDonorsRequest struct {
-	Keyword  string `json:"keyword"`
-	Gender   string `json:"gender"`
-	PageSize int    `json:"page_size"`
-	Page     int    `json:"page"`
+	Keyword  string `form:"keyword"`
+	Gender   string `form:"gender"`
+	PageSize int    `form:"page_size"`
+	Page     int    `form:"page"`
 }

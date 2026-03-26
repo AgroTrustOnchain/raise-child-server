@@ -5408,6 +5408,9 @@ const docTemplate = `{
                 "phone_number": {
                     "type": "string"
                 },
+                "profile_id": {
+                    "type": "string"
+                },
                 "refuse_reasons": {
                     "type": "array",
                     "items": {
@@ -5425,9 +5428,6 @@ const docTemplate = `{
                 },
                 "status": {
                     "description": "e.g. \"Pending\", \"Approved\", \"Refused\"",
-                    "type": "string"
-                },
-                "sub": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -6384,6 +6384,9 @@ const docTemplate = `{
                     "type": "object",
                     "additionalProperties": true
                 },
+                "first_guardian": {
+                    "$ref": "#/definitions/request.ChildGuardianProfile"
+                },
                 "first_name": {
                     "type": "string"
                 },
@@ -6395,6 +6398,15 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "health_insurance_need": {
+                    "type": "string"
+                },
+                "home_address": {
+                    "type": "string"
+                },
+                "home_blob_id": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
@@ -6416,6 +6428,9 @@ const docTemplate = `{
                 },
                 "region": {
                     "type": "string"
+                },
+                "second_guardian": {
+                    "$ref": "#/definitions/request.ChildGuardianProfile"
                 },
                 "special_need_campaigns": {
                     "type": "array",
@@ -6636,6 +6651,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "owner": {
+                    "type": "string"
+                },
                 "phone_number": {
                     "type": "string"
                 },
@@ -6829,8 +6847,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "locahost:8080",
 	BasePath:         "/",
 	Schemes:          []string{"http"},
-	Title:            "RaiseChild Server API",
-	Description:      "API for RaiseChild Server",
+	Title:            "AgroTrust Server API",
+	Description:      "API for AgroTrust Server",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

@@ -12,7 +12,7 @@ type offChainDonationMockRepo struct {
 	mock.Mock
 }
 
-func InializeOffChainDonationMockRepo() repository.IOffChainDonationRepository {
+func InitializeOffChainDonationMockRepo() repository.IOffChainDonationRepository {
 	return &offChainDonationMockRepo{}
 }
 

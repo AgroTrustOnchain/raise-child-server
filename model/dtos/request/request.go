@@ -40,19 +40,19 @@ type LocalLeaderRegistrationRequest struct {
 
 // For Admin role
 type GetAdminRegistrationRequets struct {
-	Keyword   string `json:"keyword"`
-	Gender    string `json:"gender"`
-	Status    string `json:"status"`
-	IsClosed  *bool  `json:"is_closed"`
-	IsConfirm *bool  `json:"is_confirm"`
-	SortOrder string `json:"sort_order"`
-	PageSize  int    `json:"page_size"`
-	Page      int    `json:"page"`
+	Keyword   string `form:"keyword"`
+	Gender    string `form:"gender"`
+	Status    string `form:"status"`
+	IsClosed  *bool  `form:"is_closed"`
+	IsConfirm *bool  `form:"is_confirm"`
+	SortOrder string `form:"sort_order"`
+	PageSize  int    `form:"page_size"`
+	Page      int    `form:"page"`
 }
 
 // For Volunteer, Local Leader role
 type GetNormalStaffRegistrationRequests struct {
-	Region string `json:"region"`
+	Region string `form:"region"`
 	GetAdminRegistrationRequets
 }
 
@@ -64,8 +64,8 @@ type CreateRegistrationRequest struct {
 }
 
 type GetRegistrationRequests struct {
-	RegisterRole         string `json:"register_role"`
-	IsAvailableToConfirm *bool  `json:"is_available_to_confirm"`
+	RegisterRole         string `form:"register_role"`
+	IsAvailableToConfirm *bool  `form:"is_available_to_confirm"`
 	GetUploadChildRequests
 }
 
@@ -85,14 +85,14 @@ type RegistrationRoleRequest struct {
 
 // Upload-child requests
 type GetUploadChildRequests struct {
-	Keyword   string `json:"keyword"`
-	Region    string `json:"region"`
-	Gender    string `json:"gender"`
-	Status    string `json:"status"`
-	IsClosed  *bool  `json:"is_closed"`
-	SortOrder string `json:"sort_order"`
-	PageSize  int    `json:"page_size"`
-	Page      int    `json:"page"`
+	Keyword   string `form:"keyword"`
+	Region    string `form:"region"`
+	Gender    string `form:"gender"`
+	Status    string `form:"status"`
+	IsClosed  *bool  `form:"is_closed"`
+	SortOrder string `form:"sort_order"`
+	PageSize  int    `form:"page_size"`
+	Page      int    `form:"page"`
 }
 
 // Publisher

@@ -59,12 +59,7 @@ func GenerateVolunteerRequestService() (business.IVolunteerRequestService, error
 // ConfirmRequest implements business.IVolunteerRequestService.
 func (v *volunteerRequestService) ConfirmRequest(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
 	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
-
 	req, err := v.volunteerRequestRepo.GetRequest(id, ctx)
 	if err != nil {
 		return response.BuildTransactionResponse{}, err

@@ -28,9 +28,7 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 	"github.com/payOSHQ/payos-lib-golang"
 )
 
@@ -225,7 +223,7 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 
 	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) || !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return nil, genericErr
 	}
 
@@ -418,9 +416,8 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 // ConfirmMainPoolWithdrawProposal implements business.IWithdrawProposalService.
 func (w *withdrawProposalService) ConfirmMainPoolWithdrawProposal(id string, capturedImgBlobId string, ctx context.Context) (response.BuildTransactionResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
 	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) || !utils.IsValidSuiAddress(models.SuiAddress(sender)) || capturedImgBlobId == "" {
+	if !util.IsValidSuiAddressStrict(id) || capturedImgBlobId == "" {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
@@ -499,7 +496,7 @@ func (w *withdrawProposalService) ConfirmMainPoolWithdrawProposal(id string, cap
 // GetWithdrawProposal implements business.IWithdrawProposalService.
 func (w *withdrawProposalService) GetWithdrawProposal(id string, ctx context.Context) (response.WithdrawProposalResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !!util.IsValidSuiAddressStrict(id) {
 		return response.WithdrawProposalResponse{}, genericErr
 	}
 
@@ -661,6 +658,9 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 	var data []response.WithdrawProposalResponse
 	for i := skippedRecords; i < len(filteredProposals); i++ {
 		data = append(data, filteredProposals[i].ToMinimumWithdrawProposalResponse())
+		if len(data) == req.PageSize {
+			break
+		}
 	}
 
 	res = response.PaginationDataResponse{
@@ -678,9 +678,8 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 // VoteWithdrawProposal implements business.IWithdrawProposalService.
 func (w *withdrawProposalService) VoteWithdrawProposal(id string, req request.VoteRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
 	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) || !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 

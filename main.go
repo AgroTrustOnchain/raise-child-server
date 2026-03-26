@@ -5,9 +5,9 @@ import (
 	"raise-child/cmd"
 )
 
-// @title RaiseChild Server API
+// @title AgroTrust Server API
 // @version 1.0
-// @description API for RaiseChild Server
+// @description API for AgroTrust Server
 // @host locahost:8080
 // @BasePath /
 // @schemes http

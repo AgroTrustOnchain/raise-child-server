@@ -13,7 +13,7 @@ type paymentMockRepo struct {
 	mock.Mock
 }
 
-func InializePaymentMockRepo() repository.IPaymentRepository {
+func InitializePaymentMockRepo() repository.IPaymentRepository {
 	return &paymentMockRepo{}
 }
 

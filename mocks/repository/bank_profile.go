@@ -11,7 +11,7 @@ type bankProfileMockRepo struct {
 	mock.Mock
 }
 
-func InializeBankProfileMockRepo() *bankProfileMockRepo {
+func InitializeBankProfileMockRepo() *bankProfileMockRepo {
 	return &bankProfileMockRepo{}
 }
 

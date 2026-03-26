@@ -18,7 +18,7 @@ func (l *leaderNotiMockRepo) GetNotiByNeed(id string, ctx context.Context) (*ent
 	panic("unimplemented")
 }
 
-func InializeLeaderNotiMockRepo() repository.ILeaderNotiRepository {
+func InitializeLeaderNotiMockRepo() repository.ILeaderNotiRepository {
 	return &leaderNotiMockRepo{}
 }
 

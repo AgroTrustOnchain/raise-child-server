@@ -24,9 +24,7 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 type centerRequestService struct {
@@ -78,22 +76,17 @@ func GenerateCenterRequestService() (business.ICenterRequestService, error) {
 
 // ConfirmRequest implements business.ICenterRequestService.
 func (c *centerRequestService) ConfirmRequest(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
-
 	req, err := c.centerRequestRepo.GetRequest(id, ctx)
 	if err != nil {
 		return response.BuildTransactionResponse{}, err
 	}
 
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if req == nil {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
+	var sender = ctx.Value("address").(string)
 	if req.CreatedBy != sender {
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
@@ -213,15 +206,9 @@ func (c *centerRequestService) ConfirmRequest(id string, ctx context.Context) (r
 
 // CreateRequest implements business.ICenterRequestService.
 func (c *centerRequestService) CreateRequest(req request.CreateCenterRequest, ctx context.Context) (*entities.CenterRequest, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return nil, genericErr
-	}
-
 	var client = c.clients[constant.SuiTestnet]
 	var module = on_chain.InitializeModuleStaff()
+	var sender string = ctx.Value("address").(string)
 	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
 		OwnerAddress: sender,
@@ -266,6 +253,7 @@ func (c *centerRequestService) CreateRequest(req request.CreateCenterRequest, ct
 		}
 	}
 
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !isRegionHaveStaffs {
 		return nil, genericErr
 	}
@@ -332,7 +320,9 @@ func (c *centerRequestService) GetRequest(id string, ctx context.Context) (*enti
 		return nil, err
 	}
 
-	c.redisCache.Set(redisKey, *res, time.Minute, ctx)
+	if res != nil {
+		c.redisCache.Set(redisKey, *res, time.Minute, ctx)
+	}
 
 	return res, nil
 }
@@ -398,18 +388,12 @@ func (c *centerRequestService) GetWalletRequests(id string, ctx context.Context)
 
 // VoteRequest implements business.ICenterRequestService.
 func (c *centerRequestService) VoteRequest(id string, req request.VoteRequest, ctx context.Context) error {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	var voter string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(voter)) {
-		return genericErr
-	}
-
 	request, err := c.centerRequestRepo.GetRequest(id, ctx)
 	if err != nil {
 		return err
 	}
 
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if request == nil {
 		return genericErr
 	}
@@ -418,6 +402,7 @@ func (c *centerRequestService) VoteRequest(id string, req request.VoteRequest, c
 		return errors.New(noti.REQUEST_CLOSED_MESSAGE)
 	}
 
+	var voter string = ctx.Value("address").(string)
 	if voter == request.CreatedBy {
 		return errors.New(noti.OWNER_VOTE_WARN_MSG)
 	}
@@ -444,7 +429,7 @@ func (c *centerRequestService) VoteRequest(id string, req request.VoteRequest, c
 
 	var isRegionStaff bool = false
 	for _, nft := range nfts {
-		if nft.Role == request.Region {
+		if nft.Region == request.Region {
 			isRegionStaff = true
 			break
 		}

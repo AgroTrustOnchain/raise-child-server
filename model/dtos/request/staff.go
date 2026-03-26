@@ -1,12 +1,12 @@
 package request
 
 type GetStaffsRequest struct {
-	Keyword     string `json:"keyword"`
-	Role        string `json:"role"`
-	Region      string `json:"region"`
-	Gender      string `json:"gender"`
-	YearOfBirth *int   `json:"year_of_birth"`
-	SortOrder   string `json:"sort_order"`
-	PageSize    int    `json:"page_size"`
-	Page        int    `json:"page"`
+	Keyword     string `form:"keyword"`
+	Role        string `form:"role"`
+	Region      string `form:"region"`
+	Gender      string `form:"gender"`
+	YearOfBirth *int   `form:"year_of_birth"`
+	SortOrder   string `form:"sort_order"`
+	PageSize    int    `form:"page_size"`
+	Page        int    `form:"page"`
 }

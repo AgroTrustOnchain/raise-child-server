@@ -1,24 +1,24 @@
 package request
 
 type GetTasksRequest struct {
-	Keyword       string `json:"keyword"`
-	Region        string `json:"region"`
-	Status        string `json:"status"`
-	AssignedStaff string `json:"assgined_staff"`
-	ReviewedBy    string `json:"reviewed_by"`
-	SortOrder     string `json:"sort_order"`
-	PageSize      int    `json:"page_size"`
-	Page          int    `json:"page"`
+	Keyword       string `form:"keyword"`
+	Region        string `form:"region"`
+	Status        string `form:"status"`
+	AssignedStaff string `form:"assgined_staff"`
+	ReviewedBy    string `form:"reviewed_by"`
+	SortOrder     string `form:"sort_order"`
+	PageSize      int    `form:"page_size"`
+	Page          int    `form:"page"`
 }
 
 type GetTaskProofsRequest struct {
-	Keyword      string `json:"keyword"`
-	Status       string `json:"status"`
-	ActorAddress string `json:"actor_address"`
-	ReviewedBy   string `json:"reviewed_by"`
-	SortOrder    string `json:"sort_order"`
-	PageSize     int    `json:"page_size"`
-	Page         int    `json:"page"`
+	Keyword      string `form:"keyword"`
+	Status       string `form:"status"`
+	ActorAddress string `form:"actor_address"`
+	ReviewedBy   string `form:"reviewed_by"`
+	SortOrder    string `form:"sort_order"`
+	PageSize     int    `form:"page_size"`
+	Page         int    `form:"page"`
 }
 
 type CreateTaskRequest struct {

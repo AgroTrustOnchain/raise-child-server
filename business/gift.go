@@ -24,9 +24,7 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 type giftService struct {
@@ -65,14 +63,8 @@ const (
 
 // CancelGift implements business.IGiftService.
 func (g *giftService) CancelGift(id string, req request.CancelGiftRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var sender string = ctx.Value("address").(string)
-	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return response.BuildTransactionResponse{}, genericRightErr
-	}
-
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
@@ -90,6 +82,8 @@ func (g *giftService) CancelGift(id string, req request.CancelGiftRequest, ctx c
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
+	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	var sender string = ctx.Value("address").(string)
 	if gift.Sender != sender {
 		return response.BuildTransactionResponse{}, genericRightErr
 	}
@@ -116,12 +110,8 @@ func (g *giftService) CancelGift(id string, req request.CancelGiftRequest, ctx c
 func (g *giftService) ConfirmReceiveGift(id string, req request.ConfirmReceiveGiftRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
 	var sender string = ctx.Value("address").(string)
 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return response.BuildTransactionResponse{}, genericRightErr
-	}
-
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
@@ -229,15 +219,8 @@ func (g *giftService) ConfirmReceiveGift(id string, req request.ConfirmReceiveGi
 
 // CreateGift implements business.IGiftService.
 func (g *giftService) CreateGift(req request.CreateGiftRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
-		return response.BuildTransactionResponse{}, genericRightErr
-	}
-
-	if !utils.IsValidSuiAddress(models.SuiAddress(req.Recipient)) {
+	if !util.IsValidSuiAddressStrict(req.Recipient) {
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
@@ -268,6 +251,7 @@ func (g *giftService) CreateGift(req request.CreateGiftRequest, ctx context.Cont
 	// todo: AI validate other fields
 	var client = g.clients[constant.SuiTestnet]
 	var donorModule = on_chain.InitializeModuleDonor()
+	var sender string = ctx.Value("address").(string)
 	nfts, err := on_chain.GetOnChainOwnedObjects[entities.Donor](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
 		OwnerAddress: sender,
@@ -515,6 +499,9 @@ func (g *giftService) GetGiftsOfChild(id string, req request.GetGiftsRequest, ct
 	var data []response.GiftResponse
 	for i := skippedRecords; i < len(filteredGifts); i++ {
 		data = append(data, filteredGifts[i].ToGiftResponse())
+		if len(data) == req.PageSize {
+			break
+		}
 	}
 
 	res = response.PaginationDataResponse{
@@ -612,6 +599,9 @@ func (g *giftService) GetGiftsOfRegion(region string, req request.GetGiftsReques
 	var data []response.GiftResponse
 	for i := skippedRecords; i < len(filteredGifts); i++ {
 		data = append(data, filteredGifts[i].ToGiftResponse())
+		if len(data) == req.PageSize {
+			break
+		}
 	}
 
 	res = response.PaginationDataResponse{

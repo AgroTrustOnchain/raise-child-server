@@ -64,41 +64,43 @@ func (b *backgroundService) ProcessBackgroundCenterRequests(ctx context.Context)
 		return
 	}
 
-	var refusedReqs []entities.BackgroundRecord
-	for _, req := range pendingRes {
-		var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
-		if rate >= approve_rate_limit {
-			approvedRes = append(approvedRes, req)
-		} else {
-			refusedReqs = append(refusedReqs, req)
+	if pendingRes != nil && len(pendingRes) > 0 {
+		var refusedReqs []entities.BackgroundRecord
+		for _, req := range pendingRes {
+			var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
+			if rate >= approve_rate_limit {
+				approvedRes = append(approvedRes, req)
+			} else {
+				refusedReqs = append(refusedReqs, req)
+			}
 		}
+
+		b.centerRequestRepo.SetRefusedStatuses(refusedReqs, ctx)
+
+		var modules []string
+		var functions []string
+		var args [][]interface{}
+		var module = on_chain.InitializeModuleManage()
+		for i, req := range approvedRes {
+			modules[i] = module.GetModule()
+			functions[i] = module.GetFunctionMintUploadCenterCap()
+			args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
+				Recipient: req.Sender,
+			}))
+		}
+
+		if err := on_chain.BuildMultiBackgroundTransactions(on_chain.BuildMultiBackgroundTransactionsRequest{
+			Client:    b.clients[constant.SuiTestnet],
+			Modules:   modules,
+			Functions: functions,
+			Arguments: args,
+			ErrLogger: b.errLogger,
+		}, ctx); err != nil {
+			return
+		}
+
+		b.centerRequestRepo.SetApprovedStatuses(approvedRes, ctx)
 	}
-
-	b.centerRequestRepo.SetRefusedStatuses(refusedReqs, ctx)
-
-	var modules []string
-	var functions []string
-	var args [][]interface{}
-	var module = on_chain.InitializeModuleManage()
-	for i, req := range approvedRes {
-		modules[i] = module.GetModule()
-		functions[i] = module.GetFunctionMintUploadCenterCap()
-		args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
-			Recipient: req.Sender,
-		}))
-	}
-
-	if err := on_chain.BuildMultiBackgroundTransactions(on_chain.BuildMultiBackgroundTransactionsRequest{
-		Client:    b.clients[constant.SuiTestnet],
-		Modules:   modules,
-		Functions: functions,
-		Arguments: args,
-		ErrLogger: b.errLogger,
-	}, ctx); err != nil {
-		return
-	}
-
-	b.centerRequestRepo.SetApprovedStatuses(approvedRes, ctx)
 }
 
 // ProcessBackgroundRegistrationRequests implements business.IBackgroundService.
@@ -108,48 +110,51 @@ func (b *backgroundService) ProcessBackgroundRegistrationRequests(ctx context.Co
 		return
 	}
 
-	var refusedReqs []entities.BackgroundRecord
-	for _, req := range pendingRes {
-		var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
-		if rate >= approve_rate_limit {
-			approvedRes = append(approvedRes, req)
-		} else {
-			refusedReqs = append(refusedReqs, req)
+	if pendingRes != nil && len(pendingRes) > 0 {
+
+		var refusedReqs []entities.BackgroundRecord
+		for _, req := range pendingRes {
+			var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
+			if rate >= approve_rate_limit {
+				approvedRes = append(approvedRes, req)
+			} else {
+				refusedReqs = append(refusedReqs, req)
+			}
 		}
-	}
 
-	b.registrationRequestRepo.SetRefusedStatuses(refusedReqs, ctx)
+		b.registrationRequestRepo.SetRefusedStatuses(refusedReqs, ctx)
 
-	var modules []string
-	var functions []string
-	var args [][]interface{}
-	var module = on_chain.InitializeModuleManage()
-	for i, req := range approvedRes {
-		modules[i] = module.GetModule()
-		switch req.Role {
-		case admin_role:
-			functions[i] = module.GetFunctionMintRegisterAdminCap()
-		case local_leader_role:
-			functions[i] = module.GetFunctionMintRegisterLeaderCap()
-		case volunteer_role:
-			functions[i] = module.GetFunctionMintRegisterVolunteerCap()
+		var modules []string
+		var functions []string
+		var args [][]interface{}
+		var module = on_chain.InitializeModuleManage()
+		for i, req := range approvedRes {
+			modules[i] = module.GetModule()
+			switch req.Role {
+			case admin_role:
+				functions[i] = module.GetFunctionMintRegisterAdminCap()
+			case local_leader_role:
+				functions[i] = module.GetFunctionMintRegisterLeaderCap()
+			case volunteer_role:
+				functions[i] = module.GetFunctionMintRegisterVolunteerCap()
+			}
+			args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
+				Recipient: req.Sender,
+			}))
 		}
-		args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
-			Recipient: req.Sender,
-		}))
-	}
 
-	if err := on_chain.BuildMultiBackgroundTransactions(on_chain.BuildMultiBackgroundTransactionsRequest{
-		Client:    b.clients[constant.SuiTestnet],
-		Modules:   modules,
-		Functions: functions,
-		Arguments: args,
-		ErrLogger: b.errLogger,
-	}, ctx); err != nil {
-		return
-	}
+		if err := on_chain.BuildMultiBackgroundTransactions(on_chain.BuildMultiBackgroundTransactionsRequest{
+			Client:    b.clients[constant.SuiTestnet],
+			Modules:   modules,
+			Functions: functions,
+			Arguments: args,
+			ErrLogger: b.errLogger,
+		}, ctx); err != nil {
+			return
+		}
 
-	b.registrationRequestRepo.SetApprovedStatuses(approvedRes, ctx)
+		b.registrationRequestRepo.SetApprovedStatuses(approvedRes, ctx)
+	}
 }
 
 // ProcessBackgroundUploadChildRequests implements business.IBackgroundService.

@@ -4,6 +4,7 @@ import "time"
 
 type StaffNftResponse struct {
 	ID                 string    `json:"id"`
+	Owner              string    `json:"owner"`
 	Role               string    `json:"role"`
 	IdentityCode       string    `json:"identity_code"`
 	IdentityCardBlobID string    `json:"identity_card_blob_id"`

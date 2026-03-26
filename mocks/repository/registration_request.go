@@ -13,7 +13,7 @@ type registrationRequestMockRepo struct {
 	mock.Mock
 }
 
-func InializeRegistrationRequestMockRepo() repository.IRegistrationRequestRepository {
+func InitializeRegistrationRequestMockRepo() repository.IRegistrationRequestRepository {
 	return &registrationRequestMockRepo{}
 }
 

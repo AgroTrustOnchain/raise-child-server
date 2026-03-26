@@ -24,9 +24,7 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 type uploadChildRequestService struct {
@@ -376,12 +374,7 @@ func (u *uploadChildRequestService) GetWalletUploadChildRequests(id string, page
 // VoteUploadChildRequest implements business.IUploadChildRequestService.
 func (u *uploadChildRequestService) VoteUploadChildRequest(id string, req request.VoteRequest, ctx context.Context) error {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
 	var voter string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(voter)) {
-		return genericErr
-	}
-
 	request, err := u.uploadChildRequestRepo.GetUploadChildRequest(id, ctx)
 	if err != nil {
 		return err

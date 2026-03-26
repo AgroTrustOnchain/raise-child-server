@@ -1,12 +1,12 @@
 package request
 
 type GetGiftsRequest struct {
-	Keyword   string `json:"keyword"`
-	Status    string `json:"status"`
-	Category  string `json:"category"`
-	SortOrder string `json:"sort_order"`
-	PageSize  int    `json:"page_size"`
-	Page      int    `json:"page"`
+	Keyword   string `form:"keyword"`
+	Status    string `form:"status"`
+	Category  string `form:"category"`
+	SortOrder string `form:"sort_order"`
+	PageSize  int    `form:"page_size"`
+	Page      int    `form:"page"`
 }
 
 type CreateGiftRequest struct {

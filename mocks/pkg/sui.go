@@ -13,7 +13,7 @@ type suiMockApi struct {
 	sui.ISuiAPI
 }
 
-func InializeSuiMockApi() *suiMockApi {
+func InitializeSuiMockApi() *suiMockApi {
 	return &suiMockApi{}
 }
 

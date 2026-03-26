@@ -1,6 +1,6 @@
 package request
 
 type GetNotisRequest struct {
-	PageSize int `json:"page_size"`
-	Page     int `json:"page"`
+	PageSize int `form:"page_size"`
+	Page     int `form:"page"`
 }

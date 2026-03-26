@@ -22,9 +22,7 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 type staffService struct {
@@ -51,7 +49,7 @@ const (
 
 // GetStaff implements business.IStaffService.
 func (s *staffService) GetStaff(id string, ctx context.Context) (response.StaffResponse, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.StaffResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -184,6 +182,9 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 	var data []response.StaffNftResponse
 	for i := skippedRecords; i < len(filteredStaffs); i++ {
 		data = append(data, filteredStaffs[i].ToStaffNftResponse())
+		if len(data) == req.PageSize {
+			break
+		}
 	}
 
 	res = response.PaginationDataResponse{

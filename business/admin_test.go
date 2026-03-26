@@ -17,8 +17,8 @@ import (
 )
 
 func TestGetAdmins(t *testing.T) {
-	var repo = repository.InializeProfileMockRepo()
-	var mockClient = pkg.InializeSuiMockApi()
+	var repo = repository.InitializeProfileMockRepo()
+	var mockClient = pkg.InitializeSuiMockApi()
 	mockClient.On("SuiGetObject", mock.Anything, mock.Anything).
 		Return(models.SuiObjectResponse{
 			Data: &models.SuiObjectData{

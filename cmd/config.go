@@ -43,7 +43,7 @@ func setupSwagger(server *gin.Engine, port string) {
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 	docs.SwaggerInfo.Host = "localhost:" + port
-	//docs.SwaggerInfo.Host = os.Getenv(env.SWAGGER_HOST)
+	//docs.SwaggerInfo.Host = os.Getenv(env.SERVER_HOST)
 
 	// Add swagger route
 	server.GET("swagger/*any", gin_swagger.WrapHandler(swagger_files.Handler))

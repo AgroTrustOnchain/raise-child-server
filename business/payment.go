@@ -1159,7 +1159,7 @@ func (p *paymentService) CallbackWithAuth(id string, capturedImgBlobId string, c
 	}
 
 	var sender string = ctx.Value("address").(string)
-	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) || payment.Actor != sender {
+	if payment.Actor != sender {
 		return "", errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
 

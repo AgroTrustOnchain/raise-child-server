@@ -1,14 +1,14 @@
 package request
 
 type GetCenterRequests struct {
-	Keyword              string `json:"keyword"`
-	Region               string `json:"region"`
-	Status               string `json:"status"`
-	IsClosed             *bool  `json:"is_closed"`
-	IsAvailableToConfirm *bool  `json:"is_available_to_confirm"`
-	SortOrder            string `json:"sort_order"`
-	PageSize             int    `json:"page_size"`
-	Page                 int    `json:"page"`
+	Keyword              string `form:"keyword"`
+	Region               string `form:"region"`
+	Status               string `form:"status"`
+	IsClosed             *bool  `form:"is_closed"`
+	IsAvailableToConfirm *bool  `form:"is_available_to_confirm"`
+	SortOrder            string `form:"sort_order"`
+	PageSize             int    `form:"page_size"`
+	Page                 int    `form:"page"`
 }
 
 type CreateCenterRequest struct {

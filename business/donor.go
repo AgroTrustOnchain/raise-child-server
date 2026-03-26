@@ -21,9 +21,7 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 type donorService struct {
@@ -50,7 +48,7 @@ const (
 
 // GetDonor implements business.IDonorService.
 func (s *donorService) GetDonor(id string, ctx context.Context) (response.DonorResponse, error) {
-	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return response.DonorResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -161,6 +159,9 @@ func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Conte
 	var data []response.DonorResponse
 	for i := skippedRecords; i < len(filteredDonors); i++ {
 		data = append(data, filteredDonors[i].ToDonorResponse())
+		if len(data) == req.PageSize {
+			break
+		}
 	}
 
 	res = response.PaginationDataResponse{

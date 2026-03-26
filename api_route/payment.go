@@ -35,5 +35,5 @@ func InitializePaymentsRoutes(server *gin.Engine) {
 	// Auth group
 	var authGroup = server.Group(contextPath, middleware.Authorize)
 	authGroup.POST("/donate", middleware.RateLimitMiddleware(donateLimit), transport.Donate)
-	authGroup.POST("/auth-callback/:id", middleware.AdminAuthorize, middleware.RateLimitMiddleware(donateLimit), transport.CallbackWithAuthTransaction)
+	authGroup.GET("/auth-callback/:id", middleware.AdminAuthorize, middleware.RateLimitMiddleware(donateLimit), transport.CallbackWithAuthTransaction)
 }
