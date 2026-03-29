@@ -195,7 +195,7 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 		}
 
 		if profileId == profile.ID {
-			if profile.IdentityCode != "" {
+			if profile.IdentityCode != nil {
 				return response.BuildTransactionResponse{}, genericErr
 			}
 
@@ -277,13 +277,13 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 		return response.BuildTransactionResponse{}, err
 	}
 
-	profile.IdentityCode = identityCode
-	profile.FirstName = firstName
-	profile.LastName = lastName
-	profile.Gender = gender
-	profile.DateOfBirth = dateOfBirth
-	profile.PhoneNumber = phoneNumber
-	profile.Email = email
+	profile.IdentityCode = &identityCode
+	profile.FirstName = &firstName
+	profile.LastName = &lastName
+	profile.Gender = &gender
+	profile.DateOfBirth = &dateOfBirth
+	profile.PhoneNumber = &phoneNumber
+	profile.Email = &email
 	profile.UpdatedAt = time.Now()
 
 	return response.BuildTransactionResponse{

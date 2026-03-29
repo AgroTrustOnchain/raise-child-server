@@ -180,7 +180,7 @@ func (p *profileRepo) GetProfile(id string, ctx context.Context) (*entities.Prof
 	var res entities.Profile
 	if err := p.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.Salt, &res.Status, &res.IdentityCode, &res.FirstName, &res.LastName,
-		&res.Gender, res.DateOfBirth, &res.PhoneNumber, &res.Email,
+		&res.Gender, &res.DateOfBirth, &res.PhoneNumber, &res.Email,
 		&res.Token, &res.UpdatedAt, &res.CreatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
@@ -202,7 +202,7 @@ func (p *profileRepo) GetFirstProfile(ctx context.Context) (*entities.Profile, e
 	var res entities.Profile
 	if err := p.db.QueryRowContext(ctx, query).Scan(
 		&res.ID, &res.Salt, &res.Status, &res.IdentityCode, &res.FirstName, &res.LastName,
-		&res.Gender, res.DateOfBirth, &res.PhoneNumber, &res.Email,
+		&res.Gender, &res.DateOfBirth, &res.PhoneNumber, &res.Email,
 		&res.Token, &res.UpdatedAt, &res.CreatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
@@ -224,7 +224,7 @@ func (p *profileRepo) GetProfileOfFirsts(position int, ctx context.Context) (*en
 	var res entities.Profile
 	if err := p.db.QueryRowContext(ctx, query).Scan(
 		&res.ID, &res.Salt, &res.Status, &res.IdentityCode, &res.FirstName, &res.LastName,
-		&res.Gender, res.DateOfBirth, &res.PhoneNumber, &res.Email,
+		&res.Gender, &res.DateOfBirth, &res.PhoneNumber, &res.Email,
 		&res.Token, &res.UpdatedAt, &res.CreatedAt); err != nil {
 
 		if err == sql.ErrNoRows {

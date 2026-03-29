@@ -75,6 +75,9 @@ func setupApiRoutes(server *gin.Engine) {
 	// Task Proof API endpoints
 	api_route.InitializeTaskProofRoutes(server)
 
+	// Transaction Record API endpoints
+	api_route.InitializeTransactionRecordRoutes(server)
+
 	// Default route to Swagger documentation
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusMovedPermanently, "/swagger/index.html#")

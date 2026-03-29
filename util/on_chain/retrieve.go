@@ -10,10 +10,15 @@ import (
 	"raise-child/model/dtos/response"
 	"raise-child/util"
 	"strings"
+	"sync"
 
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/machinebox/graphql"
+)
+
+const (
+	default_chunk_size int = 50
 )
 
 type GetOnChainObjectRequest struct {
@@ -73,81 +78,197 @@ func GetOnChainObject[T any](req GetOnChainObjectRequest, ctx context.Context) (
 }
 
 func GetOnChainObjects[T any](req GetOnChainObjectsRequest, ctx context.Context) ([]T, error) {
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
-	var retrieveReq = models.SuiMultiGetObjectsRequest{
-		ObjectIds: req.ObjectIds,
-		Options: models.SuiObjectDataOptions{
-			ShowContent: true,
-		},
+	// VER 1
+	// var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	// var retrieveReq = models.SuiMultiGetObjectsRequest{
+	// 	ObjectIds: req.ObjectIds,
+	// 	Options: models.SuiObjectDataOptions{
+	// 		ShowContent: true,
+	// 	},
+	// }
+
+	// res, err := req.Client.SuiMultiGetObjects(ctx, retrieveReq)
+	// if err != nil {
+	// 	if strings.Contains(err.Error(), "no result") {
+	// 		return nil, nil
+	// 	}
+
+	// 	req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
+	// 	return nil, internalErr
+	// }
+
+	// var objects []T
+	// for i := 0; i < len(res); i++ {
+	// 	var object = res[i]
+	// 	if object.Error != nil {
+	// 		handleGetEmptyOnChainObject(object.Error.Code, req.ObjectIds[i], req.ErrLogger)
+	// 		continue
+	// 	}
+
+	// 	jsonBytes, err := json.Marshal(object.Data.Content.Fields)
+	// 	if err != nil {
+	// 		req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
+	// 		continue
+	// 	}
+
+	// 	objects = append(objects, util.JsonStringToObject[T](string(jsonBytes)))
+	// }
+
+	// return objects, nil
+
+	// VER 2
+	var defaultWorkersNum int = 5
+	var idChunks = make(chan []string, len(req.ObjectIds)/default_chunk_size+1)
+	var suiRes = make(chan []*models.SuiObjectResponse, len(req.ObjectIds)/default_chunk_size+1)
+	var wg sync.WaitGroup
+
+	for i := 1; i < defaultWorkersNum; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for batch := range idChunks {
+				res, err := req.Client.SuiMultiGetObjects(ctx, models.SuiMultiGetObjectsRequest{
+					ObjectIds: batch,
+					Options: models.SuiObjectDataOptions{
+						ShowContent: true,
+					},
+				})
+
+				if err != nil {
+					if strings.Contains(err.Error(), "no result") {
+						break
+					}
+
+					req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
+					continue
+				}
+
+				suiRes <- res
+			}
+		}()
 	}
 
-	res, err := req.Client.SuiMultiGetObjects(ctx, retrieveReq)
-	if err != nil {
-		if strings.Contains(err.Error(), "no result") {
-			return nil, nil
+	for i := 0; i < len(req.ObjectIds); i += default_chunk_size {
+		var end int = i + default_chunk_size
+		if end > len(req.ObjectIds) {
+			end = len(req.ObjectIds)
 		}
 
-		req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
-		return nil, internalErr
+		idChunks <- req.ObjectIds[i:end]
 	}
+	close(idChunks)
+
+	go func() {
+		wg.Wait()
+		close(suiRes)
+	}()
 
 	var objects []T
-	for i := 0; i < len(res); i++ {
-		var object = res[i]
-		if object.Error != nil {
-			handleGetEmptyOnChainObject(object.Error.Code, req.ObjectIds[i], req.ErrLogger)
-			continue
-		}
+	if suiRes == nil {
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+	}
 
-		jsonBytes, err := json.Marshal(object.Data.Content.Fields)
-		if err != nil {
-			req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
-			continue
-		}
+	for batchRes := range suiRes {
+		for _, object := range batchRes {
+			jsonBytes, err := json.Marshal(object.Data.Content.Fields)
+			if err != nil {
+				req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
+				continue
+			}
 
-		objects = append(objects, util.JsonStringToObject[T](string(jsonBytes)))
+			objects = append(objects, util.JsonStringToObject[T](string(jsonBytes)))
+		}
 	}
 
 	return objects, nil
 }
 
 func GetOnChainOwnedObjects[T any](req GetOnChainOwnedObjectsRequest, ctx context.Context) ([]T, error) {
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
-	var filter = map[string]interface{}{
-		"StructType": req.StructType,
-	}
-	var retrieveReq = models.SuiXGetOwnedObjectsRequest{
-		Address: req.OwnerAddress,
-		Query: models.SuiObjectResponseQuery{
-			Filter: filter,
-			Options: models.SuiObjectDataOptions{
-				ShowContent: true,
-			},
-		},
-	}
+	// VER 1
+	// var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	// var filter = map[string]interface{}{
+	// 	"StructType": req.StructType,
+	// }
+	// var retrieveReq = models.SuiXGetOwnedObjectsRequest{
+	// 	Address: req.OwnerAddress,
+	// 	Query: models.SuiObjectResponseQuery{
+	// 		Filter: filter,
+	// 		Options: models.SuiObjectDataOptions{
+	// 			ShowContent: true,
+	// 		},
+	// 	},
+	// }
 
-	res, err := req.Client.SuiXGetOwnedObjects(ctx, retrieveReq)
-	if err != nil {
-		req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
-		return nil, internalErr
-	}
+	// res, err := req.Client.SuiXGetOwnedObjects(ctx, retrieveReq)
+	// if err != nil {
+	// 	req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
+	// 	return nil, internalErr
+	// }
 
+	// var objects []T
+	// for i := 0; i < len(res.Data); i++ {
+	// 	var object = res.Data[i]
+	// 	if object.Error != nil {
+	// 		handleGetEmptyOnChainObject(object.Error.Code, object.Data.ObjectId, req.ErrLogger)
+	// 		continue
+	// 	}
+
+	// 	jsonBytes, err := json.Marshal(object.Data.Content.Fields)
+	// 	if err != nil {
+	// 		req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
+	// 		continue
+	// 	}
+
+	// 	objects = append(objects, util.JsonStringToObject[T](string(jsonBytes)))
+	// }
+
+	// return objects, nil
+
+	// VER 2
 	var objects []T
-	for i := 0; i < len(res.Data); i++ {
-		var object = res.Data[i]
-		if object.Error != nil {
-			handleGetEmptyOnChainObject(object.Error.Code, object.Data.ObjectId, req.ErrLogger)
-			continue
+	var cursor interface{} = nil
+
+	for {
+		var retrieveReq = models.SuiXGetOwnedObjectsRequest{
+			Address: req.OwnerAddress,
+			Query: models.SuiObjectResponseQuery{
+				Filter: map[string]interface{}{
+					"StructType": req.StructType,
+				},
+				Options: models.SuiObjectDataOptions{
+					ShowContent: true,
+				},
+			},
+			Cursor: cursor,
+			Limit:  uint64(default_chunk_size),
 		}
 
-		jsonBytes, err := json.Marshal(object.Data.Content.Fields)
+		res, err := req.Client.SuiXGetOwnedObjects(ctx, retrieveReq)
 		if err != nil {
 			req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
-			continue
+			return nil, errors.New(noti.INTERNALL_ERR_MSG)
 		}
 
-		objects = append(objects, util.JsonStringToObject[T](string(jsonBytes)))
+		for _, object := range res.Data {
+			if object.Error != nil {
+				handleGetEmptyOnChainObject(object.Error.Code, object.Data.ObjectId, req.ErrLogger)
+				continue
+			}
+
+			jsonBytes, err := json.Marshal(object.Data.Content.Fields)
+			if err != nil {
+				continue
+			}
+			objects = append(objects, util.JsonStringToObject[T](string(jsonBytes)))
+		}
+
+		if !res.HasNextPage || res.NextCursor == "" {
+			break
+		}
+
+		cursor = res.NextCursor
 	}
+
 	return objects, nil
 }
 
@@ -185,6 +306,10 @@ func GetDynamicFields(id string, client sui.ISuiAPI, errLogger *log.Logger, ctx 
 
 	return res, nil
 }
+
+// func GetOnChainEvents[T any](req GetOnChainOwnedObjectsRequest, ctx context.Context) {
+// 	res, err := req.Client.SuiXQueryEvents(ctx, models.SuiXQueryEventsRequest{})
+// }
 
 func GetOnChainSpecificTypeObjects[T any](req GetOnChainSpecificTypeObjectsRequest, ctx context.Context) ([]T, error) {
 	var retrieveReq = graphql.NewRequest(`

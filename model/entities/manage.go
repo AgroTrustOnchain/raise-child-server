@@ -15,4 +15,5 @@ type Manage struct {
 	CreatedCenters        []string `json:"created_centers"`
 	DonorIds              []string `json:"donor_ids"`
 	DonorNfts             []string `json:"donor_nfts"`
+	TransactionRecords    []string `json:"transaction_records"`
 }

@@ -262,6 +262,10 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 		return nil, genericErr
 	}
 
+	if profile.IdentityCode == nil {
+		return nil, errors.New(noti.PROFILE_EMPTY_MESSAGE)
+	}
+
 	// Admin registration request not contain region
 	if role == admin_role {
 		if req.Region != "" {
@@ -295,16 +299,16 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 		ID:                   util.GenerateId(),
 		ProfileID:            ctx.Value("sub").(string),
 		RegisterRole:         role,
-		IdentityCode:         util.StanderizeString(profile.IdentityCode),
+		IdentityCode:         util.StanderizeString(*profile.IdentityCode),
 		IdentityCardBlobID:   strings.TrimSpace(req.IdentityCardBlobID),
 		AvatarBlobID:         strings.TrimSpace(req.AvatarBlobID),
 		Region:               req.Region,
-		FirstName:            strings.TrimSpace(profile.FirstName),
-		LastName:             strings.TrimSpace(profile.LastName),
-		Gender:               profile.Gender,
-		DateOfBirth:          profile.DateOfBirth,
-		PhoneNumber:          profile.PhoneNumber,
-		Email:                profile.Email,
+		FirstName:            strings.TrimSpace(*profile.FirstName),
+		LastName:             strings.TrimSpace(*profile.LastName),
+		Gender:               *profile.Gender,
+		DateOfBirth:          *profile.DateOfBirth,
+		PhoneNumber:          *profile.PhoneNumber,
+		Email:                *profile.Email,
 		Status:               request_pending_status,
 		IsAvailableToConfirm: false,
 		IsConfirmRegister:    false,

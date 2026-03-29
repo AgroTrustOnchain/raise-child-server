@@ -224,7 +224,7 @@ func (p *paymentService) Donate(req request.DonateRequest, ctx context.Context) 
 		return response.UrlAPIResponse{}, genericErr
 	}
 
-	if profile.IdentityCode == "" {
+	if profile.IdentityCode == nil {
 		return response.UrlAPIResponse{}, errors.New(noti.NOT_UPLOADED_PROFILE_MESSAGE)
 	}
 
@@ -927,11 +927,11 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 						ChildID:     childId,
 						DonorNft:    nftId,
 						Amount:      payment.Amount,
-						FirstName:   profile.FirstName,
-						LastName:    profile.LastName,
-						Gender:      profile.Gender,
-						PhoneNumber: profile.PhoneNumber,
-						Email:       profile.Email,
+						FirstName:   *profile.FirstName,
+						LastName:    *profile.LastName,
+						Gender:      *profile.Gender,
+						PhoneNumber: *profile.PhoneNumber,
+						Email:       *profile.Email,
 						Message:     payment.Message,
 					})
 				case string(entities.MEAL_NEED_PURPOSE):
@@ -960,11 +960,11 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 							ChildID:     childId,
 							DonorNft:    nftId,
 							Amount:      payment.Amount,
-							FirstName:   profile.FirstName,
-							LastName:    profile.LastName,
-							Gender:      profile.Gender,
-							PhoneNumber: profile.PhoneNumber,
-							Email:       profile.Email,
+							FirstName:   *profile.FirstName,
+							LastName:    *profile.LastName,
+							Gender:      *profile.Gender,
+							PhoneNumber: *profile.PhoneNumber,
+							Email:       *profile.Email,
 							Message:     payment.Message,
 						},
 					})
@@ -975,11 +975,11 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 						ChildID:     childId,
 						DonorNft:    nftId,
 						Amount:      payment.Amount,
-						FirstName:   profile.FirstName,
-						LastName:    profile.LastName,
-						Gender:      profile.Gender,
-						PhoneNumber: profile.PhoneNumber,
-						Email:       profile.Email,
+						FirstName:   *profile.FirstName,
+						LastName:    *profile.LastName,
+						Gender:      *profile.Gender,
+						PhoneNumber: *profile.PhoneNumber,
+						Email:       *profile.Email,
 						Message:     payment.Message,
 					})
 				}
@@ -990,11 +990,11 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 					ChildID:     childId,
 					DonorNft:    nftId,
 					Amount:      payment.Amount,
-					FirstName:   profile.FirstName,
-					LastName:    profile.LastName,
-					Gender:      profile.Gender,
-					PhoneNumber: profile.PhoneNumber,
-					Email:       profile.Email,
+					FirstName:   *profile.FirstName,
+					LastName:    *profile.LastName,
+					Gender:      *profile.Gender,
+					PhoneNumber: *profile.PhoneNumber,
+					Email:       *profile.Email,
 					Message:     payment.Message,
 				})
 			}
@@ -1008,11 +1008,11 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 					DonateToPoolArguments: on_chain.DonateToPoolArguments{
 						DonorID:     nftId,
 						Amount:      payment.Amount,
-						FirstName:   profile.FirstName,
-						LastName:    profile.LastName,
-						Gender:      profile.Gender,
-						PhoneNumber: profile.PhoneNumber,
-						Email:       profile.Email,
+						FirstName:   *profile.FirstName,
+						LastName:    *profile.LastName,
+						Gender:      *profile.Gender,
+						PhoneNumber: *profile.PhoneNumber,
+						Email:       *profile.Email,
 						Message:     payment.Message,
 					},
 				})
@@ -1021,11 +1021,11 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 				args = poolModule.ToDonateToPoolArguments(on_chain.DonateToPoolArguments{
 					DonorID:     nftId,
 					Amount:      payment.Amount,
-					FirstName:   profile.FirstName,
-					LastName:    profile.LastName,
-					Gender:      profile.Gender,
-					PhoneNumber: profile.PhoneNumber,
-					Email:       profile.Email,
+					FirstName:   *profile.FirstName,
+					LastName:    *profile.LastName,
+					Gender:      *profile.Gender,
+					PhoneNumber: *profile.PhoneNumber,
+					Email:       *profile.Email,
 					Message:     payment.Message,
 				})
 			}

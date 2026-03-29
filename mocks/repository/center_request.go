@@ -61,7 +61,7 @@ func (c *centerRequestMockRepo) GetPendingRequests(ctx context.Context) ([]entit
 
 // GetRegistrationRequests implements repository.ICenterRequestRepository.
 func (c *centerRequestMockRepo) GetRegistrationRequests(req request.GetCenterRequests, ctx context.Context) ([]entities.CenterRequest, int, error) {
-	var mockData = c.Called(ctx)
+	var mockData = c.Called(req, ctx)
 
 	var res1 []entities.CenterRequest
 	if val := mockData.Get(0); val != nil {

@@ -47,3 +47,39 @@ func UploadProfile(ctx *gin.Context) {
 		PostType: action_type.NON_POST,
 	})
 }
+
+// GetWalletPersonalProfile godoc
+// @Summary      Get a wallet personal profile
+// @Description  Get a wallet personal profile
+// @Tags         profile
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                      true  "Wallet Address"
+// @Param        request  body      request.GetTransactionRecordsRequest true  "Filter criteria"
+// @Success      200      {object}  response.PersonalWalletProfileResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /profiles/personal-wallet-profile/{id} [get]
+func GetWalletPersonalProfile(ctx *gin.Context) {
+	var request request.GetTransactionRecordsRequest
+	if ctx.ShouldBindQuery(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateProfileService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.GetWalletPersonalProfile(ctx.Param("id"), request, ctx)
+
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}

@@ -10,3 +10,14 @@ type PersonalProfileResponse struct {
 	PhoneNumber  string `json:"phone_number"`
 	Email        string `json:"email"`
 }
+
+type PersonalWalletProfileResponse struct {
+	WalletAddress string                `json:"wallet_address"`
+	FirstName     string                `json:"first_name"`
+	LastName      string                `json:"last_name"`
+	TotalDonation int64                 `json:"total_donation"`
+	TxRecords     []TransactionResponse `json:"transaction_records"`
+	RecordAmount  int                   `json:"record_amount"`
+	Page          int                   `json:"page"`
+	TotalPages    int                   `json:"total_pages"`
+}

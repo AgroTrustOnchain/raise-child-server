@@ -642,6 +642,170 @@ var (
 	}
 )
 
+// Sample test child objects
+var (
+	sampleJsonChild1 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleChildIds[0],
+		},
+		"identity_code":  "CHLD-001",
+		"first_name":     "Minh",
+		"last_name":      "Nguyễn Văn",
+		"gender":         "male",
+		"date_of_birth":  "2018-05-15",
+		"region":         sampleLocalRegions[0],
+		"avatar_blob_id": "blob-avatar-001",
+		"image_blob_ids": []string{"img-001-1", "img-001-2"},
+		"uploaded_by":    "0x123...abc",
+		"uploaded_at":    "1696149000000",
+		"updated_at":     "1696491300000",
+	}
+	sampleJsonChild2 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleChildIds[1],
+		},
+		"identity_code":  "CHLD-002",
+		"first_name":     "Linh",
+		"last_name":      "Trần Thị",
+		"gender":         "female",
+		"date_of_birth":  "22/08/2019",
+		"region":         sampleLocalRegions[1],
+		"avatar_blob_id": "blob-avatar-001",
+		"image_blob_ids": []string{"img-001-1", "img-001-2"},
+		"uploaded_by":    "0x123...abc",
+		"uploaded_at":    "1696149000000",
+		"updated_at":     "1696491300000",
+	}
+	sampleJsonChild3 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleChildIds[2],
+		},
+		"identity_code":  "CHLD-003",
+		"first_name":     "Gia Bảo",
+		"last_name":      "Lê",
+		"gender":         "male",
+		"date_of_birth":  "10/12/2017",
+		"region":         sampleLocalRegions[2],
+		"avatar_blob_id": "blob-avatar-001",
+		"image_blob_ids": []string{"img-001-1", "img-001-2"},
+		"uploaded_by":    "0x123...abc",
+		"uploaded_at":    "1696149000000",
+		"updated_at":     "1696491300000",
+	}
+	sampleJsonChild4 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleChildIds[3],
+		},
+		"identity_code":  "CHLD-004",
+		"first_name":     "An",
+		"last_name":      "Phạm Thùy",
+		"gender":         "female",
+		"date_of_birth":  "28/02/2020",
+		"region":         sampleLocalRegions[3],
+		"avatar_blob_id": "blob-avatar-001",
+		"image_blob_ids": []string{"img-001-1", "img-001-2"},
+		"uploaded_by":    "0x123...abc",
+		"uploaded_at":    "1696149000000",
+		"updated_at":     "1696491300000",
+	}
+	sampleJsonChild5 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleChildIds[4],
+		},
+		"identity_code":  "CHLD-005",
+		"first_name":     "Hải",
+		"last_name":      "Hoàng Nam",
+		"gender":         "male",
+		"date_of_birth":  "04/07/2016",
+		"region":         sampleLocalRegions[4],
+		"avatar_blob_id": "blob-avatar-001",
+		"image_blob_ids": []string{"img-001-1", "img-001-2"},
+		"uploaded_by":    "0x123...abc",
+		"uploaded_at":    "1696149000000",
+		"updated_at":     "1696491300000",
+	}
+	sampleJsonChild6 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleChildIds[5],
+		},
+		"identity_code":  "CHLD-006",
+		"first_name":     "Vy",
+		"last_name":      "Đặng Mai",
+		"gender":         "female",
+		"date_of_birth":  "30/11/2021",
+		"region":         sampleLocalRegions[5],
+		"avatar_blob_id": "blob-avatar-001",
+		"image_blob_ids": []string{"img-001-1", "img-001-2"},
+		"uploaded_by":    "0x123...abc",
+		"uploaded_at":    "1696149000000",
+		"updated_at":     "1696491300000",
+	}
+	sampleJsonChild7 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleChildIds[6],
+		},
+		"identity_code":  "CHLD-007",
+		"first_name":     "Khôi",
+		"last_name":      "Vũ Đăng",
+		"gender":         "male",
+		"date_of_birth":  "12/01/2019",
+		"region":         sampleLocalRegions[6],
+		"avatar_blob_id": "blob-avatar-001",
+		"image_blob_ids": []string{"img-001-1", "img-001-2"},
+		"uploaded_by":    "0x123...abc",
+		"uploaded_at":    "1696149000000",
+		"updated_at":     "1696491300000",
+	}
+	sampleJsonChild8 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleChildIds[7],
+		},
+		"identity_code":  "CHLD-008",
+		"first_name":     "Chi",
+		"last_name":      "Bùi Khánh",
+		"gender":         "female",
+		"date_of_birth":  "09/09/2018",
+		"region":         sampleLocalRegions[7],
+		"avatar_blob_id": "blob-avatar-001",
+		"image_blob_ids": []string{"img-001-1", "img-001-2"},
+		"uploaded_by":    "0x123...abc",
+		"uploaded_at":    "1696149000000",
+		"updated_at":     "1696491300000",
+	}
+	sampleJsonChild9 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleChildIds[8],
+		},
+		"identity_code":  "CHLD-009",
+		"first_name":     "Duy",
+		"last_name":      "Phan Anh",
+		"gender":         "male",
+		"date_of_birth":  "25/04/25",
+		"region":         sampleLocalRegions[8],
+		"avatar_blob_id": "blob-avatar-001",
+		"image_blob_ids": []string{"img-001-1", "img-001-2"},
+		"uploaded_by":    "0x123...abc",
+		"uploaded_at":    "1696149000000",
+		"updated_at":     "1696491300000",
+	}
+	sampleJsonChild10 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleChildIds[9],
+		},
+		"identity_code":  "CHLD-010",
+		"first_name":     "Ngọc",
+		"last_name":      "Lý Bảo",
+		"gender":         "female",
+		"date_of_birth":  "15/05/2020",
+		"region":         sampleLocalRegions[9],
+		"avatar_blob_id": "blob-avatar-010",
+		"image_blob_ids": []string{"img-010-1"},
+		"uploaded_by":    "0x123...abc",
+		"uploaded_at":    "1709294400000",
+		"updated_at":     "1709294400000",
+	}
+)
+
 func getSampleCenterRequests(reqs int) []entities.CenterRequest {
 	var res = make([]entities.CenterRequest, reqs)
 	return res
@@ -701,5 +865,30 @@ func getFoundJsonAdminNftsWithKeyWord() ([]map[string]interface{}, string) {
 		sampleJsonAdminNft8,
 		sampleJsonAdminNft9,
 		sampleJsonAdminNft10,
+	}, "ng"
+}
+
+func getFullJsonChildren() []map[string]interface{} {
+	return []map[string]interface{}{
+		sampleJsonChild1,
+		sampleJsonChild2,
+		sampleJsonChild3,
+		sampleJsonChild4,
+		sampleJsonChild5,
+		sampleJsonChild6,
+		sampleJsonChild7,
+		sampleJsonChild8,
+		sampleJsonChild9,
+		sampleJsonChild10,
+	}
+}
+
+func getFoundJsonChildrenWithKeyWord() ([]map[string]interface{}, string) {
+	return []map[string]interface{}{
+		sampleJsonChild1,
+		sampleJsonChild5,
+		sampleJsonChild6,
+		sampleJsonChild7,
+		sampleJsonChild10,
 	}, "ng"
 }

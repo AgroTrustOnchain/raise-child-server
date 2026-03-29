@@ -702,11 +702,27 @@ func (c *childService) CreateBooksNeedWithdrawProposalV2(req request.CreateNorma
 	}
 
 	var curTime time.Time = time.Now()
-	var index int = len(leaderNoti.ExpectedWithdrawPeriods) - 1
-	var expectedStartDate time.Time = util.RawDateToTime(leaderNoti.ExpectedWithdrawPeriods[index])
-	var expectedEndDate time.Time = expectedStartDate.AddDate(0, 0, 7)
+	var expectedStartDate time.Time
+	var index int = -1
+	for i := len(leaderNoti.ExpectedWithdrawPeriods) - 1; i >= 0; i-- {
+		var rawExpectedDate string = leaderNoti.ExpectedWithdrawPeriods[i]
+		var epextedDate time.Time = util.ToStartOfDate(util.RawDateToTime(rawExpectedDate))
+
+		if !curTime.Before(epextedDate) {
+			expectedStartDate = epextedDate
+			index = i
+			break
+		}
+	}
+
+	var notWithdrawDateErr error = errors.New(noti.NOT_WITHDRAW_EXPECTED_DATE_MESSAGE)
+	if index == -1 {
+		return nil, notWithdrawDateErr
+	}
+
+	var expectedEndDate time.Time = util.ToEndOfDate(expectedStartDate.AddDate(0, 0, 7))
 	if curTime.Before(expectedStartDate) || curTime.After(expectedEndDate) {
-		return nil, errors.New(noti.NOT_WITHDRAW_EXPECTED_DATE_MESSAGE)
+		return nil, notWithdrawDateErr
 	}
 
 	var description string = leaderNoti.Contents[index]
@@ -909,7 +925,7 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 		return response.UrlAPIResponse{}, err
 	}
 
-	if profile.IdentityCode == "" {
+	if profile.IdentityCode == nil {
 		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
@@ -1703,7 +1719,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 		return response.UrlAPIResponse{}, err
 	}
 
-	if profile.IdentityCode == "" {
+	if profile.IdentityCode == nil {
 		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
@@ -1865,7 +1881,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 		return response.UrlAPIResponse{}, err
 	}
 
-	if profile.IdentityCode == "" {
+	if profile.IdentityCode == nil {
 		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
@@ -2073,7 +2089,7 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 		return response.UrlAPIResponse{}, err
 	}
 
-	if profile.IdentityCode == "" {
+	if profile.IdentityCode == nil {
 		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
