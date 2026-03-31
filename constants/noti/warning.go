@@ -40,6 +40,8 @@ const (
 	NUMBER_NEGATIVE_WARN_MSG string = ""
 
 	TOO_MANY_REQUESTS_WARN_MSG string = "Too many requests."
+
+	NEED_VALUE_INVALID_WARN_MSG string = "Invalid value of child need."
 )
 
 const (

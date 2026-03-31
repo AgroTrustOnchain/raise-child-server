@@ -29,7 +29,7 @@ func Login(ctx *gin.Context) {
 	}
 
 	service, err := business.GenerateAuthService()
-	if ctx.ShouldBindJSON(&request) != nil {
+	if err != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
 		return
 	}

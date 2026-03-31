@@ -30,4 +30,7 @@ type IChildService interface {
 	ConfirmSpecialNeedProposal(id string, ctx context.Context) (response.BuildTransactionResponse, error)
 	VoteSpecialNeedProposal(id string, req request.VoteRequest, ctx context.Context) (response.BuildTransactionResponse, error)
 	EditSpecialNeedDao(req request.EditDaoRequest, ctx context.Context) (response.BuildTransactionResponse, error)
+	UpdateBooksNeed(req request.UpdateChildNeedRequest, ctx context.Context) (response.BuildTransactionResponse, error)
+	UpdateMealNeed(req request.UpdateChildNeedRequest, ctx context.Context) (response.BuildTransactionResponse, error)
+	UpdateHealthInsuranceNeed(req request.UpdateChildNeedRequest, ctx context.Context) (response.BuildTransactionResponse, error)
 }

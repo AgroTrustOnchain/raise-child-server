@@ -18,6 +18,7 @@ type BooksNeed struct {
 	Donations         []string `json:"donations"`
 	WithdrawProposals []string `json:"withdraw_proposals"`
 	WithdrawsForNeed  []string `json:"withdraws_for_need"`
+	IsUpdated         bool     `json:"is_updated"`
 }
 
 type HealthInsuranceNeed struct {
@@ -31,6 +32,7 @@ type HealthInsuranceNeed struct {
 	Donations         []string `json:"donations"`
 	WithdrawProposals []string `json:"withdraw_proposals"`
 	WithdrawsForNeed  []string `json:"withdraws_for_need"`
+	IsUpdated         bool     `json:"is_updated"`
 }
 
 type MealSupportDuration struct {
@@ -74,6 +76,7 @@ type MealNeed struct {
 	ProvideMealStaffs    []string              `json:"provide_meal_staffs"`
 	WithdrawProposals    []string              `json:"withdraw_proposals"`
 	WithdrawsForNeed     []string              `json:"withdraws_for_need"`
+	IsUpdated            bool                  `json:"is_updated"`
 }
 
 type OffChainMealSupportDuration struct {

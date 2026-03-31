@@ -145,6 +145,7 @@ func ApprovePendingWithdrawProposal(ctx *gin.Context) {
 // RefusePendingWithdrawProposal godoc
 // @Summary      Refuse a pending withdraw proposal
 // @Description  Refuse a pending withdraw proposal
+// @Tags         Pending Withdrawal
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth

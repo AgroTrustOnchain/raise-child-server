@@ -596,6 +596,25 @@ definitions:
       payos_client_id:
         type: string
     type: object
+  request.UpdateChildEditNeedDatesRequest:
+    properties:
+      end_date:
+        type: string
+      start_date:
+        type: string
+    type: object
+  request.UpdateChildNeedRequest:
+    properties:
+      child_id:
+        type: string
+      need_id:
+        type: string
+      value:
+        type: integer
+    required:
+    - child_id
+    - need_id
+    type: object
   request.UpdatePublisherInfoRequest:
     properties:
       avatar_blob_id:
@@ -2055,6 +2074,44 @@ paths:
       summary: Confirm provide meal for child
       tags:
       - children
+  /children/books-need:
+    put:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for updating a child's books
+        need on-chain
+      parameters:
+      - description: Update Child Books Need Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateChildNeedRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a child's books need
+      tags:
+      - children
   /children/books-need/{id}/support:
     post:
       consumes:
@@ -2129,6 +2186,44 @@ paths:
       summary: Create books need withdraw proposal
       tags:
       - children
+  /children/health-insurance-need:
+    put:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for updating a child's health
+        insurance need on-chain
+      parameters:
+      - description: Update Child Health Insurance Need Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateChildNeedRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a child's health insurance need
+      tags:
+      - children
   /children/health-insurance-need/{id}/support:
     post:
       consumes:
@@ -2201,6 +2296,44 @@ paths:
       security:
       - BearerAuth: []
       summary: Create health insurance need withdraw proposal
+      tags:
+      - children
+  /children/meal-need:
+    put:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for updating a child's meal need
+        on-chain
+      parameters:
+      - description: Update Child Meal Need Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateChildNeedRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a child's meal need
       tags:
       - children
   /children/meal-need/{id}/support:
@@ -2557,6 +2690,120 @@ paths:
       summary: Create special need campaign withdraw proposal
       tags:
       - children
+  /configs/books-need-edit-dates:
+    put:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for updating child books need
+        edit dates on-chain
+      parameters:
+      - description: Update Child Books Need Edit Dates Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateChildEditNeedDatesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update child books need edit dates
+      tags:
+      - configs
+  /configs/health-insurance-need-edit-dates:
+    put:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for updating child health insurance
+        need edit dates on-chain
+      parameters:
+      - description: Update Child Health Insurance Need Edit Dates Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateChildEditNeedDatesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update child health insurance need edit dates
+      tags:
+      - configs
+  /configs/meal-need-edit-dates:
+    put:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for updating child meal need
+        edit dates on-chain
+      parameters:
+      - description: Update Child Meal Need Edit Dates Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateChildEditNeedDatesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update child meal need edit dates
+      tags:
+      - configs
   /donors:
     get:
       consumes:
@@ -3307,6 +3554,8 @@ paths:
       security:
       - BearerAuth: []
       summary: Refuse a pending withdraw proposal
+      tags:
+      - Pending Withdrawal
   /profiles/{id}:
     post:
       consumes:

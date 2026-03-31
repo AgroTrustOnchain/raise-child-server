@@ -103,6 +103,12 @@ const (
 	LEADER_NOT_OF_REGION_MESSAGE string = "Leader is not of this region."
 
 	NOT_WITHDRAW_EXPECTED_DATE_MESSAGE string = "Still not date to create withdraw proposal for this need."
+
+	CHILD_NEED_UPDATED_MESSAGE string = "Need of this child was updated this year."
+
+	NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE string = "It is currently not date to update child need."
+
+	INVALID_DATE_MESSAGE string = "Invalid date."
 )
 
 const (

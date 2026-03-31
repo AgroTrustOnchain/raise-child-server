@@ -81,4 +81,15 @@ type CreateSpecialNeedProposalRequest struct { // For create special need campai
 	ProofBlobID *string `json:"proof_blob_id"`
 }
 
+type UpdateChildNeedRequest struct {
+	ChildID string `json:"child_id" validate:"required"`
+	NeedID  string `json:"need_id" validate:"required"`
+	Value   *int64 `json:"value"`
+}
+
+type UpdateChildEditNeedDatesRequest struct {
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+}
+
 // childs/special-need/proposal/{id}/confirm

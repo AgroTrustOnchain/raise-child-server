@@ -612,3 +612,114 @@ func VoteSpecialNeedProposal(ctx *gin.Context) {
 		PostType: action_type.NON_POST,
 	})
 }
+
+// UpdateBooksNeed godoc
+// @Summary      Update a child's books need
+// @Description  Prepares and builds a transaction for updating a child's books need on-chain
+// @Tags         children
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request  body      request.UpdateChildNeedRequest   true  "Update Child Books Need Detail"
+// @Success      200      {object}  response.BuildTransactionResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /children/books-need [put]
+func UpdateBooksNeed(ctx *gin.Context) {
+	var request request.UpdateChildNeedRequest
+	if ctx.ShouldBindJSON(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateChildService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.UpdateBooksNeed(request, ctx)
+
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
+
+// UpdateMealNeed godoc
+// @Summary      Update a child's meal need
+// @Description  Prepares and builds a transaction for updating a child's meal need on-chain
+// @Tags         children
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request  body      request.UpdateChildNeedRequest   true  "Update Child Meal Need Detail"
+// @Success      200      {object}  response.BuildTransactionResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /children/meal-need [put]
+func UpdateMealNeed(ctx *gin.Context) {
+	var request request.UpdateChildNeedRequest
+	if ctx.ShouldBindJSON(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateChildService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.UpdateMealNeed(request, ctx)
+
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
+
+// UpdateHealthInsuranceNeed godoc
+// @Summary      Update a child's health insurance need
+// @Description  Prepares and builds a transaction for updating a child's health insurance need on-chain
+// @Tags         children
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request  body      request.UpdateChildNeedRequest   true  "Update Child Health Insurance Need Detail"
+// @Success      200      {object}  response.BuildTransactionResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /children/health-insurance-need [put]
+func UpdateHealthInsuranceNeed(ctx *gin.Context) {
+	var request request.UpdateChildNeedRequest
+	if ctx.ShouldBindJSON(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateChildService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.UpdateHealthInsuranceNeed(request, ctx)
+
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}

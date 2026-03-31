@@ -36,6 +36,7 @@ func InitializeChildRoutes(server *gin.Engine) {
 	var proposalLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/3), 5)
 	var voteLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/1), 5)
 	var confirmLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/2), 5)
+	var editNeedLimit = middleware.InitializeRateLimiter(rate.Every(time.Minute/6), 10)
 
 	// Normal group
 	var norGroup = server.Group(contextPath)
@@ -65,4 +66,10 @@ func InitializeChildRoutes(server *gin.Engine) {
 	// Staff group
 	var staffGroup = server.Group(contextPath, middleware.Authorize, middleware.StaffRoleAuthorize)
 	staffGroup.POST("/:id/provide-meal/confirm", middleware.RateLimitMiddleware(confirmLimit), transport.ConfirmProvideMealForChild)
+
+	// Leader group
+	var leaderGroup = server.Group(contextPath, middleware.Authorize, middleware.LeaderAuthorize)
+	leaderGroup.PUT("/books-need", middleware.RateLimitMiddleware(editNeedLimit), transport.UpdateBooksNeed)
+	leaderGroup.PUT("/meal-need", middleware.RateLimitMiddleware(editNeedLimit), transport.UpdateMealNeed)
+	leaderGroup.PUT("/health-insurance-need", middleware.RateLimitMiddleware(editNeedLimit), transport.UpdateHealthInsuranceNeed)
 }

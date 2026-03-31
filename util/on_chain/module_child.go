@@ -4,7 +4,6 @@ import (
 	"os"
 	"raise-child/constants/env"
 	"raise-child/constants/on-chain/sui"
-	"time"
 )
 
 type AddChildArguments struct {
@@ -177,6 +176,14 @@ type SubmitTaskArguments struct {
 	Actor       string
 }
 
+type UpdateChildNeedArguments struct {
+	StaffNft string
+	ChildID  string
+	NeedID   string
+	Year     int
+	Value    int64
+}
+
 type IModuleChild interface {
 	GetModule() string
 	GetChildObjectStruct() string
@@ -196,6 +203,7 @@ type IModuleChild interface {
 	ToCreateChildSpecialNeedProposalArgumentsV2(args CreateChildSpecialNeedProposalArgumentsV2) []interface{}
 	ToConfirmChildSpecialNeedProposalArguments(args ConfirmChildSpecialNeedProposalArguments) []interface{}
 	ToWithdrawFromNeedArguments(args WithdrawFromNeedArguments) []interface{}
+	ToUpdateChildNeedArguments(args UpdateChildNeedArguments) []interface{}
 	ToSubmitTaskArguments(args SubmitTaskArguments) []interface{}
 	GetFunctionAddChild() string
 	GetFunctionUploadCenter() string
@@ -226,6 +234,9 @@ type IModuleChild interface {
 	GetFunctionConfirmProvideMealForChild() string
 	GetFunctionConfirmProvideMealForChildV2() string
 	GetFunctionSubmitTask() string
+	GetFunctionUpdateChildMealNeed() string
+	GetFunctionUpdateChildBooksNeed() string
+	GetFunctionUpdateChildHealthInsuranceNeed() string
 }
 
 type moduleChild struct{}
@@ -332,6 +343,34 @@ func (m *moduleChild) ToSubmitTaskArguments(args SubmitTaskArguments) []interfac
 		args.Actor,
 		sui.CLOCK_OBJECT_ID,
 	}
+}
+
+// ToUpdateChildNeedArguments implements IModuleChild.
+func (m *moduleChild) ToUpdateChildNeedArguments(args UpdateChildNeedArguments) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		args.StaffNft,
+		args.ChildID,
+		args.NeedID,
+		uint64(args.Year),
+		uint64(args.Value),
+		sui.CLOCK_OBJECT_ID,
+	}
+}
+
+// GetFunctionUpdateChildBooksNeed implements IModuleChild.
+func (m *moduleChild) GetFunctionUpdateChildBooksNeed() string {
+	return sui.UPDATE_CHILD_BOOKS_NEED_FUNCTION
+}
+
+// GetFunctionUpdateChildHealthInsuranceNeed implements IModuleChild.
+func (m *moduleChild) GetFunctionUpdateChildHealthInsuranceNeed() string {
+	return sui.UPDATE_CHILD_HEALTH_INSURANCE_NEED_FUNCTION
+}
+
+// GetFunctionUpdateChildMealNeed implements IModuleChild.
+func (m *moduleChild) GetFunctionUpdateChildMealNeed() string {
+	return sui.UPDATE_CHILD_MEAL_NEED_FUNCTION
 }
 
 // GetFunctionConfirmProvideMealForChildV2 implements IModuleChild.
@@ -610,7 +649,6 @@ func (m *moduleChild) ToAddChildArguments(args AddChildArguments) []interface{} 
 		args.Region,
 		args.AvatarBlobId,
 		args.HomeBlobID,
-		uint64(time.Now().Year()),
 		args.FirstGuardianFullName,
 		args.FirstGuardianPhone,
 		args.FirstGuardianRelation,
