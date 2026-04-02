@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"raise-child/interfaces/repository"
 	"raise-child/model/entities"
 
 	"github.com/stretchr/testify/mock"
@@ -12,7 +11,7 @@ type offChainWithdrawProposalMockRepo struct {
 	mock.Mock
 }
 
-func InitializeOffChainWithdrawProposalMockRepo() repository.IOffChainWithdrawProposalRepository {
+func InitializeOffChainWithdrawProposalMockRepo() *offChainWithdrawProposalMockRepo {
 	return &offChainWithdrawProposalMockRepo{}
 }
 

@@ -653,9 +653,13 @@ func (c *childService) CreateBooksNeedWithdrawProposalV2(req request.CreateNorma
 		return nil, err
 	}
 
+	if need == nil {
+		return nil, genericErr
+	}
+
 	// Already withdraw all
 	if len(need.Donations) == len(need.WithdrawsForNeed) {
-		return nil, errors.New("")
+		return nil, errors.New(noti.NEED_WITHDRAWN_MESSAGE)
 	}
 
 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
@@ -665,6 +669,10 @@ func (c *childService) CreateBooksNeedWithdrawProposalV2(req request.CreateNorma
 	}, ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if child == nil {
+		return nil, genericErr
 	}
 
 	var staffModule = on_chain.InitializeModuleStaff()
@@ -706,10 +714,10 @@ func (c *childService) CreateBooksNeedWithdrawProposalV2(req request.CreateNorma
 	var index int = -1
 	for i := len(leaderNoti.ExpectedWithdrawPeriods) - 1; i >= 0; i-- {
 		var rawExpectedDate string = leaderNoti.ExpectedWithdrawPeriods[i]
-		var epextedDate time.Time = util.ToStartOfDate(util.RawDateToTime(rawExpectedDate))
+		var expectedDate time.Time = util.ToStartOfDate(util.RawDateToTime(rawExpectedDate))
 
-		if !curTime.Before(epextedDate) {
-			expectedStartDate = epextedDate
+		if !curTime.Before(expectedDate) {
+			expectedStartDate = expectedDate
 			index = i
 			break
 		}
@@ -802,9 +810,13 @@ func (c *childService) CreateHealthInsuranceNeedWithdrawProposalV2(req request.C
 		return nil, err
 	}
 
+	if need == nil {
+		return nil, genericErr
+	}
+
 	// Already withdraw all
 	if len(need.Donations) == len(need.WithdrawsForNeed) {
-		return nil, errors.New("")
+		return nil, errors.New(noti.NEED_WITHDRAWN_MESSAGE)
 	}
 
 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
@@ -814,6 +826,10 @@ func (c *childService) CreateHealthInsuranceNeedWithdrawProposalV2(req request.C
 	}, ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if child == nil {
+		return nil, genericErr
 	}
 
 	var staffModule = on_chain.InitializeModuleStaff()
@@ -925,7 +941,7 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 		return response.UrlAPIResponse{}, err
 	}
 
-	if profile.IdentityCode == nil {
+	if profile == nil || profile.IdentityCode == nil {
 		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
@@ -1018,11 +1034,15 @@ func (c *childService) CreateMealNeedWithdrawProposalV2(req request.CreateNormal
 		return nil, err
 	}
 
+	if need == nil {
+		return nil, genericErr
+	}
+
 	totalSupportedMonths, _ := strconv.Atoi(need.TotalSupportedMonths)
 	var expectedDuration int = totalSupportedMonths - len(need.WithdrawsForNeed)
 	// Already withdraw all
 	if expectedDuration == 0 {
-		return nil, errors.New("")
+		return nil, errors.New(noti.NEED_WITHDRAWN_MESSAGE)
 	}
 
 	var previousDuration int = 0
@@ -1043,7 +1063,7 @@ func (c *childService) CreateMealNeedWithdrawProposalV2(req request.CreateNormal
 		var months int = totalDuration - expectedDuration
 		if months >= 0 {
 			var startDate = startPeriod.AddDate(0, months, 0)
-			expectedDate = startDate.AddDate(0, -3, 0)
+			expectedDate = startDate.AddDate(0, 0, -3)
 			break
 		}
 
@@ -1064,6 +1084,10 @@ func (c *childService) CreateMealNeedWithdrawProposalV2(req request.CreateNormal
 	}, ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if child == nil {
+		return nil, genericErr
 	}
 
 	var staffModule = on_chain.InitializeModuleStaff()
@@ -1100,11 +1124,17 @@ func (c *childService) CreateMealNeedWithdrawProposalV2(req request.CreateNormal
 		return nil, err
 	}
 
-	var rawExpectedDate string = util.TimeToRawDate(expectedDate)
+	//var rawExpectedDate string = util.TimeToRawDate(expectedDate)
 	var index int
 	for i := len(leaderNoti.ExpectedWithdrawPeriods) - 1; i >= 0; i-- {
+		// var rawDate string = leaderNoti.ExpectedWithdrawPeriods[i]
+		// if rawDate == rawExpectedDate {
+		// 	index = i
+		// 	break
+		// }
+
 		var rawDate string = leaderNoti.ExpectedWithdrawPeriods[i]
-		if rawDate == rawExpectedDate {
+		if !expectedDate.Before(util.ToStartOfDate(util.RawDateToTime(rawDate))) {
 			index = i
 			break
 		}
@@ -1719,7 +1749,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 		return response.UrlAPIResponse{}, err
 	}
 
-	if profile.IdentityCode == nil {
+	if profile == nil || profile.IdentityCode == nil {
 		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
@@ -1881,7 +1911,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 		return response.UrlAPIResponse{}, err
 	}
 
-	if profile.IdentityCode == nil {
+	if profile == nil || profile.IdentityCode == nil {
 		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
@@ -1897,6 +1927,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
+		c.errLogger.Println("Fail at get object")
 		return response.UrlAPIResponse{}, err
 	}
 
@@ -1920,6 +1951,11 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	var nextEndPeriod time.Time = nextStartPeriod.AddDate(0, req.Months, 0)
 	if nextEndPeriod.After(util.RawDateToTime(rawMaxSupportedEndPeriod)) {
 		// Support 6 months -> 16/1/2027 -> Deny
+		c.errLogger.Println("Raw last end period:", lastDuration.Fields.EndPeriod)
+		c.errLogger.Println("Last end period:", endPeriod)
+		c.errLogger.Println("Next year:", nextYear)
+		c.errLogger.Println("Next start period:", nextStartPeriod)
+		c.errLogger.Println("Next end period:", nextEndPeriod)
 		return response.UrlAPIResponse{}, errors.New(noti.MEAL_NEED_SUPPORT_DURATION_OUT_RANGE_MESSAGE)
 	}
 
@@ -1941,6 +1977,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	})
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
+		c.errLogger.Println("Fail at create payos")
 		return response.UrlAPIResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
@@ -2089,7 +2126,7 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 		return response.UrlAPIResponse{}, err
 	}
 
-	if profile.IdentityCode == nil {
+	if profile == nil || profile.IdentityCode == nil {
 		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 

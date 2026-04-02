@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"raise-child/constants/noti"
 	"raise-child/constants/shared"
 	"raise-child/mocks/pkg"
@@ -108,9 +107,6 @@ func TestCreateBankProfile(t *testing.T) {
 			if tc.isAlreadyUpload {
 				bankProfile = &sampleUploadedBankProfile
 			}
-
-			log.Println(fmt.Sprintf("Address in case %d: %s", i, tc.context.Value("address").(string)))
-			log.Println(fmt.Sprintf("Sub in case %d: %s", i, tc.context.Value("sub").(string)))
 
 			mockClient.On("SuiXGetOwnedObjects", mock.Anything, mock.Anything).Return(tc.suiPaginatedRes, nil)
 			repo.On("GetBankProfileByOwner", mock.AnythingOfType("string"), mock.Anything).Return(bankProfile, nil)

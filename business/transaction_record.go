@@ -272,6 +272,6 @@ func (t *transactionRecordService) getGetTransactionRecordsRedisKey(req request.
 		sortCriteria = req.SortCriteria
 	}
 
-	return fmt.Sprintf("tx_record:kw:%s:pool:%s:of:%s:type:%s:min:%s:max:%s:%s:sc:%s:o:%s:s:%d:p:%d",
+	return fmt.Sprintf("tx_record:kw:%s:pool:%s:of:%s:type:%s:min:%s:max:%s:sc:%s:o:%s:s:%d:p:%d",
 		keyword, poolId, actor, actionType, minAmount, maxAmount, sortCriteria, req.SortOrder, req.PageSize, req.Page)
 }

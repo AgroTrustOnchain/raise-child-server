@@ -48,6 +48,11 @@ var (
 		"donor_ids":               sampleDonorIds,
 		"donor_nfts":              sampleDonorNfts,
 	}
+	samplePoolObj = map[string]interface{}{
+		"id": map[string]string{
+			"id": "",
+		},
+	}
 )
 
 // Admin NFT
@@ -803,6 +808,74 @@ var (
 		"uploaded_by":    "0x123...abc",
 		"uploaded_at":    "1709294400000",
 		"updated_at":     "1709294400000",
+	}
+)
+
+// Child Needs
+var (
+	sampleSupportedBooksNeedJson = map[string]interface{}{
+		"supported_years": []string{"1"},
+		"year":            "1",
+	}
+	sampleNotSupportedBooksNeedJson = map[string]interface{}{
+		"supported_years": []string{"0"},
+		"year":            "1",
+		"value":           "10000",
+		"child":           sampleAddress,
+	}
+	sampleWithdrawnBooksNeedJson = map[string]interface{}{
+		"donations":          []string{"1", "2"},
+		"withdraws_for_need": []string{"1", "2"},
+	}
+	sampleStillNotWithdrawnBooksNeedJson = map[string]interface{}{
+		"donations":          []string{"1", "2"},
+		"withdraws_for_need": []string{"1"},
+	}
+	sampleMealNeedJson = map[string]interface{}{
+		"child":     "child-456",
+		"year":      "2026",
+		"value":     "200000",
+		"donors":    []string{"donor-a", "donor-b"},
+		"donations": []string{"donation-001"},
+		"durations": []map[string]interface{}{
+			{
+				"fields": map[string]interface{}{
+					"start_period": "11/02/2026",
+					"end_period":   "11/12/2026",
+				},
+			},
+		},
+		"total_supported_months": "11",
+		"supported_years": map[string]interface{}{
+			"fields": map[string]interface{}{
+				"contents": []map[string]interface{}{
+					{
+						"fields": map[string]interface{}{
+							"key":   "2026",
+							"value": "11",
+						},
+					},
+				},
+			},
+		},
+		"provide_meal_dates":   []string{"2026-04-01"},
+		"provide_meal_periods": []string{"lunch"},
+		"provide_meal_staffs":  []string{"staff-01"},
+		"withdraw_proposals":   []string{},
+		"withdraws_for_need":   []string{},
+		"is_updated":           true,
+	}
+	sampleSpecialNeedCampaignJson = map[string]interface{}{
+		"child":         sampleAddress,
+		"target":        "1000000",
+		"total_donated": "900000",
+	}
+)
+
+var (
+	sampleIdentityCode string = "Identity Code"
+	sampleProfileObj          = entities.Profile{
+		IdentityCode: &sampleIdentityCode,
 	}
 )
 

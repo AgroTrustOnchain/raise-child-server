@@ -333,6 +333,6 @@ func (p *profileService) getGetWalletPersonalProfileRedisKey(wallet string, req 
 		sortCriteria = req.SortCriteria
 	}
 
-	return fmt.Sprintf("wallet_personal_profile:kw:%s:pool:%s:of:%s:type:%s:min:%s:max:%s:%s:sc:%s:o:%s:s:%d:p:%d",
+	return fmt.Sprintf("wallet_personal_profile:kw:%s:pool:%s:of:%s:type:%s:min:%s:max:%s:sc:%s:o:%s:s:%d:p:%d",
 		keyword, poolId, wallet, actionType, minAmount, maxAmount, sortCriteria, req.SortOrder, req.PageSize, req.Page)
 }

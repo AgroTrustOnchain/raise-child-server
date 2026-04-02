@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"raise-child/interfaces/repository"
 	"raise-child/model/dtos/request"
 	"raise-child/model/entities"
 
@@ -13,7 +12,7 @@ type paymentMockRepo struct {
 	mock.Mock
 }
 
-func InitializePaymentMockRepo() repository.IPaymentRepository {
+func InitializePaymentMockRepo() *paymentMockRepo {
 	return &paymentMockRepo{}
 }
 

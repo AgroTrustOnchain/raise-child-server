@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"raise-child/interfaces/repository"
 	"raise-child/model/dtos/request"
 	"raise-child/model/entities"
 
@@ -13,12 +12,7 @@ type leaderNotiMockRepo struct {
 	mock.Mock
 }
 
-// GetNotiByNeed implements repository.ILeaderNotiRepository.
-func (l *leaderNotiMockRepo) GetNotiByNeed(id string, ctx context.Context) (*entities.LeaderNoti, error) {
-	panic("unimplemented")
-}
-
-func InitializeLeaderNotiMockRepo() repository.ILeaderNotiRepository {
+func InitializeLeaderNotiMockRepo() *leaderNotiMockRepo {
 	return &leaderNotiMockRepo{}
 }
 
@@ -96,6 +90,27 @@ func (l *leaderNotiMockRepo) GetNoti(id string, ctx context.Context) (*entities.
 
 // GetNotiByMealNeed implements repository.ILeaderNotiRepository.
 func (l *leaderNotiMockRepo) GetNotiByMealNeed(id string, ctx context.Context) (*entities.LeaderNoti, error) {
+	var mockData = l.Called(id, ctx)
+
+	var res1 *entities.LeaderNoti
+	if mockFunc, ok := mockData.Get(0).(func(string, context.Context) *entities.LeaderNoti); ok {
+		res1 = mockFunc(id, ctx)
+	} else {
+		res1 = mockData.Get(0).(*entities.LeaderNoti)
+	}
+
+	var res2 error
+	if mockFunc, ok := mockData.Get(1).(func(string, context.Context) error); ok {
+		res2 = mockFunc(id, ctx)
+	} else {
+		res2 = mockData.Error(1)
+	}
+
+	return res1, res2
+}
+
+// GetNotiByNeed implements repository.ILeaderNotiRepository.
+func (l *leaderNotiMockRepo) GetNotiByNeed(id string, ctx context.Context) (*entities.LeaderNoti, error) {
 	var mockData = l.Called(id, ctx)
 
 	var res1 *entities.LeaderNoti

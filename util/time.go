@@ -2,7 +2,7 @@ package util
 
 import "time"
 
-const dateFormat string = "25/12/2026"
+const dateFormat string = "02/01/2006"
 
 var request_duration time.Duration = time.Hour * 72 // 3 days
 var bank_request_duration time.Duration = time.Hour * 24 * 7
