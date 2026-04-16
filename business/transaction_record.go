@@ -87,9 +87,9 @@ func (t *transactionRecordService) GetTransactionRecords(req request.GetTransact
 		}
 	}
 
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
-	req.SortCriteria = util.StanderizeSortCriteria(req.SortCriteria)
-	req.Keyword = util.StanderizeString(req.Keyword)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
+	req.SortCriteria = util.StandardizeSortCriteria(req.SortCriteria)
+	req.Keyword = util.StandardizeString(req.Keyword)
 	if req.Page < 1 {
 		req.Page = 1
 	}

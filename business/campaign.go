@@ -211,9 +211,9 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 		}
 	}
 
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
-	req.Keyword = util.StanderizeString(req.Keyword)
-	req.SortCriteria = util.StanderizeSortCriteria(req.SortCriteria)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
+	req.Keyword = util.StandardizeString(req.Keyword)
+	req.SortCriteria = util.StandardizeSortCriteria(req.SortCriteria)
 	if req.Page < 1 {
 		req.Page = 1
 	}

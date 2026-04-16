@@ -89,7 +89,7 @@ func (l *leaderRequestService) CreateRequest(req request.CreateRegistrationReque
 		CenterAddress: "",
 		// AdminRegistrationRequest: entities.AdminRegistrationRequest{
 		// 	ID:                   util.GenerateId(),
-		// 	IdentityCode:         util.StanderizeString(profile.IdentityCode),
+		// 	IdentityCode:         util.StandardizeString(profile.IdentityCode),
 		// 	IdentityCardBlobID:   strings.TrimSpace(req.IdentityCardBlobID),
 		// 	AvatarBlobID:         strings.TrimSpace(req.AvatarBlobID),
 		// 	FirstName:            strings.TrimSpace(profile.FirstName),

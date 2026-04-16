@@ -81,9 +81,9 @@ func (s *staffService) GetStaff(id string, ctx context.Context) (response.StaffR
 
 // GetStaffs implements business.IStaffService.
 func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
-	req.Keyword = util.StanderizeString(req.Keyword)
-	req.Region = util.StanderizeString(req.Region)
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Keyword = util.StandardizeString(req.Keyword)
+	req.Region = util.StandardizeString(req.Region)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	if req.Page < 1 {
 		req.Page = 1
 	}
@@ -128,13 +128,13 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 		var staff entities.StaffNft = staffs[i]
 
 		if req.Role != "" {
-			if util.StanderizeString(staff.Role) != util.StanderizeString(req.Role) { // Not matched
+			if util.StandardizeString(staff.Role) != util.StandardizeString(req.Role) { // Not matched
 				continue
 			}
 		}
 
 		if req.Region != "" {
-			if util.StanderizeString(staff.Region) != req.Region { // Not matched
+			if util.StandardizeString(staff.Region) != req.Region { // Not matched
 				continue
 			}
 		}
@@ -153,8 +153,8 @@ func (s *staffService) GetStaffs(req request.GetStaffsRequest, ctx context.Conte
 		}
 
 		if req.Keyword != "" {
-			var firstName string = util.StanderizeString(staff.FirstName)
-			var lastName string = util.StanderizeString(staff.LastName)
+			var firstName string = util.StandardizeString(staff.FirstName)
+			var lastName string = util.StandardizeString(staff.LastName)
 			if !strings.Contains(firstName, req.Keyword) && !strings.Contains(lastName, req.Keyword) && !strings.Contains(staff.IdentityCode, req.Keyword) && !strings.Contains(staff.PhoneNumber, req.Keyword) && !strings.Contains(staff.Email, req.Keyword) { // Not matched
 				continue
 			}

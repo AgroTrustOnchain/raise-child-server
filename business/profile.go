@@ -93,7 +93,7 @@ func (p *profileService) UploadProfile(id string, req request.UploadProfileReque
 		return response.PersonalProfileResponse{}, genericErr
 	}
 
-	var gender string = util.StanderizeGender(util.StanderizeString(req.Gender))
+	var gender string = util.StandardizeGender(util.StandardizeString(req.Gender))
 	if gender == "" {
 		return response.PersonalProfileResponse{}, errors.New(noti.UNDEFINED_GENDER_MESSAGE)
 	}
@@ -159,9 +159,9 @@ func (p *profileService) GetWalletPersonalProfile(id string, req request.GetTran
 		}
 	}
 
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
-	req.SortCriteria = util.StanderizeSortCriteria(req.SortCriteria)
-	req.Keyword = util.StanderizeString(req.Keyword)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
+	req.SortCriteria = util.StandardizeSortCriteria(req.SortCriteria)
+	req.Keyword = util.StandardizeString(req.Keyword)
 	if req.Page < 1 {
 		req.Page = 1
 	}
@@ -290,15 +290,15 @@ func (p *profileService) GetWalletPersonalProfile(id string, req request.GetTran
 
 	totalDonation, _ := strconv.ParseInt(nfts[0].TotalDonation, 10, 64)
 	res = response.PersonalWalletProfileResponse{
-		WalletAddress:   id,
-		FirstName:       nfts[0].FirstName,
-		LastName:        nfts[0].LastName,
-		TotalDonation:   totalDonation,
-		SupportedChilds: nfts[0].SupportedChilds,
-		TxRecords:       data,
-		RecordAmount:    len(data),
-		Page:            req.Page,
-		TotalPages:      int(math.Ceil(float64(len(filteredTxs)) / float64(req.PageSize))),
+		WalletAddress:     id,
+		FirstName:         nfts[0].FirstName,
+		LastName:          nfts[0].LastName,
+		TotalDonation:     totalDonation,
+		SupportedChildren: nfts[0].SupportedChilds,
+		TxRecords:         data,
+		RecordAmount:      len(data),
+		Page:              req.Page,
+		TotalPages:        int(math.Ceil(float64(len(filteredTxs)) / float64(req.PageSize))),
 	}
 
 	p.redisCache.Set(redisKey, res, time.Minute*5, ctx)

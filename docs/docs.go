@@ -2060,7 +2060,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.AddChildStringMetadaRequest"
+                            "$ref": "#/definitions/request.AddChildStringMetadataRequest"
                         }
                     }
                 ],
@@ -2117,7 +2117,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.AddChildStringMetadaRequest"
+                            "$ref": "#/definitions/request.AddChildStringMetadataRequest"
                         }
                     }
                 ],
@@ -7064,7 +7064,7 @@ const docTemplate = `{
                 }
             }
         },
-        "request.AddChildStringMetadaRequest": {
+        "request.AddChildStringMetadataRequest": {
             "type": "object",
             "required": [
                 "key",

@@ -36,6 +36,8 @@ const (
 
 	UNDEFINED_GENDER_MESSAGE string = "Undefined gender."
 
+	UNDEFINED_RELATIONSHIP_MESSAGE string = "Undefined relationship."
+
 	NOT_UPLOADED_PROFILE_MESSAGE string = "You have not uploaded your personal information yet."
 
 	PAYMENT_EXPIRED_MESSAGE string = "This payment transaction has been exipred."

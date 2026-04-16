@@ -149,8 +149,8 @@ func (c *childService) GetChild(id string, ctx context.Context) (response.ChildR
 
 // GetChilds implements business.IChildService.
 func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.Context) (response.PaginationDataResponse, error) {
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
-	req.Keyword = util.StanderizeString(req.Keyword)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
+	req.Keyword = util.StandardizeString(req.Keyword)
 	if req.Page < 1 {
 		req.Page = 1
 	}
@@ -196,14 +196,14 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 		req.PageSize = default_page_size
 	}
 
-	var keyword string = util.StanderizeString(req.Keyword)
-	var region string = util.StanderizeString(req.Region)
+	var keyword string = util.StandardizeString(req.Keyword)
+	var region string = util.StandardizeString(req.Region)
 	var filteredChildren []entities.Child
 	for i := len(children) - 1; i >= 0; i-- {
 		var child entities.Child = children[i]
 
 		if region != "" {
-			if util.StanderizeString(child.Region) != region { // Not matched
+			if util.StandardizeString(child.Region) != region { // Not matched
 				continue
 			}
 		}
@@ -222,8 +222,8 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 		}
 
 		if keyword != "" {
-			var firstName string = util.StanderizeString(child.FirstName)
-			var lastName string = util.StanderizeString(child.LastName)
+			var firstName string = util.StandardizeString(child.FirstName)
+			var lastName string = util.StandardizeString(child.LastName)
 			if !strings.Contains(firstName, keyword) && !strings.Contains(lastName, keyword) && !strings.Contains(child.IdentityCode, keyword) { // Not matched
 				continue
 			}
@@ -277,7 +277,7 @@ func (c *childService) UploadChild(req request.UploadChildRequest, ctx context.C
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
-	var gender string = util.StanderizeGender(req.Gender)
+	var gender string = util.StandardizeGender(req.Gender)
 	if gender == "" {
 		return response.BuildTransactionResponse{}, genericErr
 	}
@@ -290,12 +290,12 @@ func (c *childService) UploadChild(req request.UploadChildRequest, ctx context.C
 		Function:  module.GetFunctionAddChild(),
 		ErrLogger: c.errLogger,
 		Arguments: module.ToAddChildArguments(on_chain.AddChildArguments{
-			IdentityCode: util.StanderizeString(req.IdentityCode),
-			FirstName:    util.StanderizeString(req.FirstName),
-			LastName:     util.StanderizeString(req.LastName),
+			IdentityCode: util.StandardizeString(req.IdentityCode),
+			FirstName:    util.StandardizeString(req.FirstName),
+			LastName:     util.StandardizeString(req.LastName),
 			Gender:       gender,
 			DateOfBirth:  rawDate,
-			AvatarBlobId: util.StanderizeString(req.AvatarBlobId),
+			AvatarBlobId: util.StandardizeString(req.AvatarBlobId),
 		}),
 	}, ctx)
 
@@ -306,7 +306,7 @@ func (c *childService) UploadChild(req request.UploadChildRequest, ctx context.C
 }
 
 // AddNumberMetada implements business.IChildService.
-func (c *childService) AddNumberMetada(id string, req request.AddChildNumberMetadaRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+func (c *childService) AddNumberMetada(id string, req request.AddChildNumberMetadataRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
 	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
@@ -317,7 +317,7 @@ func (c *childService) AddNumberMetada(id string, req request.AddChildNumberMeta
 		return response.BuildTransactionResponse{}, err
 	}
 
-	var key string = util.StanderizeString(req.Key)
+	var key string = util.StandardizeString(req.Key)
 	if existed := slices.Contains(child.DynamicFields, key); existed { // Field existed
 		return response.BuildTransactionResponse{}, errors.New(noti.METADATA_EXISTED_MESSAGE)
 	}
@@ -343,7 +343,7 @@ func (c *childService) AddNumberMetada(id string, req request.AddChildNumberMeta
 }
 
 // AddStringMetada implements business.IChildService.
-func (c *childService) AddStringMetada(id string, req request.AddChildStringMetadaRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+func (c *childService) AddStringMetada(id string, req request.AddChildStringMetadataRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
 	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
@@ -354,7 +354,7 @@ func (c *childService) AddStringMetada(id string, req request.AddChildStringMeta
 		return response.BuildTransactionResponse{}, err
 	}
 
-	var key string = util.StanderizeString(req.Key)
+	var key string = util.StandardizeString(req.Key)
 	if existed := slices.Contains(child.DynamicFields, key); existed { // Field existed
 		return response.BuildTransactionResponse{}, errors.New(noti.METADATA_EXISTED_MESSAGE)
 	}
@@ -369,7 +369,7 @@ func (c *childService) AddStringMetada(id string, req request.AddChildStringMeta
 		Arguments: []interface{}{
 			id,
 			key,
-			util.StanderizeString(req.Value),
+			util.StandardizeString(req.Value),
 			internal_sui.CLOCK_OBJECT_ID,
 		},
 	}, ctx)

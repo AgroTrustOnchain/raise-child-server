@@ -249,7 +249,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 		return nil, errors.New(noti.REGION_NOT_ADDED_WARN_MSG)
 	}
 
-	var gender string = util.StanderizeGender(util.StanderizeString(req.Gender))
+	var gender string = util.StandardizeGender(util.StandardizeString(req.Gender))
 	if gender == "" {
 		return nil, errors.New(noti.UNDEFINED_GENDER_MESSAGE)
 	}
@@ -275,16 +275,23 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 	}
 
 	var secondGuardianProfile *entities.ChildGuardianProfile
+
 	if req.SecondGuardian != nil {
+
+		var relation string = util.StandardizeRelation(req.SecondGuardian.Relation)
+		if relation == "" {
+			return nil, errors.New(noti.UNDEFINED_RELATIONSHIP_MESSAGE)
+		}
+
 		secondGuardianProfile = &entities.ChildGuardianProfile{
 			FullName:           strings.TrimSpace(req.SecondGuardian.FullName),
 			PhoneNumber:        strings.TrimSpace(req.SecondGuardian.PhoneNumber),
-			Relation:           req.SecondGuardian.Relation,
+			Relation:           relation,
 			IdentityCardBlobID: strings.TrimSpace(req.SecondGuardian.IdentityCardBlobID),
 		}
 	}
 
-	var firstNasme string = strings.TrimSpace(req.FirstName)
+	var firstName string = strings.TrimSpace(req.FirstName)
 	var lastName string = strings.TrimSpace(req.LastName)
 	var homeAddr string = strings.TrimSpace(req.HomeAddress)
 
@@ -300,7 +307,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 			IdentityCode:                    identityCode,
 			ChildBirthCertificateBytesImage: birthCertBytes,
 			Region:                          req.Region,
-			FirstName:                       firstNasme,
+			FirstName:                       firstName,
 			LastName:                        lastName,
 			Gender:                          gender,
 			DateOfBirth:                     dateOfBirth,
@@ -339,7 +346,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 		AvatarBlobId:           req.AvatarBlobId,
 		HomeBlobID:             req.HomeBlobID,
 		Region:                 region,
-		FirstName:              firstNasme,
+		FirstName:              firstName,
 		LastName:               lastName,
 		Gender:                 gender,
 		DateOfBirth:            dateOfBirth,
@@ -366,7 +373,7 @@ func (u *uploadChildRequestService) GetUploadChildRequest(id string, ctx context
 
 // GetUploadChildRequests implements business.IUploadChildRequestService.
 func (u *uploadChildRequestService) GetUploadChildRequests(req request.GetUploadChildRequests, ctx context.Context) (response.PaginationDataResponse, error) {
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	if req.Page < 1 {
 		req.Page = 1
 	}

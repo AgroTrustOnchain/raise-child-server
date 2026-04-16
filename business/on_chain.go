@@ -141,8 +141,8 @@ func (o *onChainService) ExecuteTransaction(req request.ExecuteTransactionReques
 		req.UpdatedAt = curTime
 
 		o.uploadChildRepo.UpdateUploadChildRequest(*req, ctx)
-	} else if req.RegistraionReq != "" {
-		req, err := o.registrationRepo.GetRegistrationRequest(req.RegistraionReq, ctx)
+	} else if req.RegistrationReq != "" {
+		req, err := o.registrationRepo.GetRegistrationRequest(req.RegistrationReq, ctx)
 		if err != nil {
 			return err
 		}

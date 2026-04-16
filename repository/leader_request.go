@@ -120,8 +120,8 @@ func (v *localLeaderRequestRepo) GetRegistrationRequests(req request.GetNormalSt
 	queryCondition += "ORDER BY created_at " + order
 
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
-		table:       registraion_request_table,
-		limitAmount: registraion_request_limit_record,
+		table:       registration_request_table,
+		limitAmount: registration_request_limit_record,
 		condition:   queryCondition,
 		page:        req.Page,
 		isGetCount:  false,

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"raise-child/constants/noti"
@@ -22,7 +21,7 @@ import (
 // Load .env file
 func loadEnv(logger *log.Logger) {
 	if err := godotenv.Load(); err != nil {
-		logger.Println(fmt.Sprintf(noti.ENV_LOAD_ERR_MSG, "") + err.Error())
+		logger.Println(noti.ENV_LOAD_ERR_MSG + err.Error())
 	}
 }
 

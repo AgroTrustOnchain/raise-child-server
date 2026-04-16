@@ -445,8 +445,8 @@ func (g *giftService) GetGiftsOfChild(id string, req request.GetGiftsRequest, ct
 		req.PageSize = default_page_size
 	}
 
-	req.Keyword = util.StanderizeString(req.Keyword)
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Keyword = util.StandardizeString(req.Keyword)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	req.Category = strings.TrimSpace(req.Category)
 	var res response.PaginationDataResponse
 	var redisKey string = g.getGetGiftsRedisKey(id, req)
@@ -534,8 +534,8 @@ func (g *giftService) GetGiftsOfRegion(region string, req request.GetGiftsReques
 		req.PageSize = default_page_size
 	}
 
-	req.Keyword = util.StanderizeString(req.Keyword)
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.Keyword = util.StandardizeString(req.Keyword)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	req.Category = strings.TrimSpace(req.Category)
 	var res response.PaginationDataResponse
 	var redisKey string = g.getGetGiftsOfegionRedisKey(region, req)

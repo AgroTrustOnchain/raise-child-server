@@ -358,10 +358,10 @@ func handleGetEmptyOnChainObject(err, id string, logger *log.Logger) {
 	var msg string
 	switch err {
 	case "deleted":
-		msg = fmt.Sprintf("Object %s was deleted from the network.")
+		msg = fmt.Sprintf("Object %s was deleted from the network.", id)
 		break
 	case "notExists":
-		msg = fmt.Sprintf("Object %s does not exist.")
+		msg = fmt.Sprintf("Object %s does not exist.", id)
 		break
 	}
 

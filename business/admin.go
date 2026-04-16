@@ -67,8 +67,8 @@ const (
 
 // GetAdmins implements business.IAdminService.
 func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
-	req.Keyword = util.StanderizeString(req.Keyword)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
+	req.Keyword = util.StandardizeString(req.Keyword)
 	if req.Page < 1 {
 		req.Page = 1
 	}
@@ -114,8 +114,8 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 		var admin entities.AdminNft = admins[i]
 
 		if req.Keyword != "" {
-			var firstName string = util.StanderizeString(admin.FirstName)
-			var lastName string = util.StanderizeString(admin.LastName)
+			var firstName string = util.StandardizeString(admin.FirstName)
+			var lastName string = util.StandardizeString(admin.LastName)
 			if !strings.Contains(firstName, req.Keyword) && !strings.Contains(lastName, req.Keyword) && !strings.Contains(admin.IdentityCode, req.Keyword) && !strings.Contains(admin.PhoneNumber, req.Keyword) && !strings.Contains(admin.Email, req.Keyword) { // Not matched
 				continue
 			}
@@ -213,7 +213,7 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 		return response.BuildTransactionResponse{}, genericErr
 	}
 
-	var gender string = util.StanderizeGender(util.StanderizeString(req.Gender))
+	var gender string = util.StandardizeGender(util.StandardizeString(req.Gender))
 	if gender == "" {
 		return response.BuildTransactionResponse{}, genericErr
 	}

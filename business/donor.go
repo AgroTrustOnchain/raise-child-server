@@ -90,7 +90,7 @@ func (s *donorService) GetDonor(id string, ctx context.Context) (response.DonorR
 
 // GetDonors implements business.IDonorService.
 func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
-	req.Keyword = util.StanderizeString(req.Keyword)
+	req.Keyword = util.StandardizeString(req.Keyword)
 	if req.Page < 1 {
 		req.Page = 1
 	}
@@ -139,10 +139,10 @@ func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Conte
 		}
 
 		if req.Keyword != "" {
-			var firstName string = util.StanderizeString(donor.FirstName)
-			var lastName string = util.StanderizeString(donor.LastName)
-			var phoneNumber string = util.StanderizeString(donor.PhoneNumber)
-			var email string = util.StanderizeString(donor.Email)
+			var firstName string = util.StandardizeString(donor.FirstName)
+			var lastName string = util.StandardizeString(donor.LastName)
+			var phoneNumber string = util.StandardizeString(donor.PhoneNumber)
+			var email string = util.StandardizeString(donor.Email)
 			if !strings.Contains(firstName, req.Keyword) && !strings.Contains(lastName, req.Keyword) && !strings.Contains(phoneNumber, req.Keyword) && !strings.Contains(email, req.Keyword) {
 				continue
 			}

@@ -32,12 +32,12 @@ type ChildGuardianProfile struct {
 	IdentityCardBlobID string `json:"identity_card_blob_id" validate:"required"`
 }
 
-type AddChildStringMetadaRequest struct {
+type AddChildStringMetadataRequest struct {
 	Key   string `json:"key" validate:"required"`
 	Value string `json:"value" validate:"required"`
 }
 
-type AddChildNumberMetadaRequest struct {
+type AddChildNumberMetadataRequest struct {
 	Key   string `json:"key" validate:"required"`
 	Value int    `json:"value" validate:"required"`
 }

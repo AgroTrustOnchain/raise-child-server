@@ -253,7 +253,7 @@ func (r *regionService) GetSupportedRegionSuggestions(req request.GetSupportedRe
 		}
 	}
 
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	req.Keyword = strings.TrimSpace(req.Keyword)
 	if req.PageSize < 1 {
 		req.PageSize = default_page_size
@@ -311,7 +311,7 @@ func (r *regionService) AdminGetSupportedRegionSuggestions(req request.GetSuppor
 		}
 	}
 
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	req.Keyword = strings.TrimSpace(req.Keyword)
 	if req.PageSize < 1 {
 		req.PageSize = default_page_size
@@ -354,7 +354,7 @@ func (r *regionService) GetWalletSupportedRegionSuggestions(req request.GetSuppo
 		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
 
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	req.Keyword = strings.TrimSpace(req.Keyword)
 	if req.PageSize < 1 {
 		req.PageSize = default_page_size

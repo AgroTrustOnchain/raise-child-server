@@ -219,7 +219,7 @@ func (t *taskProofService) GetTaskProof(id string, ctx context.Context) (*entiti
 
 // GetTaskProofs implements business.ITaskProofService.
 func (t *taskProofService) GetTaskProofs(req request.GetTaskProofsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	req.Keyword = strings.TrimSpace(req.Keyword)
 	if req.Page < 1 {
 		req.Page = 1

@@ -178,7 +178,7 @@ func (a *adminRequestService) CreateRequest(req request.AdminRegistrationRequest
 	var curTime time.Time = time.Now()
 	var request = entities.AdminRegistrationRequest{
 		ID:                   util.GenerateId(),
-		IdentityCode:         util.StanderizeString(*profile.IdentityCode),
+		IdentityCode:         util.StandardizeString(*profile.IdentityCode),
 		IdentityCardBlobID:   strings.TrimSpace(req.IdentityCardBlobID),
 		AvatarBlobID:         strings.TrimSpace(req.AvatarBlobID),
 		FirstName:            strings.TrimSpace(*profile.FirstName),

@@ -225,7 +225,7 @@ func (t *taskService) GetTask(id string, ctx context.Context) (*entities.Task, e
 
 // GetTasks implements business.ITaskService.
 func (t *taskService) GetTasks(req request.GetTasksRequest, ctx context.Context) (response.PaginationDataResponse, error) {
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	req.Keyword = strings.TrimSpace(req.Keyword)
 	if req.Page < 1 {
 		req.Page = 1

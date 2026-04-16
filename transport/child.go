@@ -116,14 +116,14 @@ func UploadChild(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        request  body      request.AddChildStringMetadaRequest   true  "Add child string metadata details (e.g., key, value)"
+// @Param        request  body      request.AddChildStringMetadataRequest   true  "Add child string metadata details (e.g., key, value)"
 // @Success      200      {object}  response.BuildTransactionResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /children/metadata/string/{id} [put]
 func AddChildStringMetadata(ctx *gin.Context) {
-	var request request.AddChildStringMetadaRequest
+	var request request.AddChildStringMetadataRequest
 	if ctx.ShouldBindJSON(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return
@@ -153,14 +153,14 @@ func AddChildStringMetadata(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        request  body      request.AddChildStringMetadaRequest   true  "Add child number metadata details (e.g., key, value)"
+// @Param        request  body      request.AddChildStringMetadataRequest   true  "Add child number metadata details (e.g., key, value)"
 // @Success      200      {object}  response.BuildTransactionResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /children/metadata/number/{id} [put]
 func AddChildNumberMetadata(ctx *gin.Context) {
-	var request request.AddChildNumberMetadaRequest
+	var request request.AddChildNumberMetadataRequest
 	if ctx.ShouldBindJSON(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return

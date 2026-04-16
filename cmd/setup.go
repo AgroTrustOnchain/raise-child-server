@@ -27,7 +27,7 @@ func setupApiRoutes(server *gin.Engine) {
 	// Child API endpoints
 	api_route.InitializeChildRoutes(server)
 
-	// Registraion Request API endpoints
+	// Registration Request API endpoints
 	api_route.InitializeRegistrationRequestRoute(server)
 
 	// Profile API endpoints

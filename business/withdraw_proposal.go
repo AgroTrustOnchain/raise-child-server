@@ -547,9 +547,9 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 		}
 	}
 
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
-	req.SortCriteria = util.StanderizeSortCriteria(req.SortCriteria)
-	req.Keyword = util.StanderizeString(req.Keyword)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
+	req.SortCriteria = util.StandardizeSortCriteria(req.SortCriteria)
+	req.Keyword = util.StandardizeString(req.Keyword)
 	if req.Page < 1 {
 		req.Page = 1
 	}
@@ -594,8 +594,8 @@ func (w *withdrawProposalService) GetWithdrawProposals(req request.GetWithdrawPr
 		}
 
 		if req.Keyword != "" {
-			var poolName string = util.StanderizeString(proposal.PoolName)
-			var description string = util.StanderizeString(proposal.Description)
+			var poolName string = util.StandardizeString(proposal.PoolName)
+			var description string = util.StandardizeString(proposal.Description)
 			if !strings.Contains(proposal.PoolID, req.Keyword) && !strings.Contains(poolName, req.Keyword) && !strings.Contains(description, req.Keyword) {
 				continue
 			}

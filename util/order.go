@@ -1,8 +1,8 @@
 package util
 
-func StanderizeSortOrder(order string) string {
+func StandardizeSortOrder(order string) string {
 	var res string
-	order = StanderizeString(order)
+	order = StandardizeString(order)
 	switch order {
 	case "desc":
 		res = "DESC"
@@ -15,9 +15,9 @@ func StanderizeSortOrder(order string) string {
 	return res
 }
 
-func StanderizeSortCriteria(sc string) string {
+func StandardizeSortCriteria(sc string) string {
 	var res string
-	sc = StanderizeString(sc)
+	sc = StandardizeString(sc)
 	switch sc {
 	case "created_at":
 		res = sc

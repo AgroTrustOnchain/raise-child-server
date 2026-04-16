@@ -19,7 +19,7 @@ type VoteRequest struct {
 // 	Email              string `json:"email"`
 // }
 
-// Registraion requests
+// Registration requests
 
 type AdminRegistrationRequest struct {
 	IdentityCardBlobID string `json:"identity_card_blob_id" validate:"required"`

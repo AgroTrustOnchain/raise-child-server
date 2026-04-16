@@ -241,7 +241,7 @@ func (r *registrationRequestService) ConfirmRegistrationRequest(id string, ctx c
 
 	return response.BuildTransactionResponse{
 		TxBytes:        txBytes,
-		RegistraionReq: id,
+		RegistrationReq: id,
 	}, err
 }
 
@@ -335,7 +335,7 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 		return nil, genericErr
 	}
 
-	var identityCode string = util.StanderizeString(*profile.IdentityCode)
+	var identityCode string = util.StandardizeString(*profile.IdentityCode)
 	var firstName string = strings.TrimSpace(*profile.FirstName)
 	var lastName string = strings.TrimSpace(*profile.LastName)
 
@@ -378,7 +378,7 @@ func (r *registrationRequestService) GetRegistrationRequest(id string, ctx conte
 
 // GetRegistrationRequests implements business.IRegistrationRequestService.
 func (r *registrationRequestService) GetRegistrationRequests(req request.GetRegistrationRequests, ctx context.Context) (response.PaginationDataResponse, error) {
-	req.SortOrder = util.StanderizeSortOrder(req.SortOrder)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	if req.Page < 1 {
 		req.Page = 1
 	}

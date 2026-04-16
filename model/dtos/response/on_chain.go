@@ -26,5 +26,5 @@ type BuildTransactionResponse struct {
 	ProposalId     string `json:"proposal_id"`
 	CenterReq      string `json:"center_req"`
 	UploadChildReq string `json:"upload_child_req"`
-	RegistraionReq string `json:"registration_req"`
+	RegistrationReq string `json:"registration_req"`
 }
