@@ -4,6 +4,7 @@ import (
 	"raise-child/model/dtos/response"
 	"raise-child/util"
 	"strconv"
+	"time"
 )
 
 type BooksNeed struct {
@@ -114,6 +115,12 @@ func (m MealNeed) ToMealNeedResponse() response.MealNeedResponse {
 		}
 	}
 
+	var provideMealPeriods []time.Time
+	for _, rawPeriod := range m.ProvideMealPeriods {
+		period, _ := strconv.ParseInt(rawPeriod, 10, 64)
+		provideMealPeriods = append(provideMealPeriods, util.MilliSecToTime(period))
+	}
+
 	return response.MealNeedResponse{
 		ID:                   m.ID.ID,
 		Year:                 year,
@@ -123,7 +130,78 @@ func (m MealNeed) ToMealNeedResponse() response.MealNeedResponse {
 		Durations:            durations,
 		TotalSupportedMonths: totalMonths,
 		SupportedYears:       supportedYears,
+		ProvideMealDates:     m.ProvideMealDates,
+		ProvideMealPeriods:   provideMealPeriods,
+		ProvideMealStaffs:    m.ProvideMealStaffs,
 		WithdrawProposals:    m.WithdrawProposals,
 		WithdrawsForNeed:     m.WithdrawsForNeed,
+	}
+}
+
+func (b BooksNeed) ToBooksNeedReponse() response.BooksNeedResponse {
+	if b.ID.ID == "" {
+		return response.BooksNeedResponse{}
+	}
+
+	year, _ := strconv.Atoi(b.Year)
+	semseter, _ := strconv.Atoi(b.Semster)
+	value, _ := strconv.ParseInt(b.Value, 10, 64)
+
+	// Length year changes always at least equal to length supported years
+	var yearChanges, supportedYears []int
+	for i := 0; i < len(b.YearChanges); i++ {
+		yearChange, _ := strconv.Atoi(b.YearChanges[i])
+		yearChanges = append(yearChanges, yearChange)
+
+		if i < len(b.SupportedYears) {
+			supportedYear, _ := strconv.Atoi(b.SupportedYears[i])
+			supportedYears = append(supportedYears, supportedYear)
+		}
+	}
+
+	return response.BooksNeedResponse{
+		ID:                b.ID.ID,
+		Year:              year,
+		YearChanges:       yearChanges,
+		Semster:           semseter,
+		Value:             value,
+		SupportedYears:    supportedYears,
+		Donors:            b.Donors,
+		Donations:         b.Donations,
+		WithdrawProposals: b.WithdrawProposals,
+		WithdrawsForNeed:  b.WithdrawsForNeed,
+	}
+}
+
+func (h HealthInsuranceNeed) ToHealthInsuranceNeedReponse() response.HealthInsuranceNeedResponse {
+	if h.ID.ID == "" {
+		return response.HealthInsuranceNeedResponse{}
+	}
+
+	year, _ := strconv.Atoi(h.Year)
+	value, _ := strconv.ParseInt(h.Value, 10, 64)
+
+	// Length year changes always at least equal to length supported years
+	var yearChanges, supportedYears []int
+	for i := 0; i < len(h.YearChanges); i++ {
+		yearChange, _ := strconv.Atoi(h.YearChanges[i])
+		yearChanges = append(yearChanges, yearChange)
+
+		if i < len(h.SupportedYears) {
+			supportedYear, _ := strconv.Atoi(h.SupportedYears[i])
+			supportedYears = append(supportedYears, supportedYear)
+		}
+	}
+
+	return response.HealthInsuranceNeedResponse{
+		ID:                h.ID.ID,
+		Year:              year,
+		YearChanges:       yearChanges,
+		Value:             value,
+		SupportedYears:    supportedYears,
+		Donors:            h.Donors,
+		Donations:         h.Donations,
+		WithdrawProposals: h.WithdrawProposals,
+		WithdrawsForNeed:  h.WithdrawsForNeed,
 	}
 }

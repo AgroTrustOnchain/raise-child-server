@@ -100,11 +100,11 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.
 		order = req.SortOrder
 	}
 
-	queryCondition += "ORDER BY created_at " + order
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       supported_region_proposal_table,
 		limitAmount: req.PageSize,
 		condition:   queryCondition,
+		order:       " ORDER BY created_at " + order,
 		page:        req.Page,
 		isGetCount:  false,
 	})

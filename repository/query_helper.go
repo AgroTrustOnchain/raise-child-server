@@ -9,6 +9,7 @@ type generateRetrieveQueryRequest struct {
 	table       string
 	limitAmount int
 	condition   string
+	order       string
 	page        int
 	isGetCount  bool
 }
@@ -31,6 +32,10 @@ func generateRetrieveQuery(req generateRetrieveQueryRequest) string {
 	var res string = "SELECT * FROM " + req.table
 	if req.condition != "" {
 		res += " WHERE " + req.condition
+	}
+
+	if req.order != "" {
+		res += req.order
 	}
 
 	var offSet int = (req.page - 1) * req.limitAmount

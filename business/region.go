@@ -63,6 +63,7 @@ func GenerateRegionService() (business.IRegionService, error) {
 
 	if _regions == nil || len(_regions) == 0 {
 		_regions = []string{
+			shared.AGROTRUST_REGION,
 			shared.TUYEN_QUANG_REGION,
 			shared.LAO_CAI_REGION,
 			shared.THAI_NGUYEN_REGION,

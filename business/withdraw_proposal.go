@@ -352,6 +352,21 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 	withdrawAmount, _ := strconv.ParseInt(proposal.WithdrawAmount, 10, 64)
 	var res map[string]interface{} = make(map[string]interface{})
 	var isPayosAvailable bool = bankProfile.PayosApiKey != "" && bankProfile.PayosCheckSumKey != "" && bankProfile.PayosClientID != ""
+
+	var paymentDescription string
+	switch offChainProposal.Purpose {
+	case string(entities.BOOKS_NEED_PURPOSE):
+		paymentDescription = entities.BOOKS_NEED_PAYMENT_DESCRIPTION.GenerateWithdrawPaymentDescription()
+	case string(entities.MEAL_NEED_PURPOSE):
+		paymentDescription = entities.MEAL_NEED_PAYMENT_DESCRIPTION.GenerateWithdrawPaymentDescription()
+	case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
+		paymentDescription = entities.HEALTH_INSRUANCE_PAYMENT_DESCRIPTION.GenerateWithdrawPaymentDescription()
+	case string(entities.SPECIAL_NEED_PURPOSE):
+		paymentDescription = entities.SPECIAL_NEED_CAMPAIGN_PAYMENT_DESCRIPTION.GenerateWithdrawPaymentDescription()
+	case string(entities.CAMPAIGN_PURPOSE):
+		paymentDescription = entities.POOL_CAMPAIGN_PAYMENT_DESCRIPTION.GenerateWithdrawPaymentDescription()
+	}
+
 	if isPayosAvailable {
 		if err := payos.Key(util.Decrypt(bankProfile.PayosClientID), util.Decrypt(bankProfile.PayosApiKey), util.Decrypt(bankProfile.PayosCheckSumKey)); err != nil {
 			w.errLogger.Println(fmt.Sprintf(noti.PAYMENT_INIT_ENV_ERR_MSG, "payos") + err.Error())
@@ -363,7 +378,7 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 			data, err := payos.CreatePaymentLink(payos.CheckoutRequestType{
 				OrderCode:   int64(orderCode),
 				Amount:      int(withdrawAmount),
-				Description: proposal.Description,
+				Description: paymentDescription,
 				ReturnUrl:   callbackUrl,
 				CancelUrl:   callbackUrl,
 			})

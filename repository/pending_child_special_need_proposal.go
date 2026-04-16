@@ -98,7 +98,7 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%%%%%s%%%%')", req.Status)
+		queryCondition += fmt.Sprintf("LOWER(review_status) = LOWER('%%%%%s%%%%')", req.Status)
 		isHavePreviosCondition = true
 	}
 
@@ -150,12 +150,11 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 		queryCondition += " "
 	}
 
-	queryCondition += fmt.Sprintf("ORDER BY %s %s", req.SortCriteria, req.SortOrder)
-
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       pending_child_special_need_proposal_table,
 		limitAmount: req.PageSize,
 		condition:   queryCondition,
+		order:       fmt.Sprintf(" ORDER BY %s %s", req.SortCriteria, req.SortOrder),
 		page:        req.Page,
 		isGetCount:  false,
 	})

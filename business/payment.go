@@ -282,13 +282,12 @@ func (p *paymentService) Donate(req request.DonateRequest, ctx context.Context) 
 
 // Callback implements business.IPaymentService.
 func (p *paymentService) Callback(id string, ctx context.Context) (string, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
 	payment, err := p.paymentRepo.GetPaymentById(id, ctx)
 	if err != nil {
 		return "", err
 	}
 
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if payment == nil {
 		return "", genericErr
 	}
@@ -374,587 +373,588 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 		}
 
 		if detail.Purpose != string(entities.DONATE_PURPOSE) {
-			var childModule = on_chain.InitializeModuleChild()
-			module = childModule.GetModule()
-			// switch detail.Purpose {
-			// case string(entities.BOOKS_NEED_PURPOSE):
-			// 	need, err := on_chain.GetOnChainObject[entities.BooksNeed](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  detail.Target,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-			// 	if err != nil {
-			// 		return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-			// 			OrderCode: payment.TransactionId,
-			// 			Status:    data.Status,
-			// 			Message:   err.Error(),
-			// 		}), nil
-			// 	}
-
-			// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  need.ChildID,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  os.Getenv(env.POOL_ID),
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	withdrawDates, err := on_chain.GetOnChainObject[entities.BooksNeedWithdrawDates](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  os.Getenv(env.BOOKS_NEED_WITHDRAW_DATES_ID),
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	var withdrawDate string
-			// 	if need.Semster == "1" {
-			// 		withdrawDate = withdrawDates.FirstSemesterDate
-			// 	} else {
-			// 		withdrawDate = withdrawDates.SecondSemesterDate
-			// 	}
-
-			// 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
-			// 		Client:    client,
-			// 		ObjectIds: pool.LocalPools,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	var leaders []string
-			// 	var localPoolId string
-			// 	for _, localPool := range localPools {
-			// 		if localPool.Region == child.Region {
-			// 			leaders = localPool.Mods
-			// 			localPoolId = localPool.ID.ID
-			// 			break
-			// 		}
-			// 	}
-
-			// 	var rawExpectedDate string = withdrawDate + "/" + need.Year
-			// 	var content string = fmt.Sprintf("Withdraw books need semester %s - %s for child %s %s - %s", need.Semster, need.Year, child.LastName, child.FirstName, util.FormatAddress(child.ID.ID))
-			// 	if leaderNoti == nil {
-			// 		var curTime time.Time = time.Now()
-			// 		p.leaderNotiRepo.CreateNoti(entities.LeaderNoti{
-			// 			ID:                      util.GenerateId(),
-			// 			NeedID:                  detail.Target,
-			// 			NeedType:                string(entities.BOOKS_NEED_PURPOSE),
-			// 			ChildID:                 need.ChildID,
-			// 			Region:                  child.Region,
-			// 			AssignedLeaders:         leaders,
-			// 			ExpectedWithdrawPeriods: []string{rawExpectedDate},
-			// 			Contents:                []string{content},
-			// 			GeneralContent:          fmt.Sprintf("Withdraw books need semester %s for child %s %s - %s", need.Semster, child.LastName, child.FirstName, util.FormatAddress(child.ID.ID)),
-			// 			CreatedAt:               curTime,
-			// 			UpdatedAt:               curTime,
-			// 		}, ctx)
-			// 	} else {
-			// 		leaderNoti.ExpectedWithdrawPeriods = append(leaderNoti.ExpectedWithdrawPeriods, rawExpectedDate)
-			// 		leaderNoti.Contents = append(leaderNoti.Contents, content)
-			// 		p.leaderNotiRepo.UpdateNoti(*leaderNoti, ctx)
-			// 	}
-
-			// 	function = childModule.GetFunctionSupportChildBooksNeed()
-			// 	args = childModule.ToSupportChildBooksNeedArguments(on_chain.SupportChildBooksNeedArguments{
-			// 		NeedID:      detail.Target,
-			// 		LocalPool:   localPoolId,
-			// 		ChildID:     need.ChildID,
-			// 		DonorNft:    nftId,
-			// 		Amount:      payment.Amount,
-			// 		FirstName:   profile.FirstName,
-			// 		LastName:    profile.LastName,
-			// 		Gender:      profile.Gender,
-			// 		PhoneNumber: profile.PhoneNumber,
-			// 		Email:       profile.Email,
-			// 		Message:     payment.Message,
-			// 	})
-			// case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
-			// 	need, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeed](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  id,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-			// 	if err != nil {
-			// 		return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-			// 			OrderCode: payment.TransactionId,
-			// 			Status:    data.Status,
-			// 			Message:   err.Error(),
-			// 		}), nil
-			// 	}
-
-			// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  need.ChildID,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  os.Getenv(env.POOL_ID),
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	withdrawDate, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeedWithdrawDate](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  os.Getenv(""),
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
-			// 		Client:    client,
-			// 		ObjectIds: pool.LocalPools,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	var leaders []string
-			// 	//var localPoolId string
-			// 	for _, localPool := range localPools {
-			// 		if localPool.Region == child.Region {
-			// 			leaders = localPool.Mods
-			// 			//localPoolId = localPool.ID.ID
-			// 			break
-			// 		}
-			// 	}
-
-			// 	var rawExpectedDate string = withdrawDate.ExpectedDate + "/" + need.Year
-			// 	var content string = fmt.Sprintf("Withdraw health insurance need %s for child %s %s - %s", need.Year, child.LastName, child.FirstName, util.FormatAddress(child.ID.ID))
-			// 	if leaderNoti == nil {
-			// 		var curTime time.Time = time.Now()
-			// 		p.leaderNotiRepo.CreateNoti(entities.LeaderNoti{
-			// 			ID:                      util.GenerateId(),
-			// 			NeedID:                  detail.Target,
-			// 			NeedType:                string(entities.HEALTH_INSURANCE_NEED_PURPOSE),
-			// 			ChildID:                 need.ChildID,
-			// 			Region:                  child.Region,
-			// 			AssignedLeaders:         leaders,
-			// 			ExpectedWithdrawPeriods: []string{rawExpectedDate},
-			// 			Contents:                []string{content},
-			// 			GeneralContent:          fmt.Sprintf("Withdraw health insurance need for child %s %s - %s", child.LastName, child.FirstName, util.FormatAddress(child.ID.ID)),
-			// 			CreatedAt:               curTime,
-			// 			UpdatedAt:               curTime,
-			// 		}, ctx)
-			// 	} else {
-			// 		leaderNoti.ExpectedWithdrawPeriods = append(leaderNoti.ExpectedWithdrawPeriods, rawExpectedDate)
-			// 		leaderNoti.Contents = append(leaderNoti.Contents, content)
-			// 		p.leaderNotiRepo.UpdateNoti(*leaderNoti, ctx)
-			// 	}
-
-			// 	function = ""
-			// case string(entities.MEAL_NEED_PURPOSE):
-			// 	need, err := on_chain.GetOnChainObject[entities.MealNeed](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  detail.Target,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-			// 	if err != nil {
-			// 		return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-			// 			OrderCode: payment.TransactionId,
-			// 			Status:    data.Status,
-			// 			Message:   err.Error(),
-			// 		}), nil
-			// 	}
-
-			// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  need.ChildID,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  os.Getenv(env.POOL_ID),
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	duration, err := p.mealSupportDurationRepo.GetMealSupportDuration(detail.MealDurationID, ctx)
-
-			// 	var expectedWithdrawDates, contents []string
-			// 	var startPeriod time.Time = util.ToStartOfDate(util.RawDateToTime(duration.StartPeriod))
-			// 	var endPeriod time.Time = util.ToEndOfDate(util.RawDateToTime(duration.EndPeriod))
-			// 	var endMonth int = int(endPeriod.Month())
-			// 	if endMonth == 1 {
-			// 		endMonth = 13
-			// 	}
-
-			// 	var initExpectedDate time.Time = startPeriod.AddDate(0, 0, -3)
-			// 	var childFormattedAddr string = util.FormatAddress(child.ID.ID)
-			// 	var contentFormat string = "Withdraw meal need %s - %s for child " + child.LastName + " " + child.FirstName + " - " + childFormattedAddr
-			// 	for i := 0; i < endMonth-int(startPeriod.Month()); i++ {
-			// 		var date time.Time = initExpectedDate.AddDate(0, i, 0)
-			// 		expectedWithdrawDates = append(expectedWithdrawDates, util.TimeToRawDate(date))
-
-			// 		var startProvidePeriod time.Time = startPeriod.AddDate(0, i, 0)
-			// 		var endProvidePeriod time.Time = startProvidePeriod.AddDate(0, 1, 0)
-			// 		contents = append(contents, fmt.Sprintf(contentFormat, util.TimeToRawDate(startProvidePeriod), util.TimeToRawDate(endProvidePeriod)))
-			// 	}
-
-			// 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
-			// 		Client:    client,
-			// 		ObjectIds: pool.LocalPools,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	var leaders []string
-			// 	var localPoolId string
-			// 	for _, localPool := range localPools {
-			// 		if localPool.Region == child.Region {
-			// 			leaders = localPool.Mods
-			// 			localPoolId = localPool.ID.ID
-			// 			break
-			// 		}
-			// 	}
-
-			// 	if leaderNoti == nil {
-			// 		var curTime time.Time = time.Now()
-			// 		p.leaderNotiRepo.CreateNoti(entities.LeaderNoti{
-			// 			ID:                      util.GenerateId(),
-			// 			NeedID:                  detail.Target,
-			// 			NeedType:                string(entities.MEAL_NEED_PURPOSE),
-			// 			ChildID:                 need.ChildID,
-			// 			Region:                  child.Region,
-			// 			AssignedLeaders:         leaders,
-			// 			ExpectedWithdrawPeriods: expectedWithdrawDates,
-			// 			Contents:                contents,
-			// 			GeneralContent:          fmt.Sprintf("Withdraw meal need for child %s %s - %s", child.LastName, child.FirstName, childFormattedAddr),
-			// 			CreatedAt:               curTime,
-			// 			UpdatedAt:               curTime,
-			// 		}, ctx)
-			// 	} else {
-			// 		leaderNoti.ExpectedWithdrawPeriods = append(leaderNoti.ExpectedWithdrawPeriods, expectedWithdrawDates...)
-			// 		leaderNoti.Contents = append(leaderNoti.Contents, contents...)
-			// 		p.leaderNotiRepo.UpdateNoti(*leaderNoti, ctx)
-			// 	}
-
-			// 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  os.Getenv(env.PACKAGE_ID),
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	volunteers, err := on_chain.GetOnChainObjects[entities.StaffNft](on_chain.GetOnChainObjectsRequest{
-			// 		Client:    client,
-			// 		ObjectIds: manageObj.VolunteerNfts,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-
-			// 	var volunteerAddresses []string
-			// 	for i, volunteer := range volunteers {
-			// 		if volunteer.Region == child.Region {
-			// 			volunteerAddresses = append(volunteerAddresses, manageObj.VolunteerIds[i])
-			// 		}
-			// 	}
-
-			// 	p.taskRepo.CreateNoti(entities.VolunteerNoti{
-			// 		ID:                 util.GenerateId(),
-			// 		ChildID:            need.ChildID,
-			// 		Region:             child.Region,
-			// 		AssginedVolunteers: volunteerAddresses,
-			// 		Content:            fmt.Sprintf("Provide meal for child %s %s - %s from %s to %s", child.LastName, child.FirstName, childFormattedAddr, duration.StartPeriod, duration.EndPeriod),
-			// 		StartPeriod:        startPeriod,
-			// 		EndPeriod:          endPeriod,
-			// 	}, ctx)
-
-			// 	function = childModule.GetFunctionSupportChildMealNeed()
-			// 	args = childModule.ToSupportChildMealNeedArguments(on_chain.SupportChildMealNeedArguments{
-			// 		StartPeriod: duration.StartPeriod,
-			// 		EndPeriod:   duration.EndPeriod,
-			// 		SupportChildBooksNeedArguments: on_chain.SupportChildBooksNeedArguments{
-			// 			NeedID:      detail.Target,
-			// 			LocalPool:   localPoolId,
-			// 			ChildID:     need.ChildID,
-			// 			DonorNft:    nftId,
-			// 			Amount:      payment.Amount,
-			// 			FirstName:   profile.FirstName,
-			// 			LastName:    profile.LastName,
-			// 			Gender:      profile.Gender,
-			// 			PhoneNumber: profile.PhoneNumber,
-			// 			Email:       profile.Email,
-			// 			Message:     payment.Message,
-			// 		},
-			// 	})
-			// case string(entities.SPECIAL_NEED_PURPOSE):
-			// 	campaign, err := on_chain.GetOnChainObject[entities.SpecialNeedCampaign](on_chain.GetOnChainObjectRequest{
-			// 		Client:    client,
-			// 		ObjectId:  detail.Target,
-			// 		ErrLogger: p.errLogger,
-			// 	}, ctx)
-			// 	if err != nil {
-			// 		return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-			// 			OrderCode: payment.TransactionId,
-			// 			Status:    data.Status,
-			// 			Message:   err.Error(),
-			// 		}), nil
-			// 	}
-
-			// 	function = childModule.GetFunctionSupportChildSpecialNeedCampaign()
-			// 	args = childModule.ToSupportChildSpeicalNeedArguments(on_chain.SupportChildSpeicalNeedArguments{
-			// 		CampaignID:  detail.Target,
-			// 		LocalPool:   detail.LocalPoolID,
-			// 		ChildID:     campaign.ChildID,
-			// 		DonorNft:    nftId,
-			// 		Amount:      payment.Amount,
-			// 		FirstName:   profile.FirstName,
-			// 		LastName:    profile.LastName,
-			// 		Gender:      profile.Gender,
-			// 		PhoneNumber: profile.PhoneNumber,
-			// 		Email:       profile.Email,
-			// 		Message:     payment.Message,
-			// 	})
-			// }
-
-			var childId, generalContentFormat, taskContentFormat, mealSupportStartPeriod, mealSupportEndPeriod string
-			var expectedWithdrawPeriods, contentFormats []string
-			var task entities.Task
-			switch detail.Purpose {
-			case string(entities.BOOKS_NEED_PURPOSE):
-				need, err := on_chain.GetOnChainObject[entities.BooksNeed](on_chain.GetOnChainObjectRequest{
-					Client:    client,
-					ObjectId:  detail.Target,
-					ErrLogger: p.errLogger,
-				}, ctx)
-				if err != nil {
-					return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-						OrderCode: payment.TransactionId,
-						Status:    data.Status,
-						Message:   err.Error(),
-					}), nil
+			if detail.Purpose == string(entities.CAMPAIGN_PURPOSE) {
+				var localPoolId string
+				for i := 1; i <= 3; i++ {
+					if campaign, err := on_chain.GetOnChainObject[entities.OnChainCampaign](on_chain.GetOnChainObjectRequest{
+						Client:    client,
+						ObjectId:  detail.Target,
+						ErrLogger: p.errLogger,
+					}, ctx); err == nil {
+						if campaign.PoolID == os.Getenv(env.POOL_ID) {
+							localPoolId = os.Getenv(env.SHARED_LOCAL_POOL_ID)
+						} else {
+							localPoolId = campaign.PoolID
+						}
+						break
+					}
 				}
 
-				withdrawDates, err := on_chain.GetOnChainObject[entities.BooksNeedWithdrawDates](on_chain.GetOnChainObjectRequest{
-					Client:    client,
-					ObjectId:  os.Getenv(env.BOOKS_NEED_WITHDRAW_DATES_ID),
-					ErrLogger: p.errLogger,
-				}, ctx)
+				var campaignModule = on_chain.InitializeModuleCampaign()
+				module = campaignModule.GetModule()
+				function = campaignModule.GetFunctionSupportCampaign()
 
-				var withdrawDate string
-				if need.Semster == "1" {
-					withdrawDate = withdrawDates.FirstSemesterDate
-				} else {
-					withdrawDate = withdrawDates.SecondSemesterDate
-				}
+				args = campaignModule.ToSupportCampaignArguments(on_chain.SupportCampaignArguments{
+					LocalPoolID: localPoolId,
+					CampaignID:  detail.Target,
+					DonorNFT:    nftId,
+					Amount:      payment.Amount,
+					FirstName:   *profile.FirstName,
+					LastName:    *profile.LastName,
+					Gender:      *profile.Gender,
+					PhoneNumber: *profile.PhoneNumber,
+					Email:       *profile.Email,
+					Message:     payment.Message,
+				})
+			} else {
+				var childModule = on_chain.InitializeModuleChild()
+				module = childModule.GetModule()
+				// switch detail.Purpose {
+				// case string(entities.BOOKS_NEED_PURPOSE):
+				// 	need, err := on_chain.GetOnChainObject[entities.BooksNeed](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  detail.Target,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
+				// 	if err != nil {
+				// 		return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+				// 			OrderCode: payment.TransactionId,
+				// 			Status:    data.Status,
+				// 			Message:   err.Error(),
+				// 		}), nil
+				// 	}
 
-				expectedWithdrawPeriods = append(expectedWithdrawPeriods, withdrawDate)
-				contentFormats = append(contentFormats, "Withdraw books need semester "+need.Semster+" - "+need.Year+" for child %s %s - %s")
-				generalContentFormat = "Withdraw books need semester " + need.Semster + " for child %s %s - %s"
-				childId = need.ChildID
-				function = childModule.GetFunctionSupportChildBooksNeed()
-			case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
-				need, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeed](on_chain.GetOnChainObjectRequest{
-					Client:    client,
-					ObjectId:  id,
-					ErrLogger: p.errLogger,
-				}, ctx)
-				if err != nil {
-					return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-						OrderCode: payment.TransactionId,
-						Status:    data.Status,
-						Message:   err.Error(),
-					}), nil
-				}
+				// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  need.ChildID,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
 
-				withdrawDate, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeedWithdrawDate](on_chain.GetOnChainObjectRequest{
-					Client:    client,
-					ObjectId:  os.Getenv(env.HEALTH_INSURANCE_NEED_wITHDRAW_DATE_ID),
-					ErrLogger: p.errLogger,
-				}, ctx)
+				// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  os.Getenv(env.POOL_ID),
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
 
-				expectedWithdrawPeriods = append(expectedWithdrawPeriods, withdrawDate.ExpectedDate+"/"+need.Year)
-				contentFormats = append(contentFormats, "Withdraw health insurance need "+need.Year+" for child %s %s - %s")
-				generalContentFormat = "Withdraw health insurance need for child %s %s - %s"
-				childId = need.ChildID
-				function = childModule.GetFunctionSupportChildHealthInsuranceNeed()
-			case string(entities.MEAL_NEED_PURPOSE):
-				need, err := on_chain.GetOnChainObject[entities.MealNeed](on_chain.GetOnChainObjectRequest{
-					Client:    client,
-					ObjectId:  detail.Target,
-					ErrLogger: p.errLogger,
-				}, ctx)
-				if err != nil {
-					return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-						OrderCode: payment.TransactionId,
-						Status:    data.Status,
-						Message:   err.Error(),
-					}), nil
-				}
+				// 	withdrawDates, err := on_chain.GetOnChainObject[entities.BooksNeedWithdrawDates](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  os.Getenv(env.BOOKS_NEED_WITHDRAW_DATES_ID),
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
 
-				duration, err := p.mealSupportDurationRepo.GetMealSupportDuration(*detail.MealDurationID, ctx)
+				// 	var withdrawDate string
+				// 	if need.Semster == "1" {
+				// 		withdrawDate = withdrawDates.FirstSemesterDate
+				// 	} else {
+				// 		withdrawDate = withdrawDates.SecondSemesterDate
+				// 	}
 
-				var startPeriod time.Time = util.ToStartOfDate(util.RawDateToTime(duration.StartPeriod))
-				var endPeriod time.Time = util.ToEndOfDate(util.RawDateToTime(duration.EndPeriod))
-				var endMonth int = int(endPeriod.Month())
-				if endMonth == 1 {
-					endMonth = 13
-				}
+				// 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+				// 		Client:    client,
+				// 		ObjectIds: pool.LocalPools,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
 
-				var initExpectedDate time.Time = startPeriod.AddDate(0, 0, -3)
-				var contentFormat string = "Withdraw meal need %s - %s for child %s %s - %s"
-				for i := 0; i < endMonth-int(startPeriod.Month()); i++ {
-					var date time.Time = initExpectedDate.AddDate(0, i, 0)
-					expectedWithdrawPeriods = append(expectedWithdrawPeriods, util.TimeToRawDate(date))
+				// 	var leaders []string
+				// 	var localPoolId string
+				// 	for _, localPool := range localPools {
+				// 		if localPool.Region == child.Region {
+				// 			leaders = localPool.Mods
+				// 			localPoolId = localPool.ID.ID
+				// 			break
+				// 		}
+				// 	}
 
-					var startProvidePeriod time.Time = startPeriod.AddDate(0, i, 0)
-					var endProvidePeriod time.Time = startProvidePeriod.AddDate(0, 1, 0)
+				// 	var rawExpectedDate string = withdrawDate + "/" + need.Year
+				// 	var content string = fmt.Sprintf("Withdraw books need semester %s - %s for child %s %s - %s", need.Semster, need.Year, child.LastName, child.FirstName, util.FormatAddress(child.ID.ID))
+				// 	if leaderNoti == nil {
+				// 		var curTime time.Time = time.Now()
+				// 		p.leaderNotiRepo.CreateNoti(entities.LeaderNoti{
+				// 			ID:                      util.GenerateId(),
+				// 			NeedID:                  detail.Target,
+				// 			NeedType:                string(entities.BOOKS_NEED_PURPOSE),
+				// 			ChildID:                 need.ChildID,
+				// 			Region:                  child.Region,
+				// 			AssignedLeaders:         leaders,
+				// 			ExpectedWithdrawPeriods: []string{rawExpectedDate},
+				// 			Contents:                []string{content},
+				// 			GeneralContent:          fmt.Sprintf("Withdraw books need semester %s for child %s %s - %s", need.Semster, child.LastName, child.FirstName, util.FormatAddress(child.ID.ID)),
+				// 			CreatedAt:               curTime,
+				// 			UpdatedAt:               curTime,
+				// 		}, ctx)
+				// 	} else {
+				// 		leaderNoti.ExpectedWithdrawPeriods = append(leaderNoti.ExpectedWithdrawPeriods, rawExpectedDate)
+				// 		leaderNoti.Contents = append(leaderNoti.Contents, content)
+				// 		p.leaderNotiRepo.UpdateNoti(*leaderNoti, ctx)
+				// 	}
 
-					// var appendChildInfoContentFormat string = fmt.Sprintf(contentFormat, util.TimeToRawDate(startProvidePeriod), util.TimeToRawDate(endProvidePeriod))
-					// appendChildInfoContentFormat += "%s %s - %s"
-					var format string = fmt.Sprintf(contentFormat, util.TimeToRawDate(startProvidePeriod), util.TimeToRawDate(endProvidePeriod), "%s", "%s", "%s")
-					contentFormats = append(contentFormats, format)
-				}
+				// 	function = childModule.GetFunctionSupportChildBooksNeed()
+				// 	args = childModule.ToSupportChildBooksNeedArguments(on_chain.SupportChildBooksNeedArguments{
+				// 		NeedID:      detail.Target,
+				// 		LocalPool:   localPoolId,
+				// 		ChildID:     need.ChildID,
+				// 		DonorNft:    nftId,
+				// 		Amount:      payment.Amount,
+				// 		FirstName:   profile.FirstName,
+				// 		LastName:    profile.LastName,
+				// 		Gender:      profile.Gender,
+				// 		PhoneNumber: profile.PhoneNumber,
+				// 		Email:       profile.Email,
+				// 		Message:     payment.Message,
+				// 	})
+				// case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
+				// 	need, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeed](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  id,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
+				// 	if err != nil {
+				// 		return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+				// 			OrderCode: payment.TransactionId,
+				// 			Status:    data.Status,
+				// 			Message:   err.Error(),
+				// 		}), nil
+				// 	}
 
-				task = entities.Task{
-					ID:          util.GenerateId(),
-					CreatedBy:   "System",
-					StartPeriod: startPeriod,
-					EndPeriod:   endPeriod,
-				}
+				// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  need.ChildID,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
 
-				taskContentFormat = "Provide meal for child %s %s - %s from " + duration.StartPeriod + " to " + duration.EndPeriod
-				mealSupportStartPeriod = duration.StartPeriod
-				mealSupportEndPeriod = duration.EndPeriod
-				generalContentFormat = "Withdraw meal need for child %s %s - %s"
-				childId = need.ChildID
-				function = childModule.GetFunctionSupportChildMealNeed()
-			case string(entities.SPECIAL_NEED_PURPOSE):
-				campaign, err := on_chain.GetOnChainObject[entities.SpecialNeedCampaign](on_chain.GetOnChainObjectRequest{
-					Client:    client,
-					ObjectId:  detail.Target,
-					ErrLogger: p.errLogger,
-				}, ctx)
-				if err != nil {
-					return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-						OrderCode: payment.TransactionId,
-						Status:    data.Status,
-						Message:   err.Error(),
-					}), nil
-				}
+				// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  os.Getenv(env.POOL_ID),
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
 
-				childId = campaign.ChildID
-				function = childModule.GetFunctionSupportChildSpecialNeedCampaign()
-			}
+				// 	withdrawDate, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeedWithdrawDate](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  os.Getenv(""),
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
 
-			child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
-				Client:    client,
-				ObjectId:  childId,
-				ErrLogger: p.errLogger,
-			}, ctx)
-			if err != nil {
-				return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-					OrderCode: payment.TransactionId,
-					Status:    data.Status,
-					Message:   err.Error(),
-				}), nil
-			}
+				// 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+				// 		Client:    client,
+				// 		ObjectIds: pool.LocalPools,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
 
-			pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
-				Client:    client,
-				ObjectId:  os.Getenv(env.POOL_ID),
-				ErrLogger: p.errLogger,
-			}, ctx)
-			if err != nil {
-				return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-					OrderCode: payment.TransactionId,
-					Status:    data.Status,
-					Message:   err.Error(),
-				}), nil
-			}
+				// 	var leaders []string
+				// 	//var localPoolId string
+				// 	for _, localPool := range localPools {
+				// 		if localPool.Region == child.Region {
+				// 			leaders = localPool.Mods
+				// 			//localPoolId = localPool.ID.ID
+				// 			break
+				// 		}
+				// 	}
 
-			localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
-				Client:    client,
-				ObjectIds: pool.LocalPools,
-				ErrLogger: p.errLogger,
-			}, ctx)
-			if err != nil {
-				return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-					OrderCode: payment.TransactionId,
-					Status:    data.Status,
-					Message:   err.Error(),
-				}), nil
-			}
+				// 	var rawExpectedDate string = withdrawDate.ExpectedDate + "/" + need.Year
+				// 	var content string = fmt.Sprintf("Withdraw health insurance need %s for child %s %s - %s", need.Year, child.LastName, child.FirstName, util.FormatAddress(child.ID.ID))
+				// 	if leaderNoti == nil {
+				// 		var curTime time.Time = time.Now()
+				// 		p.leaderNotiRepo.CreateNoti(entities.LeaderNoti{
+				// 			ID:                      util.GenerateId(),
+				// 			NeedID:                  detail.Target,
+				// 			NeedType:                string(entities.HEALTH_INSURANCE_NEED_PURPOSE),
+				// 			ChildID:                 need.ChildID,
+				// 			Region:                  child.Region,
+				// 			AssignedLeaders:         leaders,
+				// 			ExpectedWithdrawPeriods: []string{rawExpectedDate},
+				// 			Contents:                []string{content},
+				// 			GeneralContent:          fmt.Sprintf("Withdraw health insurance need for child %s %s - %s", child.LastName, child.FirstName, util.FormatAddress(child.ID.ID)),
+				// 			CreatedAt:               curTime,
+				// 			UpdatedAt:               curTime,
+				// 		}, ctx)
+				// 	} else {
+				// 		leaderNoti.ExpectedWithdrawPeriods = append(leaderNoti.ExpectedWithdrawPeriods, rawExpectedDate)
+				// 		leaderNoti.Contents = append(leaderNoti.Contents, content)
+				// 		p.leaderNotiRepo.UpdateNoti(*leaderNoti, ctx)
+				// 	}
 
-			var leaders []string
-			var localPoolId string
-			for _, localPool := range localPools {
-				if localPool.Region == child.Region {
-					leaders = localPool.Mods
-					localPoolId = localPool.ID.ID
-					break
-				}
-			}
+				// 	function = ""
+				// case string(entities.MEAL_NEED_PURPOSE):
+				// 	need, err := on_chain.GetOnChainObject[entities.MealNeed](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  detail.Target,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
+				// 	if err != nil {
+				// 		return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+				// 			OrderCode: payment.TransactionId,
+				// 			Status:    data.Status,
+				// 			Message:   err.Error(),
+				// 		}), nil
+				// 	}
 
-			if detail.Purpose != string(entities.SPECIAL_NEED_PURPOSE) {
-				leaderNoti, err := p.leaderNotiRepo.GetNotiByNeed(detail.Target, ctx)
-				if err != nil {
-					return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
-						OrderCode: payment.TransactionId,
-						Status:    data.Status,
-						Message:   err.Error(),
-					}), nil
-				}
+				// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  need.ChildID,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
 
-				var childFormattedAddr string = util.FormatAddress(childId)
-				var contents []string
-				for _, format := range contentFormats {
-					contents = append(contents, fmt.Sprintf(format, child.LastName, child.FirstName, childFormattedAddr))
-				}
+				// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  os.Getenv(env.POOL_ID),
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
 
-				var curTime time.Time = time.Now()
-				if leaderNoti == nil {
-					p.leaderNotiRepo.CreateNoti(entities.LeaderNoti{
-						ID:                      util.GenerateId(),
-						NeedID:                  detail.Target,
-						NeedType:                detail.Purpose,
-						ChildID:                 childId,
-						Region:                  child.Region,
-						AssignedLeaders:         leaders,
-						ExpectedWithdrawPeriods: expectedWithdrawPeriods,
-						Contents:                contents,
-						GeneralContent:          fmt.Sprintf(generalContentFormat, child.LastName, child.FirstName, childFormattedAddr),
-						CreatedAt:               curTime,
-						UpdatedAt:               curTime,
-					}, ctx)
-				} else {
-					leaderNoti.ExpectedWithdrawPeriods = append(leaderNoti.ExpectedWithdrawPeriods, expectedWithdrawPeriods...)
-					leaderNoti.Contents = append(leaderNoti.Contents, contents...)
-					p.leaderNotiRepo.UpdateNoti(*leaderNoti, ctx)
-				}
+				// 	duration, err := p.mealSupportDurationRepo.GetMealSupportDuration(detail.MealDurationID, ctx)
 
+				// 	var expectedWithdrawDates, contents []string
+				// 	var startPeriod time.Time = util.ToStartOfDate(util.RawDateToTime(duration.StartPeriod))
+				// 	var endPeriod time.Time = util.ToEndOfDate(util.RawDateToTime(duration.EndPeriod))
+				// 	var endMonth int = int(endPeriod.Month())
+				// 	if endMonth == 1 {
+				// 		endMonth = 13
+				// 	}
+
+				// 	var initExpectedDate time.Time = startPeriod.AddDate(0, 0, -3)
+				// 	var childFormattedAddr string = util.FormatAddress(child.ID.ID)
+				// 	var contentFormat string = "Withdraw meal need %s - %s for child " + child.LastName + " " + child.FirstName + " - " + childFormattedAddr
+				// 	for i := 0; i < endMonth-int(startPeriod.Month()); i++ {
+				// 		var date time.Time = initExpectedDate.AddDate(0, i, 0)
+				// 		expectedWithdrawDates = append(expectedWithdrawDates, util.TimeToRawDate(date))
+
+				// 		var startProvidePeriod time.Time = startPeriod.AddDate(0, i, 0)
+				// 		var endProvidePeriod time.Time = startProvidePeriod.AddDate(0, 1, 0)
+				// 		contents = append(contents, fmt.Sprintf(contentFormat, util.TimeToRawDate(startProvidePeriod), util.TimeToRawDate(endProvidePeriod)))
+				// 	}
+
+				// 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+				// 		Client:    client,
+				// 		ObjectIds: pool.LocalPools,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
+
+				// 	var leaders []string
+				// 	var localPoolId string
+				// 	for _, localPool := range localPools {
+				// 		if localPool.Region == child.Region {
+				// 			leaders = localPool.Mods
+				// 			localPoolId = localPool.ID.ID
+				// 			break
+				// 		}
+				// 	}
+
+				// 	if leaderNoti == nil {
+				// 		var curTime time.Time = time.Now()
+				// 		p.leaderNotiRepo.CreateNoti(entities.LeaderNoti{
+				// 			ID:                      util.GenerateId(),
+				// 			NeedID:                  detail.Target,
+				// 			NeedType:                string(entities.MEAL_NEED_PURPOSE),
+				// 			ChildID:                 need.ChildID,
+				// 			Region:                  child.Region,
+				// 			AssignedLeaders:         leaders,
+				// 			ExpectedWithdrawPeriods: expectedWithdrawDates,
+				// 			Contents:                contents,
+				// 			GeneralContent:          fmt.Sprintf("Withdraw meal need for child %s %s - %s", child.LastName, child.FirstName, childFormattedAddr),
+				// 			CreatedAt:               curTime,
+				// 			UpdatedAt:               curTime,
+				// 		}, ctx)
+				// 	} else {
+				// 		leaderNoti.ExpectedWithdrawPeriods = append(leaderNoti.ExpectedWithdrawPeriods, expectedWithdrawDates...)
+				// 		leaderNoti.Contents = append(leaderNoti.Contents, contents...)
+				// 		p.leaderNotiRepo.UpdateNoti(*leaderNoti, ctx)
+				// 	}
+
+				// 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  os.Getenv(env.PACKAGE_ID),
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
+
+				// 	volunteers, err := on_chain.GetOnChainObjects[entities.StaffNft](on_chain.GetOnChainObjectsRequest{
+				// 		Client:    client,
+				// 		ObjectIds: manageObj.VolunteerNfts,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
+
+				// 	var volunteerAddresses []string
+				// 	for i, volunteer := range volunteers {
+				// 		if volunteer.Region == child.Region {
+				// 			volunteerAddresses = append(volunteerAddresses, manageObj.VolunteerIds[i])
+				// 		}
+				// 	}
+
+				// 	p.taskRepo.CreateNoti(entities.VolunteerNoti{
+				// 		ID:                 util.GenerateId(),
+				// 		ChildID:            need.ChildID,
+				// 		Region:             child.Region,
+				// 		AssginedVolunteers: volunteerAddresses,
+				// 		Content:            fmt.Sprintf("Provide meal for child %s %s - %s from %s to %s", child.LastName, child.FirstName, childFormattedAddr, duration.StartPeriod, duration.EndPeriod),
+				// 		StartPeriod:        startPeriod,
+				// 		EndPeriod:          endPeriod,
+				// 	}, ctx)
+
+				// 	function = childModule.GetFunctionSupportChildMealNeed()
+				// 	args = childModule.ToSupportChildMealNeedArguments(on_chain.SupportChildMealNeedArguments{
+				// 		StartPeriod: duration.StartPeriod,
+				// 		EndPeriod:   duration.EndPeriod,
+				// 		SupportChildBooksNeedArguments: on_chain.SupportChildBooksNeedArguments{
+				// 			NeedID:      detail.Target,
+				// 			LocalPool:   localPoolId,
+				// 			ChildID:     need.ChildID,
+				// 			DonorNft:    nftId,
+				// 			Amount:      payment.Amount,
+				// 			FirstName:   profile.FirstName,
+				// 			LastName:    profile.LastName,
+				// 			Gender:      profile.Gender,
+				// 			PhoneNumber: profile.PhoneNumber,
+				// 			Email:       profile.Email,
+				// 			Message:     payment.Message,
+				// 		},
+				// 	})
+				// case string(entities.SPECIAL_NEED_PURPOSE):
+				// 	campaign, err := on_chain.GetOnChainObject[entities.SpecialNeedCampaign](on_chain.GetOnChainObjectRequest{
+				// 		Client:    client,
+				// 		ObjectId:  detail.Target,
+				// 		ErrLogger: p.errLogger,
+				// 	}, ctx)
+				// 	if err != nil {
+				// 		return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+				// 			OrderCode: payment.TransactionId,
+				// 			Status:    data.Status,
+				// 			Message:   err.Error(),
+				// 		}), nil
+				// 	}
+
+				// 	function = childModule.GetFunctionSupportChildSpecialNeedCampaign()
+				// 	args = childModule.ToSupportChildSpeicalNeedArguments(on_chain.SupportChildSpeicalNeedArguments{
+				// 		CampaignID:  detail.Target,
+				// 		LocalPool:   detail.LocalPoolID,
+				// 		ChildID:     campaign.ChildID,
+				// 		DonorNft:    nftId,
+				// 		Amount:      payment.Amount,
+				// 		FirstName:   profile.FirstName,
+				// 		LastName:    profile.LastName,
+				// 		Gender:      profile.Gender,
+				// 		PhoneNumber: profile.PhoneNumber,
+				// 		Email:       profile.Email,
+				// 		Message:     payment.Message,
+				// 	})
+				// }
+
+				var childId, generalContentFormat, taskContentFormat, mealSupportStartPeriod, mealSupportEndPeriod string
+				var expectedWithdrawPeriods, contentFormats []string
+				var task entities.Task
 				switch detail.Purpose {
 				case string(entities.BOOKS_NEED_PURPOSE):
-					args = childModule.ToSupportChildBooksNeedArguments(on_chain.SupportChildBooksNeedArguments{
-						NeedID:      detail.Target,
-						LocalPool:   localPoolId,
-						ChildID:     childId,
-						DonorNft:    nftId,
-						Amount:      payment.Amount,
-						FirstName:   *profile.FirstName,
-						LastName:    *profile.LastName,
-						Gender:      *profile.Gender,
-						PhoneNumber: *profile.PhoneNumber,
-						Email:       *profile.Email,
-						Message:     payment.Message,
-					})
-				case string(entities.MEAL_NEED_PURPOSE):
-					var detailId string = util.GenerateId()
-					p.childTaskDetailRepo.CreateChildTaskDetail(entities.ChildTaskDetail{
-						ID:      detailId,
-						ChildID: childId,
-						Purpose: string(entities.MEAL_NEED_PURPOSE),
-						Target:  detail.Target,
+					need, err := on_chain.GetOnChainObject[entities.BooksNeed](on_chain.GetOnChainObjectRequest{
+						Client:    client,
+						ObjectId:  detail.Target,
+						ErrLogger: p.errLogger,
+					}, ctx)
+					if err != nil {
+						return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+							OrderCode: payment.TransactionId,
+							Status:    data.Status,
+							Message:   err.Error(),
+						}), nil
+					}
+
+					withdrawDates, err := on_chain.GetOnChainObject[entities.BooksNeedWithdrawDates](on_chain.GetOnChainObjectRequest{
+						Client:    client,
+						ObjectId:  os.Getenv(env.BOOKS_NEED_WITHDRAW_DATES_ID),
+						ErrLogger: p.errLogger,
 					}, ctx)
 
-					task.IsChildTask = true
-					task.ChildTaskDetailID = &detailId
-					task.Region = child.Region
-					task.Description = fmt.Sprintf(taskContentFormat, child.LastName, child.FirstName, childFormattedAddr)
-					task.CreatedAt = curTime
-					task.UpdatedAt = curTime
-					p.taskRepo.CreateTask(task, ctx)
+					var withdrawDate string
+					if need.Semster == "1" {
+						withdrawDate = withdrawDates.FirstSemesterDate
+					} else {
+						withdrawDate = withdrawDates.SecondSemesterDate
+					}
 
-					args = childModule.ToSupportChildMealNeedArguments(on_chain.SupportChildMealNeedArguments{
-						StartPeriod: mealSupportStartPeriod,
-						EndPeriod:   mealSupportEndPeriod,
-						SupportChildBooksNeedArguments: on_chain.SupportChildBooksNeedArguments{
+					expectedWithdrawPeriods = append(expectedWithdrawPeriods, withdrawDate)
+					contentFormats = append(contentFormats, "Withdraw books need semester "+need.Semster+" - "+need.Year+" for child %s %s - %s")
+					generalContentFormat = "Withdraw books need semester " + need.Semster + " for child %s %s - %s"
+					childId = need.ChildID
+					function = childModule.GetFunctionSupportChildBooksNeed()
+				case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
+					need, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeed](on_chain.GetOnChainObjectRequest{
+						Client:    client,
+						ObjectId:  id,
+						ErrLogger: p.errLogger,
+					}, ctx)
+					if err != nil {
+						return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+							OrderCode: payment.TransactionId,
+							Status:    data.Status,
+							Message:   err.Error(),
+						}), nil
+					}
+
+					withdrawDate, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeedWithdrawDate](on_chain.GetOnChainObjectRequest{
+						Client:    client,
+						ObjectId:  os.Getenv(env.HEALTH_INSURANCE_NEED_wITHDRAW_DATE_ID),
+						ErrLogger: p.errLogger,
+					}, ctx)
+
+					expectedWithdrawPeriods = append(expectedWithdrawPeriods, withdrawDate.ExpectedDate+"/"+need.Year)
+					contentFormats = append(contentFormats, "Withdraw health insurance need "+need.Year+" for child %s %s - %s")
+					generalContentFormat = "Withdraw health insurance need for child %s %s - %s"
+					childId = need.ChildID
+					function = childModule.GetFunctionSupportChildHealthInsuranceNeed()
+				case string(entities.MEAL_NEED_PURPOSE):
+					need, err := on_chain.GetOnChainObject[entities.MealNeed](on_chain.GetOnChainObjectRequest{
+						Client:    client,
+						ObjectId:  detail.Target,
+						ErrLogger: p.errLogger,
+					}, ctx)
+					if err != nil {
+						return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+							OrderCode: payment.TransactionId,
+							Status:    data.Status,
+							Message:   err.Error(),
+						}), nil
+					}
+
+					duration, err := p.mealSupportDurationRepo.GetMealSupportDuration(*detail.MealDurationID, ctx)
+
+					var startPeriod time.Time = util.ToStartOfDate(util.RawDateToTime(duration.StartPeriod))
+					var endPeriod time.Time = util.ToEndOfDate(util.RawDateToTime(duration.EndPeriod))
+					var endMonth int = int(endPeriod.Month())
+					if endMonth == 1 {
+						endMonth = 13
+					}
+
+					var initExpectedDate time.Time = startPeriod.AddDate(0, 0, -3)
+					var contentFormat string = "Withdraw meal need %s - %s for child %s %s - %s"
+					for i := 0; i < endMonth-int(startPeriod.Month()); i++ {
+						var date time.Time = initExpectedDate.AddDate(0, i, 0)
+						expectedWithdrawPeriods = append(expectedWithdrawPeriods, util.TimeToRawDate(date))
+
+						var startProvidePeriod time.Time = startPeriod.AddDate(0, i, 0)
+						var endProvidePeriod time.Time = startProvidePeriod.AddDate(0, 1, 0)
+
+						// var appendChildInfoContentFormat string = fmt.Sprintf(contentFormat, util.TimeToRawDate(startProvidePeriod), util.TimeToRawDate(endProvidePeriod))
+						// appendChildInfoContentFormat += "%s %s - %s"
+						var format string = fmt.Sprintf(contentFormat, util.TimeToRawDate(startProvidePeriod), util.TimeToRawDate(endProvidePeriod), "%s", "%s", "%s")
+						contentFormats = append(contentFormats, format)
+					}
+
+					task = entities.Task{
+						ID:          util.GenerateId(),
+						CreatedBy:   "System",
+						StartPeriod: startPeriod,
+						EndPeriod:   endPeriod,
+					}
+
+					taskContentFormat = "Provide meal for child %s %s - %s from " + duration.StartPeriod + " to " + duration.EndPeriod
+					mealSupportStartPeriod = duration.StartPeriod
+					mealSupportEndPeriod = duration.EndPeriod
+					generalContentFormat = "Withdraw meal need for child %s %s - %s"
+					childId = need.ChildID
+					function = childModule.GetFunctionSupportChildMealNeed()
+				case string(entities.SPECIAL_NEED_PURPOSE):
+					campaign, err := on_chain.GetOnChainObject[entities.SpecialNeedCampaign](on_chain.GetOnChainObjectRequest{
+						Client:    client,
+						ObjectId:  detail.Target,
+						ErrLogger: p.errLogger,
+					}, ctx)
+					if err != nil {
+						return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+							OrderCode: payment.TransactionId,
+							Status:    data.Status,
+							Message:   err.Error(),
+						}), nil
+					}
+
+					childId = campaign.ChildID
+					function = childModule.GetFunctionSupportChildSpecialNeedCampaign()
+				}
+
+				child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+					Client:    client,
+					ObjectId:  childId,
+					ErrLogger: p.errLogger,
+				}, ctx)
+				if err != nil {
+					return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+						OrderCode: payment.TransactionId,
+						Status:    data.Status,
+						Message:   err.Error(),
+					}), nil
+				}
+
+				pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+					Client:    client,
+					ObjectId:  os.Getenv(env.POOL_ID),
+					ErrLogger: p.errLogger,
+				}, ctx)
+				if err != nil {
+					return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+						OrderCode: payment.TransactionId,
+						Status:    data.Status,
+						Message:   err.Error(),
+					}), nil
+				}
+
+				localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+					Client:    client,
+					ObjectIds: pool.LocalPools,
+					ErrLogger: p.errLogger,
+				}, ctx)
+				if err != nil {
+					return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+						OrderCode: payment.TransactionId,
+						Status:    data.Status,
+						Message:   err.Error(),
+					}), nil
+				}
+
+				var leaders []string
+				var localPoolId string
+				for _, localPool := range localPools {
+					if localPool.Region == child.Region {
+						leaders = localPool.Mods
+						localPoolId = localPool.ID.ID
+						break
+					}
+				}
+
+				if detail.Purpose != string(entities.SPECIAL_NEED_PURPOSE) {
+					leaderNoti, err := p.leaderNotiRepo.GetNotiByNeed(detail.Target, ctx)
+					if err != nil {
+						return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
+							OrderCode: payment.TransactionId,
+							Status:    data.Status,
+							Message:   err.Error(),
+						}), nil
+					}
+
+					var childFormattedAddr string = util.FormatAddress(childId)
+					var contents []string
+					for _, format := range contentFormats {
+						contents = append(contents, fmt.Sprintf(format, child.LastName, child.FirstName, childFormattedAddr))
+					}
+
+					var curTime time.Time = time.Now()
+					if leaderNoti == nil {
+						p.leaderNotiRepo.CreateNoti(entities.LeaderNoti{
+							ID:                      util.GenerateId(),
+							NeedID:                  detail.Target,
+							NeedType:                detail.Purpose,
+							ChildID:                 childId,
+							Region:                  child.Region,
+							AssignedLeaders:         leaders,
+							ExpectedWithdrawPeriods: expectedWithdrawPeriods,
+							Contents:                contents,
+							GeneralContent:          fmt.Sprintf(generalContentFormat, child.LastName, child.FirstName, childFormattedAddr),
+							CreatedAt:               curTime,
+							UpdatedAt:               curTime,
+						}, ctx)
+					} else {
+						leaderNoti.ExpectedWithdrawPeriods = append(leaderNoti.ExpectedWithdrawPeriods, expectedWithdrawPeriods...)
+						leaderNoti.Contents = append(leaderNoti.Contents, contents...)
+						p.leaderNotiRepo.UpdateNoti(*leaderNoti, ctx)
+					}
+
+					switch detail.Purpose {
+					case string(entities.BOOKS_NEED_PURPOSE):
+						args = childModule.ToSupportChildBooksNeedArguments(on_chain.SupportChildBooksNeedArguments{
 							NeedID:      detail.Target,
 							LocalPool:   localPoolId,
 							ChildID:     childId,
@@ -966,11 +966,59 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 							PhoneNumber: *profile.PhoneNumber,
 							Email:       *profile.Email,
 							Message:     payment.Message,
-						},
-					})
-				case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
-					args = childModule.ToSupportChildHealthInsuranceNeedArguments(on_chain.SupportChildHealthInsuranceNeedArguments{
-						NeedID:      detail.Target,
+						})
+					case string(entities.MEAL_NEED_PURPOSE):
+						var detailId string = util.GenerateId()
+						p.childTaskDetailRepo.CreateChildTaskDetail(entities.ChildTaskDetail{
+							ID:      detailId,
+							ChildID: childId,
+							Purpose: string(entities.MEAL_NEED_PURPOSE),
+							Target:  detail.Target,
+						}, ctx)
+
+						task.IsChildTask = true
+						task.ChildTaskDetailID = &detailId
+						task.Region = child.Region
+						task.Description = fmt.Sprintf(taskContentFormat, child.LastName, child.FirstName, childFormattedAddr)
+						task.CreatedAt = curTime
+						task.UpdatedAt = curTime
+						p.taskRepo.CreateTask(task, ctx)
+
+						args = childModule.ToSupportChildMealNeedArguments(on_chain.SupportChildMealNeedArguments{
+							StartPeriod: mealSupportStartPeriod,
+							EndPeriod:   mealSupportEndPeriod,
+							SupportChildBooksNeedArguments: on_chain.SupportChildBooksNeedArguments{
+								NeedID:      detail.Target,
+								LocalPool:   localPoolId,
+								ChildID:     childId,
+								DonorNft:    nftId,
+								Amount:      payment.Amount,
+								FirstName:   *profile.FirstName,
+								LastName:    *profile.LastName,
+								Gender:      *profile.Gender,
+								PhoneNumber: *profile.PhoneNumber,
+								Email:       *profile.Email,
+								Message:     payment.Message,
+							},
+						})
+					case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
+						args = childModule.ToSupportChildHealthInsuranceNeedArguments(on_chain.SupportChildHealthInsuranceNeedArguments{
+							NeedID:      detail.Target,
+							LocalPool:   localPoolId,
+							ChildID:     childId,
+							DonorNft:    nftId,
+							Amount:      payment.Amount,
+							FirstName:   *profile.FirstName,
+							LastName:    *profile.LastName,
+							Gender:      *profile.Gender,
+							PhoneNumber: *profile.PhoneNumber,
+							Email:       *profile.Email,
+							Message:     payment.Message,
+						})
+					}
+				} else {
+					args = childModule.ToSupportChildSpeicalNeedArguments(on_chain.SupportChildSpeicalNeedArguments{
+						CampaignID:  detail.Target,
 						LocalPool:   localPoolId,
 						ChildID:     childId,
 						DonorNft:    nftId,
@@ -983,20 +1031,6 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 						Message:     payment.Message,
 					})
 				}
-			} else {
-				args = childModule.ToSupportChildSpeicalNeedArguments(on_chain.SupportChildSpeicalNeedArguments{
-					CampaignID:  detail.Target,
-					LocalPool:   localPoolId,
-					ChildID:     childId,
-					DonorNft:    nftId,
-					Amount:      payment.Amount,
-					FirstName:   *profile.FirstName,
-					LastName:    *profile.LastName,
-					Gender:      *profile.Gender,
-					PhoneNumber: *profile.PhoneNumber,
-					Email:       *profile.Email,
-					Message:     payment.Message,
-				})
 			}
 		} else {
 			var poolModule = on_chain.InitializeModulePool()
@@ -1283,24 +1317,34 @@ func (p *paymentService) CallbackWithAuth(id string, capturedImgBlobId string, c
 			// 	}
 			// }
 
-			var childModule = on_chain.InitializeModuleChild()
-			module = childModule.GetModule()
-			switch detail.Purpose {
-			case string(entities.BOOKS_NEED_PURPOSE):
-				function = childModule.GetFunctionWithdrawFromBooksNeedProposal()
-			case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
-				function = childModule.GetFunctionWithdrawFromHealthInsuranceNeedProposal()
-			case string(entities.MEAL_NEED_PURPOSE):
-				function = childModule.GetFunctionWithdrawFromMealNeedProposal()
-			case string(entities.SPECIAL_NEED_PURPOSE):
-				function = childModule.GetFunctionWithdrawFromSpecialNeedCampaign()
-			}
+			if detail.Purpose == string(entities.CAMPAIGN_PURPOSE) {
+				var campaignModule = on_chain.InitializeModuleCampaign()
+				module = campaignModule.GetModule()
+				function = campaignModule.GetFunctionWithdrawFromCampaign()
+				args = campaignModule.ToWithdrawFromCampaignArguments(on_chain.WithdrawFromCampaignArguments{
+					CampaignID: detail.Target,
+					ProposalID: *detail.ProposalID,
+				})
+			} else {
+				var childModule = on_chain.InitializeModuleChild()
+				module = childModule.GetModule()
+				switch detail.Purpose {
+				case string(entities.BOOKS_NEED_PURPOSE):
+					function = childModule.GetFunctionWithdrawFromBooksNeedProposal()
+				case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
+					function = childModule.GetFunctionWithdrawFromHealthInsuranceNeedProposal()
+				case string(entities.MEAL_NEED_PURPOSE):
+					function = childModule.GetFunctionWithdrawFromMealNeedProposal()
+				case string(entities.SPECIAL_NEED_PURPOSE):
+					function = childModule.GetFunctionWithdrawFromSpecialNeedCampaign()
+				}
 
-			args = childModule.ToWithdrawFromNeedArguments(on_chain.WithdrawFromNeedArguments{
-				LocalPool:  detail.LocalPoolID,
-				TargetID:   detail.Target,
-				ProposalID: *detail.ProposalID,
-			})
+				args = childModule.ToWithdrawFromNeedArguments(on_chain.WithdrawFromNeedArguments{
+					LocalPool:  detail.LocalPoolID,
+					TargetID:   detail.Target,
+					ProposalID: *detail.ProposalID,
+				})
+			}
 		}
 	}
 

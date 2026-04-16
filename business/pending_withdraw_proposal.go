@@ -16,9 +16,11 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/ai"
 	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
+	walrus_pkg "raise-child/util/walrus_pkg"
 	"slices"
 	"strings"
 	"time"
@@ -31,6 +33,8 @@ type pendingWithdrawProposalService struct {
 	pendingWithdrawProposalRepo i_repository.IPendingWithdrawProposalRepository
 	offWithdrawProposalRepo     i_repository.IOffChainWithdrawProposalRepository
 	bankProfileRepo             i_repository.IBankProfileRepository
+	aiProvider                  ai.IAiClientProvider
+	walrusProvider              walrus_pkg.IWalrusProvider
 	redisCache                  cache.IRedisCache
 	clients                     map[string]sui.ISuiAPI
 	errLogger                   *log.Logger
@@ -39,12 +43,16 @@ type pendingWithdrawProposalService struct {
 func initializePendingWithdrawProposalService(
 	pendingWithdrawProposalRepo i_repository.IPendingWithdrawProposalRepository,
 	bankProfileRepo i_repository.IBankProfileRepository,
+	aiProvider ai.IAiClientProvider,
+	walrusProvider walrus_pkg.IWalrusProvider,
 	clients map[string]sui.ISuiAPI,
 	errLogger *log.Logger,
 ) business.IPendingWithdrawProposalService {
 	return &pendingWithdrawProposalService{
 		pendingWithdrawProposalRepo: pendingWithdrawProposalRepo,
 		bankProfileRepo:             bankProfileRepo,
+		aiProvider:                  aiProvider,
+		walrusProvider:              walrusProvider,
 		redisCache:                  cache.InitializeRedisCache(),
 		clients:                     clients,
 		errLogger:                   errLogger,
@@ -62,6 +70,8 @@ func GeneratePendingWithdrawProposalService() (business.IPendingWithdrawProposal
 	return initializePendingWithdrawProposalService(
 		repository.InitializePendingWithdrawProposalRepo(cnn, errLogger),
 		repository.InitializeBankProfileRepository(cnn, errLogger),
+		ai.InitializeAiProvider(nil, errLogger),
+		walrus_pkg.InitializeWalrusProvider(errLogger),
 		_networkAliases,
 		errLogger,
 	), nil
@@ -97,13 +107,14 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
 
-	var module, function string
+	var module, function, localPoolId string
 	var args []interface{}
 	var closedAt int64 = util.ToMilliseconds(util.GetRequestDuration())
 	if proposal.Purpose == string(entities.WITHDRAW_PURPOSE) {
 		var poolModule = on_chain.InitializeModulePool()
 		module = poolModule.GetModule()
 		function = poolModule.GetFunctionCreateWithdrawProposalV2()
+		localPoolId = proposal.PoolID
 		//localPoolId = proposal.PoolID
 		// if localPoolId == os.Getenv(env.POOL_ID) {
 		// 	localPoolId = os.Getenv(env.SHARED_LOCAL_POOL_ID)
@@ -120,7 +131,6 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 		})
 	} else {
 		var childModule = on_chain.InitializeModuleChild()
-		module = childModule.GetModule()
 
 		switch proposal.Purpose {
 		case string(entities.BOOKS_NEED_PURPOSE):
@@ -133,7 +143,9 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 				return response.BuildTransactionResponse{}, err
 			}
 
+			module = childModule.GetModule()
 			function = childModule.GetFunctionCreateChildBooksNeedWithdrawProposalV2()
+			localPoolId = proposal.PoolID
 			args = childModule.ToCreateChildNormalNeedWithdrawProposalArgumentsV2(on_chain.CreateChildNormalNeedWithdrawProposalArgumentsV2{
 				NeedID:      proposal.Target,
 				ChildID:     need.ChildID,
@@ -153,7 +165,9 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 				return response.BuildTransactionResponse{}, err
 			}
 
+			module = childModule.GetModule()
 			function = childModule.GetFunctionCreateChildHealthInsuranceNeedWithdrawProposalV2()
+			localPoolId = proposal.PoolID
 			args = childModule.ToCreateChildNormalNeedWithdrawProposalArgumentsV2(on_chain.CreateChildNormalNeedWithdrawProposalArgumentsV2{
 				NeedID:      proposal.Target,
 				ChildID:     need.ChildID,
@@ -174,7 +188,9 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 				return response.BuildTransactionResponse{}, err
 			}
 
+			module = childModule.GetModule()
 			function = childModule.GetFunctionCreateChildMealNeedWithdrawProposalV2()
+			localPoolId = proposal.PoolID
 			args = childModule.ToCreateChildNormalNeedWithdrawProposalArgumentsV2(on_chain.CreateChildNormalNeedWithdrawProposalArgumentsV2{
 				NeedID:      proposal.Target,
 				ChildID:     need.ChildID,
@@ -194,11 +210,33 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 				return response.BuildTransactionResponse{}, err
 			}
 
+			module = childModule.GetModule()
 			function = childModule.GetFunctionCreateChildSpecialNeedWithdrawProposalV2()
+			localPoolId = proposal.PoolID
 			args = childModule.ToCreateChildSpecialNeedWithdrawProposalArgumentsV2(on_chain.CreateChildSpecialNeedWithdrawProposalArgumentsV2{
 				CampaignID:     proposal.Target,
 				LocalPool:      proposal.PoolID,
 				ChildID:        campaign.ChildID,
+				WithdrawAmount: proposal.WithdrawAmount,
+				Description:    proposal.Description,
+				ProofBlobID:    proposal.ProofBlobID,
+				ClosedAt:       closedAt,
+				Creator:        proposal.Creator,
+			})
+		case string(entities.CAMPAIGN_PURPOSE):
+			var campaignModule = on_chain.InitializeModuleCampaign()
+			module = campaignModule.GetModule()
+			function = campaignModule.GetFunctionWithdrawFromCampaign()
+
+			if proposal.PoolID != os.Getenv(env.POOL_ID) {
+				localPoolId = proposal.PoolID
+			} else {
+				localPoolId = os.Getenv(env.SHARED_LOCAL_POOL_ID)
+			}
+
+			args = campaignModule.ToCreateCampaignWithdrawProposalArguments(on_chain.CreateCampaignWithdrawProposalArguments{
+				LocalPoolID:    localPoolId,
+				CampaignID:     proposal.Target,
 				WithdrawAmount: proposal.WithdrawAmount,
 				Description:    proposal.Description,
 				ProofBlobID:    proposal.ProofBlobID,
@@ -234,7 +272,7 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 			ID:          proposalId,
 			Purpose:     proposal.Purpose,
 			Target:      proposal.Target,
-			LocalPoolID: proposal.PoolID,
+			LocalPoolID: localPoolId,
 			CreatedAt:   time.Now(),
 		}, ctx)
 }
@@ -299,6 +337,21 @@ func (p *pendingWithdrawProposalService) CreatePendingWithdrawProposal(req reque
 		poolName = localPool.Region
 	}
 
+	var purpose string = string(entities.WITHDRAW_PURPOSE)
+	var description string = strings.TrimSpace(req.Description)
+	var aiEvaluation string
+	if req.ProofBlobID != nil {
+		proofBytes, _ := p.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+		if proofBytes != nil {
+			aiEvaluation = p.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+				Purpose:         purpose,
+				WithdrawAmount:  req.WithdrawAmount,
+				Description:     description,
+				ProofBytesImage: proofBytes,
+			}, ctx)
+		}
+	}
+
 	// todo: AI validation
 	var curTime time.Time = time.Now()
 	var proposal = entities.PendingWithdrawProposal{
@@ -307,13 +360,13 @@ func (p *pendingWithdrawProposalService) CreatePendingWithdrawProposal(req reque
 		Creator:        sender,
 		PoolID:         poolId,
 		PoolName:       poolName,
-		Purpose:        string(entities.WITHDRAW_PURPOSE),
+		Purpose:        purpose,
 		Target:         req.PoolID,
 		WithdrawAmount: req.WithdrawAmount,
 		ProofBlobID:    req.ProofBlobID,
-		Description:    strings.TrimSpace(req.Description),
+		Description:    description,
 		Status:         request_pending_status,
-		AIEvaluation:   "",
+		AIEvaluation:   aiEvaluation,
 		CreatedAt:      curTime,
 		UpdatedAt:      curTime,
 	}

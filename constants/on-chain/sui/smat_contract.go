@@ -2,14 +2,16 @@ package sui
 
 // Modules
 const (
-	MODULE_MANAGE string = "manage"
-	MODULE_RECORD string = "record"
-	MODULE_CHILD  string = "child"
-	MODULE_STAFF  string = "staff"
-	MODULE_DONOR  string = "donor"
-	MODULE_POOL   string = "pool"
-	MODULE_GIFT   string = "gift"
-	MODULE_NEED   string = "need"
+	MODULE_MANAGE   string = "manage"
+	MODULE_RECORD   string = "record"
+	MODULE_CHILD    string = "child"
+	MODULE_STAFF    string = "staff"
+	MODULE_DONOR    string = "donor"
+	MODULE_POOL     string = "pool"
+	MODULE_GIFT     string = "gift"
+	MODULE_NEED     string = "need"
+	MODULE_TASK     string = "task"
+	MODULE_CAMPAIGN string = "campaign"
 )
 
 // Functions
@@ -75,6 +77,11 @@ const (
 	EDIT_UPDATE_BOOKS_NEED_DATES_FUNCTION                            string = "edit_update_books_need_dates"
 	EDIT_UPDATE_MEAL_NEED_DATES_FUNCTION                             string = "edit_update_meal_need_dates"
 	EDIT_UPDATE_HEALTH_INSURANCE_NEED_DATES_FUNCTION                 string = "edit_update_health_insurance_need_dates"
+	CREATE_CAMPAIGN_FOR_MAIN_POOL_FUNCTION                           string = "create_campaign_for_main_pool"
+	CREATE_CAMPAIGN_FOR_REGION_POOL_FUNCTION                         string = "create_campaign_for_region_pool"
+	SUPPORT_CAMPAIGN_FUNCTION                                        string = "support_campaign"
+	CREATE_CAMPAIGN_WITHDRAW_PROPOSAL_FUNCTION                       string = "create_campaign_withdraw_proposal"
+	WITHDRAW_FROM_CAMPAIGN_FUNCTION                                  string = "withdraw_from_campaign"
 )
 
 // Structs
@@ -91,6 +98,7 @@ const (
 	SPECIAL_NEED_PROPOSAL_STRUCT string = "SpecialNeedProposal"
 	SPECIAL_NEED_CAMPAIGN_STRUCT string = "SpecialNeedCampaign"
 	GIFT_STRUCT                  string = "Gift"
+	CAMPAIGN_STRUCT              string = "Campaign"
 )
 
 // Cap structs

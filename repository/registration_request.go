@@ -85,7 +85,7 @@ func (r *registratioRequestRepo) CreateRegistrationRequest(req entities.Registra
 		"approvers, refusers, refuse_reasons, status, is_available_to_confirm, is_confirm_register, " +
 		"created_by, created_at, updated_at, closed_at) " +
 		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, " +
-		"$11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $ss, $23)"
+		"$11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.REGISTRAION_REQUEST_REPOSITORY) + "CreateRegistrationRequest - "
 
@@ -238,12 +238,11 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 		order = req.SortOrder
 	}
 
-	queryCondition += "ORDER BY created_at " + order
-
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       registraion_request_table,
 		limitAmount: req.PageSize,
 		condition:   queryCondition,
+		order:       " ORDER BY created_at " + order,
 		page:        req.Page,
 		isGetCount:  false,
 	})

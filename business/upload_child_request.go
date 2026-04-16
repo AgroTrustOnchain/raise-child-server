@@ -16,9 +16,11 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/ai"
 	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
+	walrus_pkg "raise-child/util/walrus_pkg"
 	"slices"
 	"strings"
 	"time"
@@ -29,6 +31,8 @@ import (
 
 type uploadChildRequestService struct {
 	uploadChildRequestRepo i_repository.IUploadChildRequestRepository
+	aiProvider             ai.IAiClientProvider
+	walrusProvider         walrus_pkg.IWalrusProvider
 	redisCache             cache.IRedisCache
 	clients                map[string]sui.ISuiAPI
 	errLogger              *log.Logger
@@ -36,11 +40,15 @@ type uploadChildRequestService struct {
 
 func initializeUploadChildRequestService(
 	uploadChildRequestRepo i_repository.IUploadChildRequestRepository,
+	aiProvider ai.IAiClientProvider,
+	walrusProvider walrus_pkg.IWalrusProvider,
 	clients map[string]sui.ISuiAPI,
 	errLogger *log.Logger,
 ) business.IUploadChildRequestService {
 	return &uploadChildRequestService{
 		uploadChildRequestRepo: uploadChildRequestRepo,
+		aiProvider:             aiProvider,
+		walrusProvider:         walrusProvider,
 		redisCache:             cache.InitializeRedisCache(),
 		clients:                clients,
 		errLogger:              errLogger,
@@ -55,7 +63,7 @@ func GenerateUploadChildRequestService() (business.IUploadChildRequestService, e
 		return nil, err
 	}
 
-	return initializeUploadChildRequestService(repository.InitializeUploadChildRequestRepo(cnn, errLogger), _networkAliases, errLogger), nil
+	return initializeUploadChildRequestService(repository.InitializeUploadChildRequestRepo(cnn, errLogger), ai.InitializeAiProvider(nil, errLogger), walrus_pkg.InitializeWalrusProvider(errLogger), _networkAliases, errLogger), nil
 }
 
 // ReviewUploadChildRequest implements business.IUploadChildRequestService.
@@ -152,15 +160,35 @@ func (u *uploadChildRequestService) ConfirmUploadChildRequest(id string, ctx con
 			secondGuardianIdentityCardBlobID = req.SecondGuardianProfile.IdentityCardBlobID
 		}
 
+		var client = u.clients[constant.SuiTestnet]
+		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+			Client:    client,
+			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+			ErrLogger: u.errLogger,
+		}, ctx)
+		if err != nil {
+			return res, err
+		}
+
+		var centerId string
+		for i, region := range manageObj.LocalRegions {
+			if region == req.Region {
+				centerId = manageObj.ChildrenCenters[i]
+				break
+			}
+		}
+
 		var module = on_chain.InitializeModuleChild()
 		txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-			Client:    u.clients[constant.SuiTestnet],
+			Client:    client,
 			Sender:    sender,
 			Module:    module.GetModule(),
 			Function:  module.GetFunctionAddChild(),
 			ErrLogger: u.errLogger,
 			Arguments: module.ToAddChildArguments(on_chain.AddChildArguments{
+				Center:                           centerId,
 				IdentityCode:                     req.IdentityCode,
+				BirthCertificateBlobID:           req.BirthCertificateBlobID,
 				FirstName:                        req.FirstName,
 				LastName:                         req.LastName,
 				Gender:                           req.Gender,
@@ -256,26 +284,72 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 		}
 	}
 
+	var firstNasme string = strings.TrimSpace(req.FirstName)
+	var lastName string = strings.TrimSpace(req.LastName)
+	var homeAddr string = strings.TrimSpace(req.HomeAddress)
+
+	birthCertBytes, _ := u.walrusProvider.FetchBytesImage(req.BirthCertificateBlobID)
+	avatarBytes, _ := u.walrusProvider.FetchBytesImage(req.AvatarBlobId)
+	homeBytes, _ := u.walrusProvider.FetchBytesImage(req.HomeBlobID)
+	firstGuardianIdentityCardBytes, _ := u.walrusProvider.FetchBytesImage(firstGuardianProfile.IdentityCardBlobID)
+
+	var aiEvaluation string
+	if birthCertBytes != nil && avatarBytes != nil && homeBytes != nil && firstGuardianIdentityCardBytes != nil {
+		var validateReq = ai.ValidateUploadChildRequest{
+			HomeBytesImage:                  homeBytes,
+			IdentityCode:                    identityCode,
+			ChildBirthCertificateBytesImage: birthCertBytes,
+			Region:                          req.Region,
+			FirstName:                       firstNasme,
+			LastName:                        lastName,
+			Gender:                          gender,
+			DateOfBirth:                     dateOfBirth,
+			HomeAddress:                     homeAddr,
+			AvatarBytesImage:                avatarBytes,
+			FirstGuardian: ai.ChildGuardianProfile{
+				FullName:               firstGuardianProfile.FullName,
+				PhoneNumber:            firstGuardianProfile.PhoneNumber,
+				Relation:               firstGuardianProfile.Relation,
+				IdentityCardBytesImage: firstGuardianIdentityCardBytes,
+			},
+		}
+
+		if secondGuardianProfile != nil {
+			secondGuardianIdentityCardBytes, _ := u.walrusProvider.FetchBytesImage(secondGuardianProfile.IdentityCardBlobID)
+			if secondGuardianIdentityCardBytes != nil {
+				validateReq.SecondGuardian = &ai.ChildGuardianProfile{
+					FullName:               secondGuardianProfile.FullName,
+					PhoneNumber:            secondGuardianProfile.PhoneNumber,
+					Relation:               secondGuardianProfile.Relation,
+					IdentityCardBytesImage: secondGuardianIdentityCardBytes,
+				}
+			}
+		}
+
+		aiEvaluation = u.aiProvider.ValidateUploadChildRequest(validateReq, ctx)
+	}
+
 	// todo: AI validation
 	var curTime time.Time = time.Now()
 	var request = entities.UploadChildRequest{
-		ID:                    util.GenerateId(),
-		ProfileID:             ctx.Value("sub").(string),
-		IdentityCode:          identityCode,
-		AvatarBlobId:          strings.TrimSpace(req.AvatarBlobId),
-		HomeBlobID:            req.HomeBlobID,
-		Region:                region,
-		FirstName:             strings.TrimSpace(req.FirstName),
-		LastName:              strings.TrimSpace(req.LastName),
-		Gender:                gender,
-		DateOfBirth:           dateOfBirth,
-		HomeAddress:           strings.TrimSpace(req.HomeAddress),
-		FirstGuardianProfile:  firstGuardianProfile,
-		SecondGuardianProfile: secondGuardianProfile,
-		AIEvaluation:          "",
-		CreatedBy:             ctx.Value("address").(string),
-		CreatedAt:             curTime,
-		UpdatedAt:             curTime,
+		ID:                     util.GenerateId(),
+		ProfileID:              ctx.Value("sub").(string),
+		IdentityCode:           identityCode,
+		BirthCertificateBlobID: req.BirthCertificateBlobID,
+		AvatarBlobId:           req.AvatarBlobId,
+		HomeBlobID:             req.HomeBlobID,
+		Region:                 region,
+		FirstName:              firstNasme,
+		LastName:               lastName,
+		Gender:                 gender,
+		DateOfBirth:            dateOfBirth,
+		HomeAddress:            homeAddr,
+		FirstGuardianProfile:   firstGuardianProfile,
+		SecondGuardianProfile:  secondGuardianProfile,
+		AIEvaluation:           aiEvaluation,
+		CreatedBy:              ctx.Value("address").(string),
+		CreatedAt:              curTime,
+		UpdatedAt:              curTime,
 	}
 
 	return &request, u.uploadChildRequestRepo.CreateUploadChildRequest(request, ctx)

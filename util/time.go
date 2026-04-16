@@ -12,7 +12,7 @@ func ToMilliseconds(time time.Time) int64 {
 }
 
 func RawDateToTime(rawDate string) time.Time {
-	parsedTime, _ := time.Parse(dateFormat, rawDate)
+	parsedTime, _ := time.ParseInLocation(dateFormat, rawDate, time.Local)
 	return parsedTime
 }
 

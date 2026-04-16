@@ -36,10 +36,13 @@ func TestGetChildren(t *testing.T) {
 		pendingWithdrawProposalRepo,
 		offchainWithdrawRepo,
 		offchainDonationRepo,
+		nil,
 		paymentRepo,
 		profileRepo,
 		bankProfileRepo,
 		leaderNotiRepo,
+		nil,
+		nil,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
 		},
@@ -141,10 +144,13 @@ func TestGetChild(t *testing.T) {
 		pendingWithdrawProposalRepo,
 		offchainWithdrawRepo,
 		offchainDonationRepo,
+		nil,
 		paymentRepo,
 		profileRepo,
 		bankProfileRepo,
 		leaderNotiRepo,
+		nil,
+		nil,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
 		},
@@ -202,10 +208,13 @@ func TestSupportBooksNeed(t *testing.T) {
 		pendingWithdrawProposalRepo,
 		offchainWithdrawRepo,
 		offchainDonationRepo,
+		nil,
 		paymentRepo,
 		profileRepo,
 		bankProfileRepo,
 		leaderNotiRepo,
+		nil,
+		nil,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
 		},
@@ -348,16 +357,21 @@ func TestSupportHealthInsuranceNeed(t *testing.T) {
 	var profileRepo = repository.InitializeProfileMockRepo()
 	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
 	var leaderNotiRepo = repository.InitializeLeaderNotiMockRepo()
+	var aiClient = pkg.InitializeAiMockClient()
+	var walrusProvider = pkg.InitializeWalrusMockProvider()
 	var mockClient = pkg.InitializeSuiMockApi()
 	var service = initializeChildService(
 		pendingChildSpecialNeedRepo,
 		pendingWithdrawProposalRepo,
 		offchainWithdrawRepo,
 		offchainDonationRepo,
+		nil,
 		paymentRepo,
 		profileRepo,
 		bankProfileRepo,
 		leaderNotiRepo,
+		aiClient,
+		walrusProvider,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
 		},
@@ -496,6 +510,7 @@ func TestSupportMealNeed(t *testing.T) {
 	var pendingWithdrawProposalRepo = repository.InitializePendingWithdrawProposalMockRepo()
 	var offchainWithdrawRepo = repository.InitializeOffChainWithdrawProposalMockRepo()
 	var offchainDonationRepo = repository.InitializeOffChainDonationMockRepo()
+	var mealSupportDurationRepo = repository.InitializeMealSupportDurationMockRepo()
 	var paymentRepo = repository.InitializePaymentMockRepo()
 	var profileRepo = repository.InitializeProfileMockRepo()
 	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
@@ -506,10 +521,13 @@ func TestSupportMealNeed(t *testing.T) {
 		pendingWithdrawProposalRepo,
 		offchainWithdrawRepo,
 		offchainDonationRepo,
+		mealSupportDurationRepo,
 		paymentRepo,
 		profileRepo,
 		bankProfileRepo,
 		leaderNotiRepo,
+		nil,
+		nil,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
 		},
@@ -519,16 +537,18 @@ func TestSupportMealNeed(t *testing.T) {
 	var ctx = context.WithValue(context.Background(), "address", sampleAddress)
 	ctx = context.WithValue(ctx, "sub", sampleSub)
 	var tcsInfo = []struct {
-		needId               string
-		req                  request.SupportMealNeadRequest
-		profile              *entities.Profile
-		getProfileErr        error
-		suiRes               models.SuiObjectResponse
-		isCallCreateDonation bool
-		createDonateRes      error
-		isCallCreatePayment  bool
-		createPaymentRes     error
-		expectedErr          error
+		needId                          string
+		req                             request.SupportMealNeadRequest
+		profile                         *entities.Profile
+		getProfileErr                   error
+		suiRes                          models.SuiObjectResponse
+		isCallCreateMealSupportDuration bool
+		createMealSupportDurationRes    error
+		isCallCreateDonation            bool
+		createDonateRes                 error
+		isCallCreatePayment             bool
+		createPaymentRes                error
+		expectedErr                     error
 	}{
 		{ // Error get profile case
 			getProfileErr: errors.New(noti.INTERNALL_ERR_MSG),
@@ -570,6 +590,25 @@ func TestSupportMealNeed(t *testing.T) {
 			},
 			expectedErr: errors.New(noti.MEAL_NEED_SUPPORT_DURATION_OUT_RANGE_MESSAGE),
 		},
+		{ // Create meal support duration fail case
+			needId: sampleAddress,
+			req: request.SupportMealNeadRequest{
+				Months: 1,
+			},
+			profile: &sampleProfileObj,
+			suiRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: sampleMealNeedJson,
+						},
+					},
+				},
+			},
+			isCallCreateMealSupportDuration: true,
+			createMealSupportDurationRes:    errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:                     errors.New(noti.INTERNALL_ERR_MSG),
+		},
 		{ // Create donation fail case
 			needId: sampleAddress,
 			req: request.SupportMealNeadRequest{
@@ -585,9 +624,10 @@ func TestSupportMealNeed(t *testing.T) {
 					},
 				},
 			},
-			isCallCreateDonation: true,
-			createDonateRes:      errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			isCallCreateMealSupportDuration: true,
+			isCallCreateDonation:            true,
+			createDonateRes:                 errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:                     errors.New(noti.INTERNALL_ERR_MSG),
 		},
 		{ // Create payment fail case
 			needId: sampleAddress,
@@ -604,10 +644,11 @@ func TestSupportMealNeed(t *testing.T) {
 					},
 				},
 			},
-			isCallCreateDonation: true,
-			isCallCreatePayment:  true,
-			createPaymentRes:     errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			isCallCreateMealSupportDuration: true,
+			isCallCreateDonation:            true,
+			isCallCreatePayment:             true,
+			createPaymentRes:                errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:                     errors.New(noti.INTERNALL_ERR_MSG),
 		},
 	}
 
@@ -616,11 +657,16 @@ func TestSupportMealNeed(t *testing.T) {
 			profileRepo.ExpectedCalls = nil
 			mockClient.ExpectedCalls = nil
 			offchainDonationRepo.ExpectedCalls = nil
+			mealSupportDurationRepo.ExpectedCalls = nil
 			paymentRepo.ExpectedCalls = nil
 
 			profileRepo.On("GetProfile", mock.Anything, mock.Anything).Return(tc.profile, tc.getProfileErr)
 			if tc.suiRes.Data != nil {
 				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.suiRes, nil)
+			}
+
+			if tc.isCallCreateMealSupportDuration {
+				mealSupportDurationRepo.On("CreateMealSupportDuration", mock.Anything, mock.Anything).Return(tc.createMealSupportDurationRes)
 			}
 
 			if tc.isCallCreateDonation {
@@ -652,10 +698,13 @@ func TestSupportSpecialNeed(t *testing.T) {
 		pendingWithdrawProposalRepo,
 		offchainWithdrawRepo,
 		offchainDonationRepo,
+		nil,
 		paymentRepo,
 		profileRepo,
 		bankProfileRepo,
 		leaderNotiRepo,
+		nil,
+		nil,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
 		},
@@ -792,16 +841,21 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 	var profileRepo = repository.InitializeProfileMockRepo()
 	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
 	var leaderNotiRepo = repository.InitializeLeaderNotiMockRepo()
+	var aiClient = pkg.InitializeAiMockClient()
+	var walrusProvider = pkg.InitializeWalrusMockProvider()
 	var mockClient = pkg.InitializeSuiMockApi()
 	var service = initializeChildService(
 		pendingChildSpecialNeedRepo,
 		pendingWithdrawProposalRepo,
 		offchainWithdrawRepo,
 		offchainDonationRepo,
+		nil,
 		paymentRepo,
 		profileRepo,
 		bankProfileRepo,
 		leaderNotiRepo,
+		aiClient,
+		walrusProvider,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
 		},
@@ -860,6 +914,7 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 
 	var ctx = context.WithValue(context.Background(), "address", sampleAddress)
 	ctx = context.WithValue(ctx, "sub", sampleSub)
+	var sampleBlobId string = "blobID"
 	var tcsInfo = []struct {
 		req                  request.CreateNormalNeedWithdrawProposalRequest
 		needRes              models.SuiObjectResponse
@@ -877,11 +932,13 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 		isGetPools           bool
 		isCallCreateProposal bool
 		createProposalRes    error
+		isCallAiValidate     bool
 		expectedErr          error
 	}{
 		{ // Happy case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
-				NeedID: sampleAddress,
+				NeedID:      sampleAddress,
+				ProofBlobID: &sampleBlobId,
 			},
 			needRes:              validNeedRes,
 			isGetNeed:            true,
@@ -894,6 +951,7 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 			isGetProposal:        true,
 			isGetPools:           true,
 			isCallCreateProposal: true,
+			isCallAiValidate:     true,
 		},
 		{ // Invalid need case
 			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
@@ -1054,7 +1112,8 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 		},
 		{ // Create pending proposal fail case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
-				NeedID: sampleAddress,
+				NeedID:      sampleAddress,
+				ProofBlobID: &sampleBlobId,
 			},
 			needRes:              validNeedRes,
 			isGetNeed:            true,
@@ -1067,6 +1126,7 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 			isGetProposal:        true,
 			isGetPools:           true,
 			isCallCreateProposal: true,
+			isCallAiValidate:     true,
 			createProposalRes:    errors.New(noti.INTERNALL_ERR_MSG),
 			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
 		},
@@ -1077,6 +1137,8 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 			mockClient.ExpectedCalls = nil
 			leaderNotiRepo.ExpectedCalls = nil
 			pendingWithdrawProposalRepo.ExpectedCalls = nil
+			walrusProvider.ExpectedCalls = nil
+			aiClient.ExpectedCalls = nil
 
 			if tc.isGetNeed {
 				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.needRes, nil).Once()
@@ -1124,6 +1186,11 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 						},
 					},
 				}, nil).Once()
+			}
+
+			if tc.isCallAiValidate {
+				walrusProvider.On("FetchBytesImage", mock.Anything).Return([]byte{}, nil)
+				aiClient.On("ValidateWithdrawProposal", mock.Anything, mock.Anything).Return("")
 			}
 
 			res, err := service.CreateBooksNeedWithdrawProposalV2(tc.req, ctx)
@@ -1144,16 +1211,21 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 	var profileRepo = repository.InitializeProfileMockRepo()
 	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
 	var leaderNotiRepo = repository.InitializeLeaderNotiMockRepo()
+	var aiClient = pkg.InitializeAiMockClient()
+	var walrusProvider = pkg.InitializeWalrusMockProvider()
 	var mockClient = pkg.InitializeSuiMockApi()
 	var service = initializeChildService(
 		pendingChildSpecialNeedRepo,
 		pendingWithdrawProposalRepo,
 		offchainWithdrawRepo,
 		offchainDonationRepo,
+		nil,
 		paymentRepo,
 		profileRepo,
 		bankProfileRepo,
 		leaderNotiRepo,
+		aiClient,
+		walrusProvider,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
 		},
@@ -1212,6 +1284,7 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 
 	var ctx = context.WithValue(context.Background(), "address", sampleAddress)
 	ctx = context.WithValue(ctx, "sub", sampleSub)
+	var sampleBlobId string = "blobID"
 	var tcsInfo = []struct {
 		req                  request.CreateNormalNeedWithdrawProposalRequest
 		needRes              models.SuiObjectResponse
@@ -1229,11 +1302,13 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 		isGetPools           bool
 		isCallCreateProposal bool
 		createProposalRes    error
+		isCallAiValidate     bool
 		expectedErr          error
 	}{
 		{ // Happy case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
-				NeedID: sampleAddress,
+				NeedID:      sampleAddress,
+				ProofBlobID: &sampleBlobId,
 			},
 			needRes:              validNeedRes,
 			isGetNeed:            true,
@@ -1246,6 +1321,7 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 			isGetProposal:        true,
 			isGetPools:           true,
 			isCallCreateProposal: true,
+			isCallAiValidate:     true,
 		},
 		{ // Invalid need case
 			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
@@ -1406,7 +1482,8 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 		},
 		{ // Create pending proposal fail case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
-				NeedID: sampleAddress,
+				NeedID:      sampleAddress,
+				ProofBlobID: &sampleBlobId,
 			},
 			needRes:              validNeedRes,
 			isGetNeed:            true,
@@ -1420,6 +1497,7 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 			isGetPools:           true,
 			isCallCreateProposal: true,
 			createProposalRes:    errors.New(noti.INTERNALL_ERR_MSG),
+			isCallAiValidate:     true,
 			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
 		},
 	}
@@ -1429,6 +1507,8 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 			mockClient.ExpectedCalls = nil
 			leaderNotiRepo.ExpectedCalls = nil
 			pendingWithdrawProposalRepo.ExpectedCalls = nil
+			walrusProvider.ExpectedCalls = nil
+			aiClient.ExpectedCalls = nil
 
 			if tc.isGetNeed {
 				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.needRes, nil).Once()
@@ -1478,6 +1558,11 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 				}, nil).Once()
 			}
 
+			if tc.isCallAiValidate {
+				walrusProvider.On("FetchBytesImage", mock.Anything).Return([]byte{}, nil)
+				aiClient.On("ValidateWithdrawProposal", mock.Anything, mock.Anything).Return("")
+			}
+
 			res, err := service.CreateHealthInsuranceNeedWithdrawProposalV2(tc.req, ctx)
 			assert.Equal(t, tc.expectedErr, err)
 			if tc.expectedErr == nil {
@@ -1496,16 +1581,21 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 	var profileRepo = repository.InitializeProfileMockRepo()
 	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
 	var leaderNotiRepo = repository.InitializeLeaderNotiMockRepo()
+	var aiClient = pkg.InitializeAiMockClient()
+	var walrusProvider = pkg.InitializeWalrusMockProvider()
 	var mockClient = pkg.InitializeSuiMockApi()
 	var service = initializeChildService(
 		pendingChildSpecialNeedRepo,
 		pendingWithdrawProposalRepo,
 		offchainWithdrawRepo,
 		offchainDonationRepo,
+		nil,
 		paymentRepo,
 		profileRepo,
 		bankProfileRepo,
 		leaderNotiRepo,
+		aiClient,
+		walrusProvider,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
 		},
@@ -1616,18 +1706,9 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 		Contents:                make([]string, totalSupportedMonths),
 	}
 
-	// var passedWithdrawDateNoti = entities.LeaderNoti{
-	// 	ExpectedWithdrawPeriods: []string{util.TimeToRawDate(curTime.AddDate(0, -1, 0))},
-	// 	Contents:                []string{"1", "2"},
-	// }
-
-	// var stillNotComeWithdrawDateNoti = entities.LeaderNoti{
-	// 	ExpectedWithdrawPeriods: []string{util.TimeToRawDate(curTime.AddDate(0, 1, 0))},
-	// 	Contents:                []string{"1", "2"},
-	// }
-
 	var ctx = context.WithValue(context.Background(), "address", sampleAddress)
 	ctx = context.WithValue(ctx, "sub", sampleSub)
+	var sampleBlobId string = "blobID"
 	var tcsInfo = []struct {
 		req                  request.CreateNormalNeedWithdrawProposalRequest
 		needRes              models.SuiObjectResponse
@@ -1645,11 +1726,13 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 		isGetPools           bool
 		isCallCreateProposal bool
 		createProposalRes    error
+		isCallAiValidate     bool
 		expectedErr          error
 	}{
 		{ // Happy case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
-				NeedID: sampleAddress,
+				NeedID:      sampleAddress,
+				ProofBlobID: &sampleBlobId,
 			},
 			needRes:              validNeedRes,
 			isGetNeed:            true,
@@ -1662,6 +1745,7 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 			isGetProposal:        true,
 			isGetPools:           true,
 			isCallCreateProposal: true,
+			isCallAiValidate:     true,
 		},
 		{ // Invalid need case
 			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
@@ -1794,7 +1878,8 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 		},
 		{ // Create pending proposal fail case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
-				NeedID: sampleAddress,
+				NeedID:      sampleAddress,
+				ProofBlobID: &sampleBlobId,
 			},
 			needRes:              validNeedRes,
 			isGetNeed:            true,
@@ -1808,6 +1893,7 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 			isGetPools:           true,
 			isCallCreateProposal: true,
 			createProposalRes:    errors.New(noti.INTERNALL_ERR_MSG),
+			isCallAiValidate:     true,
 			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
 		},
 	}
@@ -1817,6 +1903,8 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 			mockClient.ExpectedCalls = nil
 			leaderNotiRepo.ExpectedCalls = nil
 			pendingWithdrawProposalRepo.ExpectedCalls = nil
+			walrusProvider.ExpectedCalls = nil
+			aiClient.ExpectedCalls = nil
 
 			if tc.isGetNeed {
 				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.needRes, nil).Once()
@@ -1866,11 +1954,1602 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 				}, nil).Once()
 			}
 
+			if tc.isCallAiValidate {
+				walrusProvider.On("FetchBytesImage", mock.Anything).Return([]byte{}, nil)
+				aiClient.On("ValidateWithdrawProposal", mock.Anything, mock.Anything).Return("")
+			}
+
 			res, err := service.CreateMealNeedWithdrawProposalV2(tc.req, ctx)
 			assert.Equal(t, tc.expectedErr, err)
 			if tc.expectedErr == nil {
 				assert.True(t, res != nil)
 			}
+		})
+	}
+}
+
+func TestCreateSpecialNeedWithdrawProposalV2(t *testing.T) {
+	var pendingChildSpecialNeedRepo = repository.InitializeChildPendingSpecialProposalMockRepo()
+	var pendingWithdrawProposalRepo = repository.InitializePendingWithdrawProposalMockRepo()
+	var offchainWithdrawRepo = repository.InitializeOffChainWithdrawProposalMockRepo()
+	var offchainDonationRepo = repository.InitializeOffChainDonationMockRepo()
+	var paymentRepo = repository.InitializePaymentMockRepo()
+	var profileRepo = repository.InitializeProfileMockRepo()
+	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
+	var leaderNotiRepo = repository.InitializeLeaderNotiMockRepo()
+	var aiClient = pkg.InitializeAiMockClient()
+	var walrusProvider = pkg.InitializeWalrusMockProvider()
+	var mockClient = pkg.InitializeSuiMockApi()
+	var service = initializeChildService(
+		pendingChildSpecialNeedRepo,
+		pendingWithdrawProposalRepo,
+		offchainWithdrawRepo,
+		offchainDonationRepo,
+		nil,
+		paymentRepo,
+		profileRepo,
+		bankProfileRepo,
+		leaderNotiRepo,
+		aiClient,
+		walrusProvider,
+		map[string]sui.ISuiAPI{
+			constant.SuiTestnet: mockClient,
+		},
+		util.GetLogConfig(shared.ERROR_LEVEL),
+	)
+
+	var childRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: sampleJsonChild1,
+				},
+			},
+		},
+	}
+
+	var validCampaignRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: sampleSpecialNeedCampaignJson,
+				},
+			},
+		},
+	}
+
+	var ctx = context.WithValue(context.Background(), "address", sampleAddress)
+	ctx = context.WithValue(ctx, "sub", sampleSub)
+	var sampleBlobId string = "blobID"
+	var tcsInfo = []struct {
+		req                  request.CreateSpecialNeedWithdrawProposalRequest
+		camapginRes          models.SuiObjectResponse
+		isGetCampaign        bool
+		isGetPoolsWithChild  bool
+		isCallCreateProposal bool
+		createProposalRes    error
+		expectedErr          error
+		isCallAiValidate     bool
+		ctx                  context.Context
+	}{
+		{ // Happy case
+			req: request.CreateSpecialNeedWithdrawProposalRequest{
+				CampaignID:  sampleAddress,
+				Amount:      100000,
+				ProofBlobID: &sampleBlobId,
+			},
+			camapginRes:          validCampaignRes,
+			isGetCampaign:        true,
+			isGetPoolsWithChild:  true,
+			isCallCreateProposal: true,
+			isCallAiValidate:     true,
+			ctx:                  ctx,
+		},
+		{ // Invalid campaign case
+			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
+		},
+		{ // Not exist campaign case
+			req: request.CreateSpecialNeedWithdrawProposalRequest{
+				CampaignID: sampleAddress,
+			},
+			camapginRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{},
+					},
+				},
+			},
+			isGetCampaign: true,
+			expectedErr:   errors.New(noti.GENERIC_ERROR_WARN_MSG),
+			ctx:           ctx,
+		},
+		{ // Not creator case
+			req: request.CreateSpecialNeedWithdrawProposalRequest{
+				CampaignID: sampleAddress,
+			},
+			camapginRes:   validCampaignRes,
+			isGetCampaign: true,
+			expectedErr:   errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG),
+			ctx:           context.WithValue(context.Background(), "address", "1"),
+		},
+		{ // Out of budget case
+			req: request.CreateSpecialNeedWithdrawProposalRequest{
+				CampaignID: sampleAddress,
+				Amount:     150000,
+			},
+			camapginRes:   validCampaignRes,
+			isGetCampaign: true,
+			expectedErr:   errors.New(noti.CURRENT_BUDGET_NOT_ENOUGH_MESSAGE),
+			ctx:           ctx,
+		},
+		{ // Create pending proposal fail case
+			req: request.CreateSpecialNeedWithdrawProposalRequest{
+				CampaignID:  sampleAddress,
+				Amount:      100000,
+				ProofBlobID: &sampleBlobId,
+			},
+			camapginRes:          validCampaignRes,
+			isGetCampaign:        true,
+			isGetPoolsWithChild:  true,
+			isCallCreateProposal: true,
+			createProposalRes:    errors.New(noti.INTERNALL_ERR_MSG),
+			isCallAiValidate:     true,
+			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			ctx:                  ctx,
+		},
+	}
+
+	for i, tc := range tcsInfo {
+		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
+			mockClient.ExpectedCalls = nil
+			pendingWithdrawProposalRepo.ExpectedCalls = nil
+			walrusProvider.ExpectedCalls = nil
+			aiClient.ExpectedCalls = nil
+
+			if tc.isGetCampaign {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.camapginRes, nil).Once()
+			}
+
+			if tc.isGetPoolsWithChild {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(models.SuiObjectResponse{
+					Data: &models.SuiObjectData{
+						Content: &models.SuiParsedData{
+							SuiMoveObject: models.SuiMoveObject{
+								Fields: samplePoolObj,
+							},
+						},
+					},
+				}, nil).Once()
+
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(childRes, nil).Once()
+
+				mockClient.On("SuiMultiGetObjects", mock.Anything, mock.Anything).Return([]*models.SuiObjectResponse{
+					&models.SuiObjectResponse{
+						Data: &models.SuiObjectData{
+							Content: &models.SuiParsedData{
+								SuiMoveObject: models.SuiMoveObject{
+									Fields: samplePoolObj,
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			}
+
+			if tc.isCallCreateProposal {
+				pendingWithdrawProposalRepo.On("CreatePendingWithdrawProposal", mock.Anything, mock.Anything).Return(tc.createProposalRes)
+			}
+
+			if tc.isCallAiValidate {
+				walrusProvider.On("FetchBytesImage", mock.Anything).Return([]byte{}, nil)
+				aiClient.On("ValidateWithdrawProposal", mock.Anything, mock.Anything).Return("")
+			}
+
+			res, err := service.CreateSpecialNeedWithdrawProposalV2(tc.req, tc.ctx)
+			assert.Equal(t, tc.expectedErr, err)
+			if tc.expectedErr == nil {
+				assert.True(t, res != nil)
+			}
+		})
+	}
+}
+
+func TestConfirmSpecialNeedProposal(t *testing.T) {
+	var pendingChildSpecialNeedRepo = repository.InitializeChildPendingSpecialProposalMockRepo()
+	var pendingWithdrawProposalRepo = repository.InitializePendingWithdrawProposalMockRepo()
+	var offchainWithdrawRepo = repository.InitializeOffChainWithdrawProposalMockRepo()
+	var offchainDonationRepo = repository.InitializeOffChainDonationMockRepo()
+	var paymentRepo = repository.InitializePaymentMockRepo()
+	var profileRepo = repository.InitializeProfileMockRepo()
+	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
+	var leaderNotiRepo = repository.InitializeLeaderNotiMockRepo()
+	var mockClient = pkg.InitializeSuiMockApi()
+	var service = initializeChildService(
+		pendingChildSpecialNeedRepo,
+		pendingWithdrawProposalRepo,
+		offchainWithdrawRepo,
+		offchainDonationRepo,
+		nil,
+		paymentRepo,
+		profileRepo,
+		bankProfileRepo,
+		leaderNotiRepo,
+		nil,
+		nil,
+		map[string]sui.ISuiAPI{
+			constant.SuiTestnet: mockClient,
+		},
+		util.GetLogConfig(shared.ERROR_LEVEL),
+	)
+
+	var validProposalRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: sampleSpecialNeedProposalJson,
+				},
+			},
+		},
+	}
+
+	var ctx = context.WithValue(context.Background(), "address", sampleAddress)
+	ctx = context.WithValue(ctx, "sub", sampleSub)
+	var tcsInfo = []struct {
+		id                  string
+		proposalRes         models.SuiObjectResponse
+		isGetProposal       bool
+		isGetSpecialNeedDao bool
+		isBuildTx           bool
+		buildTxRes          error
+		expectedErr         error
+		ctx                 context.Context
+	}{
+		{ // Happy case
+			id:                  sampleAddress,
+			proposalRes:         validProposalRes,
+			isGetProposal:       true,
+			isGetSpecialNeedDao: true,
+			isBuildTx:           true,
+			ctx:                 ctx,
+		},
+		{ // Invalid proposal case
+			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
+		},
+		{ // Not exist proposal case
+			id: sampleAddress,
+			proposalRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{},
+					},
+				},
+			},
+			isGetProposal: true,
+			expectedErr:   errors.New(noti.GENERIC_ERROR_WARN_MSG),
+			ctx:           ctx,
+		},
+		{ // Not creator case
+			id:            sampleAddress,
+			proposalRes:   validProposalRes,
+			isGetProposal: true,
+			expectedErr:   errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG),
+			ctx:           context.WithValue(context.Background(), "address", "1"),
+		},
+		{ // Proposal confirmed case
+			id: sampleAddress,
+			proposalRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: map[string]interface{}{
+								"creator":    sampleAddress,
+								"is_confirm": true,
+							},
+						},
+					},
+				},
+			},
+			isGetProposal: true,
+			expectedErr:   errors.New(noti.SPECIAL_NEED_PROPOSAL_CONFIRMED_MESSAGE),
+			ctx:           ctx,
+		},
+		{ // Proposal pending case
+			id: sampleAddress,
+			proposalRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: map[string]interface{}{
+								"creator":    sampleAddress,
+								"is_confirm": false,
+								"closed_at":  "4102444800000", // Year: 2100
+							},
+						},
+					},
+				},
+			},
+			isGetProposal: true,
+			expectedErr:   errors.New(noti.STILL_PENDING_REQUEST_MESSAGE),
+			ctx:           ctx,
+		},
+		{ // Proposal fail condition case
+			id: sampleAddress,
+			proposalRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: map[string]interface{}{
+								"child":           sampleAddress,
+								"target":          "1000000",
+								"total_donated":   "900000",
+								"withdraw_amount": "800000",
+								"creator":         sampleAddress,
+								"approvers":       []string{"", "", "", "", "", "", ""},
+								"refusers":        []string{""},
+								"approve_weight":  "500000",
+								"refuse_weight":   "50000",
+								"is_confirm":      false,
+								"closed_at":       "1262304000000", // year 2010
+							},
+						},
+					},
+				},
+			},
+			isGetProposal:       true,
+			isGetSpecialNeedDao: true,
+			expectedErr:         errors.New(noti.PROPOSAL_FAIL_CONDITION_TO_CONFIRM_MESSAGE),
+			ctx:                 ctx,
+		},
+		{ // Build tx fail case
+			id:                  sampleAddress,
+			proposalRes:         validProposalRes,
+			isGetProposal:       true,
+			isGetSpecialNeedDao: true,
+			isBuildTx:           true,
+			buildTxRes:          errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:         errors.New(noti.INTERNALL_ERR_MSG),
+			ctx:                 ctx,
+		},
+	}
+
+	for i, tc := range tcsInfo {
+		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
+			mockClient.ExpectedCalls = nil
+
+			if tc.isGetProposal {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.proposalRes, nil).Once()
+			}
+
+			if tc.isGetSpecialNeedDao {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(models.SuiObjectResponse{
+					Data: &models.SuiObjectData{
+						Content: &models.SuiParsedData{
+							SuiMoveObject: models.SuiMoveObject{
+								Fields: sampleDaoObjJson,
+							},
+						},
+					},
+				}, nil).Once()
+			}
+
+			if tc.isBuildTx {
+				mockClient.On("MoveCall", mock.Anything, mock.Anything).Return(models.TxnMetaData{}, tc.buildTxRes)
+			}
+
+			_, err := service.ConfirmSpecialNeedProposal(tc.id, tc.ctx)
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
+}
+
+func TestVoteSpecialNeedProposal(t *testing.T) {
+	var pendingChildSpecialNeedRepo = repository.InitializeChildPendingSpecialProposalMockRepo()
+	var pendingWithdrawProposalRepo = repository.InitializePendingWithdrawProposalMockRepo()
+	var offchainWithdrawRepo = repository.InitializeOffChainWithdrawProposalMockRepo()
+	var offchainDonationRepo = repository.InitializeOffChainDonationMockRepo()
+	var paymentRepo = repository.InitializePaymentMockRepo()
+	var profileRepo = repository.InitializeProfileMockRepo()
+	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
+	var leaderNotiRepo = repository.InitializeLeaderNotiMockRepo()
+	var mockClient = pkg.InitializeSuiMockApi()
+	var service = initializeChildService(
+		pendingChildSpecialNeedRepo,
+		pendingWithdrawProposalRepo,
+		offchainWithdrawRepo,
+		offchainDonationRepo,
+		nil,
+		paymentRepo,
+		profileRepo,
+		bankProfileRepo,
+		leaderNotiRepo,
+		nil,
+		nil,
+		map[string]sui.ISuiAPI{
+			constant.SuiTestnet: mockClient,
+		},
+		util.GetLogConfig(shared.ERROR_LEVEL),
+	)
+
+	var validProposalRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: map[string]interface{}{
+						"child":           sampleAddress,
+						"target":          "1000000",
+						"total_donated":   "900000",
+						"withdraw_amount": "800000",
+						"creator":         sampleAddress,
+						"approvers":       []string{"", "", "", "", "", "", "", "", "", ""},
+						"refusers":        []string{""},
+						"approve_weight":  "500000",
+						"refuse_weight":   "50000",
+						"is_confirm":      false,
+						"closed_at":       "4102444800000", // year 2100
+					},
+				},
+			},
+		},
+	}
+
+	var nftsRes = models.PaginatedObjectsResponse{
+		Data: []models.SuiObjectResponse{
+			models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: map[string]interface{}{
+								"id": map[string]string{
+									"id": "",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var ctx = context.WithValue(context.Background(), "address", "address")
+	var tcsInfo = []struct {
+		id            string
+		proposalRes   models.SuiObjectResponse
+		isGetProposal bool
+		nftsRes       models.PaginatedObjectsResponse
+		isGetNfts     bool
+		isBuildTx     bool
+		buildTxRes    error
+		expectedErr   error
+		ctx           context.Context
+	}{
+		{ // Happy case
+			id:            sampleAddress,
+			proposalRes:   validProposalRes,
+			isGetProposal: true,
+			nftsRes:       nftsRes,
+			isGetNfts:     true,
+			isBuildTx:     true,
+			ctx:           ctx,
+		},
+		{ // Invalid proposal case
+			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
+		},
+		{ // Not exist proposal case
+			id: sampleAddress,
+			proposalRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{},
+					},
+				},
+			},
+			isGetProposal: true,
+			expectedErr:   errors.New(noti.GENERIC_ERROR_WARN_MSG),
+			ctx:           ctx,
+		},
+		{ // Creator case
+			id:            sampleAddress,
+			proposalRes:   validProposalRes,
+			isGetProposal: true,
+			expectedErr:   errors.New(noti.OWNER_VOTE_WARN_MSG),
+			ctx:           context.WithValue(context.Background(), "address", sampleAddress),
+		},
+		{ // Proposal closed case
+			id: sampleAddress,
+			proposalRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: map[string]interface{}{
+								"creator":    sampleAddress,
+								"is_confirm": false,
+								"closed_at":  "1262304000000", // Year: 2010
+							},
+						},
+					},
+				},
+			},
+			isGetProposal: true,
+			expectedErr:   errors.New(noti.REQUEST_CLOSED_MESSAGE),
+			ctx:           ctx,
+		},
+		{ // Voted case
+			id: sampleAddress,
+			proposalRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: map[string]interface{}{
+								"child":           sampleAddress,
+								"target":          "1000000",
+								"total_donated":   "900000",
+								"withdraw_amount": "800000",
+								"creator":         sampleAddress,
+								"approvers":       []string{"", "", "", "", "", "", ""},
+								"refusers":        []string{"address"},
+								"approve_weight":  "500000",
+								"refuse_weight":   "50000",
+								"is_confirm":      false,
+								"closed_at":       "4102444800000", // year 2100
+							},
+						},
+					},
+				},
+			},
+			isGetProposal: true,
+			expectedErr:   errors.New(noti.ALREADY_VOTE_MESSAGE),
+			ctx:           ctx,
+		},
+		{ // Not donor case
+			id:            sampleAddress,
+			proposalRes:   validProposalRes,
+			isGetProposal: true,
+			nftsRes: models.PaginatedObjectsResponse{
+				Data: []models.SuiObjectResponse{},
+			},
+			isGetNfts:   true,
+			expectedErr: errors.New(noti.HAVE_TO_DONATE_TO_VOTE),
+			ctx:         ctx,
+		},
+		{ // Build tx fail case
+			id:            sampleAddress,
+			proposalRes:   validProposalRes,
+			isGetProposal: true,
+			nftsRes:       nftsRes,
+			isGetNfts:     true,
+			isBuildTx:     true,
+			buildTxRes:    errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:   errors.New(noti.INTERNALL_ERR_MSG),
+			ctx:           ctx,
+		},
+	}
+
+	for i, tc := range tcsInfo {
+		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
+			mockClient.ExpectedCalls = nil
+
+			if tc.isGetProposal {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.proposalRes, nil)
+			}
+
+			if tc.isGetNfts {
+				mockClient.On("SuiXGetOwnedObjects", mock.Anything, mock.Anything).Return(tc.nftsRes, nil)
+			}
+
+			if tc.isBuildTx {
+				mockClient.On("MoveCall", mock.Anything, mock.Anything).Return(models.TxnMetaData{}, tc.buildTxRes)
+			}
+
+			_, err := service.VoteSpecialNeedProposal(tc.id, request.VoteRequest{}, tc.ctx)
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
+}
+
+func TestUpdateChildBooksNeed(t *testing.T) {
+	var pendingChildSpecialNeedRepo = repository.InitializeChildPendingSpecialProposalMockRepo()
+	var pendingWithdrawProposalRepo = repository.InitializePendingWithdrawProposalMockRepo()
+	var offchainWithdrawRepo = repository.InitializeOffChainWithdrawProposalMockRepo()
+	var offchainDonationRepo = repository.InitializeOffChainDonationMockRepo()
+	var paymentRepo = repository.InitializePaymentMockRepo()
+	var profileRepo = repository.InitializeProfileMockRepo()
+	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
+	var leaderNotiRepo = repository.InitializeLeaderNotiMockRepo()
+	var mockClient = pkg.InitializeSuiMockApi()
+	var service = initializeChildService(
+		pendingChildSpecialNeedRepo,
+		pendingWithdrawProposalRepo,
+		offchainWithdrawRepo,
+		offchainDonationRepo,
+		nil,
+		paymentRepo,
+		profileRepo,
+		bankProfileRepo,
+		leaderNotiRepo,
+		nil,
+		nil,
+		map[string]sui.ISuiAPI{
+			constant.SuiTestnet: mockClient,
+		},
+		util.GetLogConfig(shared.ERROR_LEVEL),
+	)
+
+	var validChildRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: sampleJsonChild1,
+				},
+			},
+		},
+	}
+
+	var nftsRes = models.PaginatedObjectsResponse{
+		Data: []models.SuiObjectResponse{
+			models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: sampleJsonLeaderNft1,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var needRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: sampleNotSupportedBooksNeedJson,
+				},
+			},
+		},
+	}
+
+	var notUpdatedNeedRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: map[string]interface{}{
+						"is_updated": false,
+					},
+				},
+			},
+		},
+	}
+
+	var value int64 = 10000
+	var req = request.UpdateChildNeedRequest{
+		ChildID: sampleAddress,
+		NeedID:  sampleAddress,
+		Value:   &value,
+	}
+
+	var zeroValue int64
+	var zeroValueReq = request.UpdateChildNeedRequest{
+		ChildID: sampleAddress,
+		NeedID:  sampleAddress,
+		Value:   &zeroValue,
+	}
+
+	var standerizeDate = func(src string) string {
+		if len(src) == 2 {
+			return src
+		}
+
+		return "0" + src
+	}
+
+	var curTime time.Time = time.Now()
+	var previousDate time.Time = curTime.AddDate(0, 0, -1)
+	var nextDate time.Time = curTime.AddDate(0, 0, 1)
+	var validEditDatesRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: map[string]interface{}{
+						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", previousDate.Day())), standerizeDate(fmt.Sprintf("%d", previousDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+					},
+				},
+			},
+		},
+	}
+
+	var nextWeekDate time.Time = curTime.AddDate(0, 0, 7)
+	var passedEditDatesRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: map[string]interface{}{
+						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextWeekDate.Day())), standerizeDate(fmt.Sprintf("%d", nextWeekDate.Month()))),
+					},
+				},
+			},
+		},
+	}
+
+	var ctx = context.WithValue(context.Background(), "address", "address")
+	var tcsInfo = []struct {
+		req            request.UpdateChildNeedRequest
+		childRes       models.SuiObjectResponse
+		isGetChild     bool
+		staffNftsRes   models.PaginatedObjectsResponse
+		isGetNfts      bool
+		needRes        models.SuiObjectResponse
+		isGetNeed      bool
+		editDatesRes   models.SuiObjectResponse
+		isGetEditDates bool
+		isBuildTx      bool
+		buildTxRes     error
+		expectedErr    error
+		ctx            context.Context
+	}{
+		{ // Happy case
+			req:            req,
+			childRes:       validChildRes,
+			isGetChild:     true,
+			staffNftsRes:   nftsRes,
+			isGetNfts:      true,
+			needRes:        needRes,
+			isGetNeed:      true,
+			editDatesRes:   validEditDatesRes,
+			isGetEditDates: true,
+			isBuildTx:      true,
+			ctx:            ctx,
+		},
+		{ // Empty value case
+			req: request.UpdateChildNeedRequest{
+				ChildID: sampleAddress,
+				NeedID:  sampleAddress,
+			},
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			ctx:          ctx,
+		},
+		{ // Invalid need and child case
+			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Not exist child case
+			req: req,
+			childRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{},
+					},
+				},
+			},
+			isGetChild:  true,
+			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Not staff case
+			req:        req,
+			childRes:   validChildRes,
+			isGetChild: true,
+			staffNftsRes: models.PaginatedObjectsResponse{
+				Data: []models.SuiObjectResponse{},
+			},
+			isGetNfts:   true,
+			expectedErr: errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Not leader case
+			req:        req,
+			childRes:   validChildRes,
+			isGetChild: true,
+			staffNftsRes: models.PaginatedObjectsResponse{
+				Data: []models.SuiObjectResponse{
+					models.SuiObjectResponse{
+						Data: &models.SuiObjectData{
+							Content: &models.SuiParsedData{
+								SuiMoveObject: models.SuiMoveObject{
+									Fields: sampleJsonVolunteerNft10,
+								},
+							},
+						},
+					},
+				},
+			},
+			isGetNfts:   true,
+			expectedErr: errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Zero value case
+			req:          zeroValueReq,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			expectedErr:  errors.New(noti.NEED_VALUE_INVALID_WARN_MSG),
+			ctx:          ctx,
+		},
+		{ // Not updated need build tx fail case
+			req:          req,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			needRes:      notUpdatedNeedRes,
+			isGetNeed:    true,
+			isBuildTx:    true,
+			buildTxRes:   errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:  errors.New(noti.INTERNALL_ERR_MSG),
+			ctx:          ctx,
+		},
+		{ // Not updated need build tx success case
+			req:          req,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			needRes:      notUpdatedNeedRes,
+			isGetNeed:    true,
+			isBuildTx:    true,
+			ctx:          ctx,
+		},
+		{ // Updated need year changes case
+			req:          req,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			needRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: map[string]interface{}{
+								"supported_years": []string{"0"},
+								"year_changes":    []string{fmt.Sprintf("%d", curTime.Year())},
+								"year":            "1",
+								"value":           "10000",
+								"child":           sampleAddress,
+								"is_updated":      true,
+							},
+						},
+					},
+				},
+			},
+			isGetNeed:      true,
+			editDatesRes:   passedEditDatesRes,
+			isGetEditDates: true,
+			expectedErr:    errors.New(noti.CHILD_NEED_UPDATED_MESSAGE),
+			ctx:            ctx,
+		},
+		{ // Updated need not edit date case
+			req:            req,
+			childRes:       validChildRes,
+			isGetChild:     true,
+			staffNftsRes:   nftsRes,
+			isGetNfts:      true,
+			needRes:        needRes,
+			isGetNeed:      true,
+			editDatesRes:   passedEditDatesRes,
+			isGetEditDates: true,
+			expectedErr:    errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE),
+			ctx:            ctx,
+		},
+		{ // Updated need build tx fail case
+			req:            req,
+			childRes:       validChildRes,
+			isGetChild:     true,
+			staffNftsRes:   nftsRes,
+			isGetNfts:      true,
+			needRes:        needRes,
+			isGetNeed:      true,
+			editDatesRes:   validEditDatesRes,
+			isGetEditDates: true,
+			isBuildTx:      true,
+			buildTxRes:     errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:    errors.New(noti.INTERNALL_ERR_MSG),
+			ctx:            ctx,
+		},
+	}
+
+	for i, tc := range tcsInfo {
+		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
+			mockClient.ExpectedCalls = nil
+
+			if tc.isGetChild {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.childRes, nil).Once()
+			}
+
+			if tc.isGetNfts {
+				mockClient.On("SuiXGetOwnedObjects", mock.Anything, mock.Anything).Return(tc.staffNftsRes, nil)
+			}
+
+			if tc.isGetNeed {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.needRes, nil).Once()
+			}
+
+			if tc.isGetEditDates {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.editDatesRes, nil).Once()
+			}
+
+			if tc.isBuildTx {
+				mockClient.On("MoveCall", mock.Anything, mock.Anything).Return(models.TxnMetaData{}, tc.buildTxRes)
+			}
+
+			_, err := service.UpdateBooksNeed(tc.req, tc.ctx)
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
+}
+
+func TestUpdateChildHealthInsuranceNeed(t *testing.T) {
+	var pendingChildSpecialNeedRepo = repository.InitializeChildPendingSpecialProposalMockRepo()
+	var pendingWithdrawProposalRepo = repository.InitializePendingWithdrawProposalMockRepo()
+	var offchainWithdrawRepo = repository.InitializeOffChainWithdrawProposalMockRepo()
+	var offchainDonationRepo = repository.InitializeOffChainDonationMockRepo()
+	var paymentRepo = repository.InitializePaymentMockRepo()
+	var profileRepo = repository.InitializeProfileMockRepo()
+	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
+	var leaderNotiRepo = repository.InitializeLeaderNotiMockRepo()
+	var mockClient = pkg.InitializeSuiMockApi()
+	var service = initializeChildService(
+		pendingChildSpecialNeedRepo,
+		pendingWithdrawProposalRepo,
+		offchainWithdrawRepo,
+		offchainDonationRepo,
+		nil,
+		paymentRepo,
+		profileRepo,
+		bankProfileRepo,
+		leaderNotiRepo,
+		nil,
+		nil,
+		map[string]sui.ISuiAPI{
+			constant.SuiTestnet: mockClient,
+		},
+		util.GetLogConfig(shared.ERROR_LEVEL),
+	)
+
+	var validChildRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: sampleJsonChild1,
+				},
+			},
+		},
+	}
+
+	var nftsRes = models.PaginatedObjectsResponse{
+		Data: []models.SuiObjectResponse{
+			models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: sampleJsonLeaderNft1,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var needRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: sampleNotSupportedBooksNeedJson,
+				},
+			},
+		},
+	}
+
+	var notUpdatedNeedRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: map[string]interface{}{
+						"is_updated": false,
+					},
+				},
+			},
+		},
+	}
+
+	var value int64 = 10000
+	var req = request.UpdateChildNeedRequest{
+		ChildID: sampleAddress,
+		NeedID:  sampleAddress,
+		Value:   &value,
+	}
+
+	var zeroValue int64
+	var zeroValueReq = request.UpdateChildNeedRequest{
+		ChildID: sampleAddress,
+		NeedID:  sampleAddress,
+		Value:   &zeroValue,
+	}
+
+	var standerizeDate = func(src string) string {
+		if len(src) == 2 {
+			return src
+		}
+
+		return "0" + src
+	}
+
+	var curTime time.Time = time.Now()
+	var previousDate time.Time = curTime.AddDate(0, 0, -1)
+	var nextDate time.Time = curTime.AddDate(0, 0, 1)
+	var validEditDatesRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: map[string]interface{}{
+						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", previousDate.Day())), standerizeDate(fmt.Sprintf("%d", previousDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+					},
+				},
+			},
+		},
+	}
+
+	var nextWeekDate time.Time = curTime.AddDate(0, 0, 7)
+	var passedEditDatesRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: map[string]interface{}{
+						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextWeekDate.Day())), standerizeDate(fmt.Sprintf("%d", nextWeekDate.Month()))),
+					},
+				},
+			},
+		},
+	}
+
+	var ctx = context.WithValue(context.Background(), "address", "address")
+	var tcsInfo = []struct {
+		req            request.UpdateChildNeedRequest
+		childRes       models.SuiObjectResponse
+		isGetChild     bool
+		staffNftsRes   models.PaginatedObjectsResponse
+		isGetNfts      bool
+		needRes        models.SuiObjectResponse
+		isGetNeed      bool
+		editDatesRes   models.SuiObjectResponse
+		isGetEditDates bool
+		isBuildTx      bool
+		buildTxRes     error
+		expectedErr    error
+		ctx            context.Context
+	}{
+		{ // Happy case
+			req:            req,
+			childRes:       validChildRes,
+			isGetChild:     true,
+			staffNftsRes:   nftsRes,
+			isGetNfts:      true,
+			needRes:        needRes,
+			isGetNeed:      true,
+			editDatesRes:   validEditDatesRes,
+			isGetEditDates: true,
+			isBuildTx:      true,
+			ctx:            ctx,
+		},
+		{ // Empty value case
+			req: request.UpdateChildNeedRequest{
+				ChildID: sampleAddress,
+				NeedID:  sampleAddress,
+			},
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			ctx:          ctx,
+		},
+		{ // Invalid need and child case
+			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Not exist child case
+			req: req,
+			childRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{},
+					},
+				},
+			},
+			isGetChild:  true,
+			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Not staff case
+			req:        req,
+			childRes:   validChildRes,
+			isGetChild: true,
+			staffNftsRes: models.PaginatedObjectsResponse{
+				Data: []models.SuiObjectResponse{},
+			},
+			isGetNfts:   true,
+			expectedErr: errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Not leader case
+			req:        req,
+			childRes:   validChildRes,
+			isGetChild: true,
+			staffNftsRes: models.PaginatedObjectsResponse{
+				Data: []models.SuiObjectResponse{
+					models.SuiObjectResponse{
+						Data: &models.SuiObjectData{
+							Content: &models.SuiParsedData{
+								SuiMoveObject: models.SuiMoveObject{
+									Fields: sampleJsonVolunteerNft10,
+								},
+							},
+						},
+					},
+				},
+			},
+			isGetNfts:   true,
+			expectedErr: errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Zero value case
+			req:          zeroValueReq,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			expectedErr:  errors.New(noti.NEED_VALUE_INVALID_WARN_MSG),
+			ctx:          ctx,
+		},
+		{ // Not updated need build tx fail case
+			req:          req,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			needRes:      notUpdatedNeedRes,
+			isGetNeed:    true,
+			isBuildTx:    true,
+			buildTxRes:   errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:  errors.New(noti.INTERNALL_ERR_MSG),
+			ctx:          ctx,
+		},
+		{ // Not updated need build tx success case
+			req:          req,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			needRes:      notUpdatedNeedRes,
+			isGetNeed:    true,
+			isBuildTx:    true,
+			ctx:          ctx,
+		},
+		{ // Updated need year changes case
+			req:          req,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			needRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: map[string]interface{}{
+								"supported_years": []string{"0"},
+								"year_changes":    []string{fmt.Sprintf("%d", curTime.Year())},
+								"year":            "1",
+								"value":           "10000",
+								"child":           sampleAddress,
+								"is_updated":      true,
+							},
+						},
+					},
+				},
+			},
+			isGetNeed:      true,
+			editDatesRes:   passedEditDatesRes,
+			isGetEditDates: true,
+			expectedErr:    errors.New(noti.CHILD_NEED_UPDATED_MESSAGE),
+			ctx:            ctx,
+		},
+		{ // Updated need not edit date case
+			req:            req,
+			childRes:       validChildRes,
+			isGetChild:     true,
+			staffNftsRes:   nftsRes,
+			isGetNfts:      true,
+			needRes:        needRes,
+			isGetNeed:      true,
+			editDatesRes:   passedEditDatesRes,
+			isGetEditDates: true,
+			expectedErr:    errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE),
+			ctx:            ctx,
+		},
+		{ // Updated need build tx fail case
+			req:            req,
+			childRes:       validChildRes,
+			isGetChild:     true,
+			staffNftsRes:   nftsRes,
+			isGetNfts:      true,
+			needRes:        needRes,
+			isGetNeed:      true,
+			editDatesRes:   validEditDatesRes,
+			isGetEditDates: true,
+			isBuildTx:      true,
+			buildTxRes:     errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:    errors.New(noti.INTERNALL_ERR_MSG),
+			ctx:            ctx,
+		},
+	}
+
+	for i, tc := range tcsInfo {
+		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
+			mockClient.ExpectedCalls = nil
+
+			if tc.isGetChild {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.childRes, nil).Once()
+			}
+
+			if tc.isGetNfts {
+				mockClient.On("SuiXGetOwnedObjects", mock.Anything, mock.Anything).Return(tc.staffNftsRes, nil)
+			}
+
+			if tc.isGetNeed {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.needRes, nil).Once()
+			}
+
+			if tc.isGetEditDates {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.editDatesRes, nil).Once()
+			}
+
+			if tc.isBuildTx {
+				mockClient.On("MoveCall", mock.Anything, mock.Anything).Return(models.TxnMetaData{}, tc.buildTxRes)
+			}
+
+			_, err := service.UpdateHealthInsuranceNeed(tc.req, tc.ctx)
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
+}
+
+func TestUpdateChildMealNeed(t *testing.T) {
+	var pendingChildSpecialNeedRepo = repository.InitializeChildPendingSpecialProposalMockRepo()
+	var pendingWithdrawProposalRepo = repository.InitializePendingWithdrawProposalMockRepo()
+	var offchainWithdrawRepo = repository.InitializeOffChainWithdrawProposalMockRepo()
+	var offchainDonationRepo = repository.InitializeOffChainDonationMockRepo()
+	var paymentRepo = repository.InitializePaymentMockRepo()
+	var profileRepo = repository.InitializeProfileMockRepo()
+	var bankProfileRepo = repository.InitializeBankProfileMockRepo()
+	var leaderNotiRepo = repository.InitializeLeaderNotiMockRepo()
+	var mockClient = pkg.InitializeSuiMockApi()
+	var service = initializeChildService(
+		pendingChildSpecialNeedRepo,
+		pendingWithdrawProposalRepo,
+		offchainWithdrawRepo,
+		offchainDonationRepo,
+		nil,
+		paymentRepo,
+		profileRepo,
+		bankProfileRepo,
+		leaderNotiRepo,
+		nil,
+		nil,
+		map[string]sui.ISuiAPI{
+			constant.SuiTestnet: mockClient,
+		},
+		util.GetLogConfig(shared.ERROR_LEVEL),
+	)
+
+	var validChildRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: sampleJsonChild1,
+				},
+			},
+		},
+	}
+
+	var nftsRes = models.PaginatedObjectsResponse{
+		Data: []models.SuiObjectResponse{
+			models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: sampleJsonLeaderNft1,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var needRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: sampleNotSupportedBooksNeedJson,
+				},
+			},
+		},
+	}
+
+	var notUpdatedNeedRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: map[string]interface{}{
+						"is_updated": false,
+					},
+				},
+			},
+		},
+	}
+
+	var value int64 = 10000
+	var req = request.UpdateChildNeedRequest{
+		ChildID: sampleAddress,
+		NeedID:  sampleAddress,
+		Value:   &value,
+	}
+
+	var zeroValue int64
+	var zeroValueReq = request.UpdateChildNeedRequest{
+		ChildID: sampleAddress,
+		NeedID:  sampleAddress,
+		Value:   &zeroValue,
+	}
+
+	var standerizeDate = func(src string) string {
+		if len(src) == 2 {
+			return src
+		}
+
+		return "0" + src
+	}
+
+	var curTime time.Time = time.Now()
+	var previousDate time.Time = curTime.AddDate(0, 0, -1)
+	var nextDate time.Time = curTime.AddDate(0, 0, 1)
+	var validEditDatesRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: map[string]interface{}{
+						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", previousDate.Day())), standerizeDate(fmt.Sprintf("%d", previousDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+					},
+				},
+			},
+		},
+	}
+
+	var nextWeekDate time.Time = curTime.AddDate(0, 0, 7)
+	var passedEditDatesRes = models.SuiObjectResponse{
+		Data: &models.SuiObjectData{
+			Content: &models.SuiParsedData{
+				SuiMoveObject: models.SuiMoveObject{
+					Fields: map[string]interface{}{
+						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextWeekDate.Day())), standerizeDate(fmt.Sprintf("%d", nextWeekDate.Month()))),
+					},
+				},
+			},
+		},
+	}
+
+	var ctx = context.WithValue(context.Background(), "address", "address")
+	var tcsInfo = []struct {
+		req            request.UpdateChildNeedRequest
+		childRes       models.SuiObjectResponse
+		isGetChild     bool
+		staffNftsRes   models.PaginatedObjectsResponse
+		isGetNfts      bool
+		needRes        models.SuiObjectResponse
+		isGetNeed      bool
+		editDatesRes   models.SuiObjectResponse
+		isGetEditDates bool
+		isBuildTx      bool
+		buildTxRes     error
+		expectedErr    error
+		ctx            context.Context
+	}{
+		{ // Happy case
+			req:            req,
+			childRes:       validChildRes,
+			isGetChild:     true,
+			staffNftsRes:   nftsRes,
+			isGetNfts:      true,
+			needRes:        needRes,
+			isGetNeed:      true,
+			editDatesRes:   validEditDatesRes,
+			isGetEditDates: true,
+			isBuildTx:      true,
+			ctx:            ctx,
+		},
+		{ // Empty value case
+			req: request.UpdateChildNeedRequest{
+				ChildID: sampleAddress,
+				NeedID:  sampleAddress,
+			},
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			ctx:          ctx,
+		},
+		{ // Invalid need and child case
+			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Not exist child case
+			req: req,
+			childRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{},
+					},
+				},
+			},
+			isGetChild:  true,
+			expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Not staff case
+			req:        req,
+			childRes:   validChildRes,
+			isGetChild: true,
+			staffNftsRes: models.PaginatedObjectsResponse{
+				Data: []models.SuiObjectResponse{},
+			},
+			isGetNfts:   true,
+			expectedErr: errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Not leader case
+			req:        req,
+			childRes:   validChildRes,
+			isGetChild: true,
+			staffNftsRes: models.PaginatedObjectsResponse{
+				Data: []models.SuiObjectResponse{
+					models.SuiObjectResponse{
+						Data: &models.SuiObjectData{
+							Content: &models.SuiParsedData{
+								SuiMoveObject: models.SuiMoveObject{
+									Fields: sampleJsonVolunteerNft10,
+								},
+							},
+						},
+					},
+				},
+			},
+			isGetNfts:   true,
+			expectedErr: errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG),
+			ctx:         ctx,
+		},
+		{ // Zero value case
+			req:          zeroValueReq,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			expectedErr:  errors.New(noti.NEED_VALUE_INVALID_WARN_MSG),
+			ctx:          ctx,
+		},
+		{ // Not updated need build tx fail case
+			req:          req,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			needRes:      notUpdatedNeedRes,
+			isGetNeed:    true,
+			isBuildTx:    true,
+			buildTxRes:   errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:  errors.New(noti.INTERNALL_ERR_MSG),
+			ctx:          ctx,
+		},
+		{ // Not updated need build tx success case
+			req:          req,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			needRes:      notUpdatedNeedRes,
+			isGetNeed:    true,
+			isBuildTx:    true,
+			ctx:          ctx,
+		},
+		{ // Updated need year changes case
+			req:          req,
+			childRes:     validChildRes,
+			isGetChild:   true,
+			staffNftsRes: nftsRes,
+			isGetNfts:    true,
+			needRes: models.SuiObjectResponse{
+				Data: &models.SuiObjectData{
+					Content: &models.SuiParsedData{
+						SuiMoveObject: models.SuiMoveObject{
+							Fields: map[string]interface{}{
+								"supported_years": []string{"0"},
+								"year_changes":    []string{fmt.Sprintf("%d", curTime.Year())},
+								"year":            fmt.Sprintf("%d", curTime.Year()),
+								"value":           "10000",
+								"child":           sampleAddress,
+								"is_updated":      true,
+							},
+						},
+					},
+				},
+			},
+			isGetNeed:      true,
+			editDatesRes:   passedEditDatesRes,
+			isGetEditDates: true,
+			expectedErr:    errors.New(noti.CHILD_NEED_UPDATED_MESSAGE),
+			ctx:            ctx,
+		},
+		{ // Updated need not edit date case
+			req:            req,
+			childRes:       validChildRes,
+			isGetChild:     true,
+			staffNftsRes:   nftsRes,
+			isGetNfts:      true,
+			needRes:        needRes,
+			isGetNeed:      true,
+			editDatesRes:   passedEditDatesRes,
+			isGetEditDates: true,
+			expectedErr:    errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE),
+			ctx:            ctx,
+		},
+		{ // Updated need build tx fail case
+			req:            req,
+			childRes:       validChildRes,
+			isGetChild:     true,
+			staffNftsRes:   nftsRes,
+			isGetNfts:      true,
+			needRes:        needRes,
+			isGetNeed:      true,
+			editDatesRes:   validEditDatesRes,
+			isGetEditDates: true,
+			isBuildTx:      true,
+			buildTxRes:     errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:    errors.New(noti.INTERNALL_ERR_MSG),
+			ctx:            ctx,
+		},
+	}
+
+	for i, tc := range tcsInfo {
+		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
+			mockClient.ExpectedCalls = nil
+
+			if tc.isGetChild {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.childRes, nil).Once()
+			}
+
+			if tc.isGetNfts {
+				mockClient.On("SuiXGetOwnedObjects", mock.Anything, mock.Anything).Return(tc.staffNftsRes, nil)
+			}
+
+			if tc.isGetNeed {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.needRes, nil).Once()
+			}
+
+			if tc.isGetEditDates {
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.editDatesRes, nil).Once()
+			}
+
+			if tc.isBuildTx {
+				mockClient.On("MoveCall", mock.Anything, mock.Anything).Return(models.TxnMetaData{}, tc.buildTxRes)
+			}
+
+			_, err := service.UpdateMealNeed(tc.req, tc.ctx)
+			assert.Equal(t, tc.expectedErr, err)
 		})
 	}
 }

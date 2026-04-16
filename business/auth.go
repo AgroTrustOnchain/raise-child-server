@@ -70,6 +70,7 @@ func (a *authService) LoginV2(req request.LoginRequestV2, ctx context.Context) (
 	var roles []string
 	if manageObj != nil {
 		if slices.Contains(manageObj.AdminIds, address) {
+			a.errLogger.Println("Admin !!!!")
 			roles = append(roles, admin_role)
 		}
 

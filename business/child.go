@@ -23,9 +23,11 @@ import (
 	"raise-child/model/dtos/response"
 	"raise-child/model/entities"
 	"raise-child/util"
+	"raise-child/util/ai"
 	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
+	walrus_pkg "raise-child/util/walrus_pkg"
 	"slices"
 
 	i_repository "raise-child/interfaces/repository"
@@ -40,10 +42,13 @@ type childService struct {
 	pendingWithdrawProposalRepo         i_repository.IPendingWithdrawProposalRepository
 	withdrawRepo                        i_repository.IOffChainWithdrawProposalRepository
 	donationRepo                        i_repository.IOffChainDonationRepository
+	mealDurationRepo                    i_repository.IMealSupportDurationRepository
 	paymentRepo                         i_repository.IPaymentRepository
 	profileRepo                         i_repository.IProfileRepository
 	bankRepo                            i_repository.IBankProfileRepository
 	leaderNotiRepo                      i_repository.ILeaderNotiRepository
+	aiProvider                          ai.IAiClientProvider
+	walrusProvider                      walrus_pkg.IWalrusProvider
 	redisCache                          cache.IRedisCache
 	clients                             map[string]sui.ISuiAPI
 	errLogger                           *log.Logger
@@ -54,10 +59,13 @@ func initializeChildService(
 	pendingWithdrawProposalRepo i_repository.IPendingWithdrawProposalRepository,
 	withdrawRepo i_repository.IOffChainWithdrawProposalRepository,
 	donationRepo i_repository.IOffChainDonationRepository,
+	mealDurationRepo i_repository.IMealSupportDurationRepository,
 	paymentRepo i_repository.IPaymentRepository,
 	profileRepo i_repository.IProfileRepository,
 	bankRepo i_repository.IBankProfileRepository,
 	leaderNotiRepo i_repository.ILeaderNotiRepository,
+	aiProvider ai.IAiClientProvider,
+	walrusProvider walrus_pkg.IWalrusProvider,
 	clients map[string]sui.ISuiAPI,
 	errLogger *log.Logger,
 ) business.IChildService {
@@ -66,10 +74,13 @@ func initializeChildService(
 		pendingWithdrawProposalRepo:         pendingWithdrawProposalRepo,
 		withdrawRepo:                        withdrawRepo,
 		donationRepo:                        donationRepo,
+		mealDurationRepo:                    mealDurationRepo,
 		paymentRepo:                         paymentRepo,
 		profileRepo:                         profileRepo,
 		bankRepo:                            bankRepo,
 		leaderNotiRepo:                      leaderNotiRepo,
+		aiProvider:                          aiProvider,
+		walrusProvider:                      walrusProvider,
 		redisCache:                          cache.InitializeRedisCache(),
 		clients:                             clients,
 		errLogger:                           errLogger,
@@ -89,10 +100,13 @@ func GenerateChildService() (business.IChildService, error) {
 		repository.InitializePendingWithdrawProposalRepo(cnn, errLogger),
 		repository.InitializeOffChainWithdrawProposalRepository(cnn, errLogger),
 		repository.InitializeOffChainDonationRepository(cnn, errLogger),
+		repository.InitializeMealSupportDurationRepository(cnn, errLogger),
 		repository.InitializePaymentRepository(cnn, errLogger),
 		repository.InitializeProfileRepository(cnn, errLogger),
 		repository.InitializeBankProfileRepository(cnn, errLogger),
 		repository.InitializeLeaderNotiRepository(cnn, errLogger),
+		ai.InitializeAiProvider(nil, errLogger),
+		walrus_pkg.InitializeWalrusProvider(errLogger),
 		_networkAliases,
 		errLogger,
 	), nil
@@ -730,6 +744,7 @@ func (c *childService) CreateBooksNeedWithdrawProposalV2(req request.CreateNorma
 
 	var expectedEndDate time.Time = util.ToEndOfDate(expectedStartDate.AddDate(0, 0, 7))
 	if curTime.Before(expectedStartDate) || curTime.After(expectedEndDate) {
+		c.errLogger.Println("Die at below")
 		return nil, notWithdrawDateErr
 	}
 
@@ -772,6 +787,19 @@ func (c *childService) CreateBooksNeedWithdrawProposalV2(req request.CreateNorma
 		}
 	}
 
+	var aiEvaluation string
+	if req.ProofBlobID != nil {
+		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+		if proofBytes != nil {
+			aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+				Purpose:         purpose,
+				WithdrawAmount:  withdrawAmount,
+				Description:     description,
+				ProofBytesImage: proofBytes,
+			}, ctx)
+		}
+	}
+
 	// todo: AI validation
 	var res = entities.PendingWithdrawProposal{
 		ID:             util.GenerateId(),
@@ -785,7 +813,7 @@ func (c *childService) CreateBooksNeedWithdrawProposalV2(req request.CreateNorma
 		ProofBlobID:    req.ProofBlobID,
 		Description:    description,
 		Status:         request_pending_status,
-		AIEvaluation:   "",
+		AIEvaluation:   aiEvaluation,
 		CreatedAt:      curTime,
 		UpdatedAt:      curTime,
 	}
@@ -913,6 +941,19 @@ func (c *childService) CreateHealthInsuranceNeedWithdrawProposalV2(req request.C
 		}
 	}
 
+	var aiEvaluation string
+	if req.ProofBlobID != nil {
+		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+		if proofBytes != nil {
+			aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+				Purpose:         purpose,
+				WithdrawAmount:  withdrawAmount,
+				Description:     description,
+				ProofBytesImage: proofBytes,
+			}, ctx)
+		}
+	}
+
 	// todo: AI validation
 	var res = entities.PendingWithdrawProposal{
 		ID:             util.GenerateId(),
@@ -926,7 +967,7 @@ func (c *childService) CreateHealthInsuranceNeedWithdrawProposalV2(req request.C
 		ProofBlobID:    req.ProofBlobID,
 		Description:    description,
 		Status:         request_pending_status,
-		AIEvaluation:   "",
+		AIEvaluation:   aiEvaluation,
 		CreatedAt:      curTime,
 		UpdatedAt:      curTime,
 	}
@@ -971,12 +1012,12 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 	var paymentId string = util.GenerateId()
 	var orderCode int = util.GenerateNumber()
 	var callbackUrl string = os.Getenv(payment.PAYMENT_CALLBACK_URL) + paymentId
-	var description string = fmt.Sprintf("Support Health Insurance Need %s for child %s", need.Year, util.FormatAddress(need.ChildID))
+	var paymentDescription string = entities.HEALTH_INSRUANCE_PAYMENT_DESCRIPTION.GenerateSupportPaymentDescription()
 	amount, _ := strconv.ParseInt(need.Value, 10, 64)
 	data, err := payos.CreatePaymentLink(payos.CheckoutRequestType{
 		OrderCode:   int64(orderCode),
 		Amount:      int(amount),
-		Description: description,
+		Description: paymentDescription,
 		ReturnUrl:   callbackUrl,
 		CancelUrl:   callbackUrl,
 	})
@@ -997,6 +1038,7 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 		return response.UrlAPIResponse{}, err
 	}
 
+	var description string = fmt.Sprintf("Support Health Insurance Need %s for child %s", need.Year, util.FormatAddress(need.ChildID))
 	return response.UrlAPIResponse{
 			Url: data.CheckoutUrl,
 		}, c.paymentRepo.CreatePayment(entities.Payment{
@@ -1179,6 +1221,19 @@ func (c *childService) CreateMealNeedWithdrawProposalV2(req request.CreateNormal
 		}
 	}
 
+	var aiEvaluation string
+	if req.ProofBlobID != nil {
+		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+		if proofBytes != nil {
+			aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+				Purpose:         purpose,
+				WithdrawAmount:  withdrawAmount,
+				Description:     description,
+				ProofBytesImage: proofBytes,
+			}, ctx)
+		}
+	}
+
 	// todo: AI validation
 	var res = entities.PendingWithdrawProposal{
 		ID:             util.GenerateId(),
@@ -1192,7 +1247,7 @@ func (c *childService) CreateMealNeedWithdrawProposalV2(req request.CreateNormal
 		ProofBlobID:    req.ProofBlobID,
 		Description:    description,
 		Status:         request_pending_status,
-		AIEvaluation:   "",
+		AIEvaluation:   aiEvaluation,
 		CreatedAt:      curTime,
 		UpdatedAt:      curTime,
 	}
@@ -1268,6 +1323,21 @@ func (c *childService) CreateSpecialNeedWithdrawProposalV2(req request.CreateSpe
 		}
 	}
 
+	var description string = strings.TrimSpace(req.Description)
+	var purpose string = string(entities.SPECIAL_NEED_PURPOSE)
+	var aiEvaluation string
+	if req.ProofBlobID != nil {
+		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+		if proofBytes != nil {
+			aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+				Purpose:         purpose,
+				WithdrawAmount:  req.Amount,
+				Description:     description,
+				ProofBytesImage: proofBytes,
+			}, ctx)
+		}
+	}
+
 	var curTime time.Time = time.Now()
 	var res = entities.PendingWithdrawProposal{
 		ID:             util.GenerateId(),
@@ -1275,13 +1345,13 @@ func (c *childService) CreateSpecialNeedWithdrawProposalV2(req request.CreateSpe
 		Creator:        sender,
 		PoolID:         localPoolId,
 		PoolName:       localPoolName,
-		Purpose:        string(entities.SPECIAL_NEED_PURPOSE),
+		Purpose:        purpose,
 		Target:         req.CampaignID,
 		WithdrawAmount: req.Amount,
 		ProofBlobID:    req.ProofBlobID,
-		Description:    req.Description,
+		Description:    description,
 		Status:         request_pending_status,
-		AIEvaluation:   "",
+		AIEvaluation:   aiEvaluation,
 		CreatedAt:      curTime,
 		UpdatedAt:      curTime,
 	}
@@ -1517,6 +1587,19 @@ func (c *childService) CreateSpecialNeedProposalV2(req request.CreateSpecialNeed
 		return nil, errors.New(noti.LEADER_NOT_UPLOAD_BANK_PROFILE_MESSAGE)
 	}
 
+	var description string = strings.TrimSpace(req.Description)
+	var aiEvaluation string
+	if req.ProofBlobID != nil {
+		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+		if proofBytes != nil {
+			aiEvaluation = c.aiProvider.ValidateChildSpecialNeedProposal(ai.ValidateChildSpecialNeedProposal{
+				CamapaignTarget: req.Target,
+				Description:     description,
+				ProofBytesImage: proofBytes,
+			}, ctx)
+		}
+	}
+
 	// todo: AI validation
 	var curTime time.Time = time.Now()
 	var proposal = entities.PendingChildSpecialNeedProposal{
@@ -1528,7 +1611,7 @@ func (c *childService) CreateSpecialNeedProposalV2(req request.CreateSpecialNeed
 		Target:         req.Target,
 		Description:    strings.TrimSpace(req.Description),
 		ProofBlobID:    req.ProofBlobID,
-		AIEvaluation:   "",
+		AIEvaluation:   aiEvaluation,
 		CreatedAt:      curTime,
 		UpdatedAt:      curTime,
 	}
@@ -1779,12 +1862,12 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 	var paymentId string = util.GenerateId()
 	var orderCode int = util.GenerateNumber()
 	var callbackUrl string = os.Getenv(payment.PAYMENT_CALLBACK_URL) + paymentId
-	var description string = fmt.Sprintf("Support Books Need Semester %s - %s", need.Semster, need.Year)
 	amount, _ := strconv.ParseInt(need.Value, 10, 64)
+	var paymentDescription string = entities.BOOKS_NEED_PAYMENT_DESCRIPTION.GenerateSupportPaymentDescription()
 	data, err := payos.CreatePaymentLink(payos.CheckoutRequestType{
 		OrderCode:   int64(orderCode),
 		Amount:      int(amount),
-		Description: description,
+		Description: paymentDescription,
 		ReturnUrl:   callbackUrl,
 		CancelUrl:   callbackUrl,
 	})
@@ -1884,6 +1967,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 		return response.UrlAPIResponse{}, err
 	}
 
+	var description string = fmt.Sprintf("Support Books Need Semester %s - %s", need.Semster, need.Year)
 	return response.UrlAPIResponse{
 			Url: data.CheckoutUrl,
 		}, c.paymentRepo.CreatePayment(entities.Payment{
@@ -1965,13 +2049,13 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	var paymentId string = util.GenerateId()
 	var orderCode int = util.GenerateNumber()
 	var callbackUrl string = os.Getenv(payment.PAYMENT_CALLBACK_URL) + paymentId
-	var description string = fmt.Sprintf("Support Meal Need %s - %s for child", rawExpectedStart, rawExpectedEnd)
 	value, _ := strconv.ParseInt(need.Value, 10, 64)
 	var amount int64 = value * int64(req.Months)
+	var paymentDescription string = entities.MEAL_NEED_PAYMENT_DESCRIPTION.GenerateSupportPaymentDescription()
 	data, err := payos.CreatePaymentLink(payos.CheckoutRequestType{
 		OrderCode:   int64(orderCode),
 		Amount:      int(amount),
-		Description: description,
+		Description: paymentDescription,
 		ReturnUrl:   callbackUrl,
 		CancelUrl:   callbackUrl,
 	})
@@ -2087,6 +2171,13 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	// }
 
 	var mealSupportDurationId string = util.GenerateId()
+	if err := c.mealDurationRepo.CreateMealSupportDuration(entities.OffChainMealSupportDuration{
+		ID:          mealSupportDurationId,
+		StartPeriod: rawExpectedStart,
+		EndPeriod:   rawExpectedEnd,
+	}, ctx); err != nil {
+		return response.UrlAPIResponse{}, err
+	}
 
 	var donationId string = util.GenerateId()
 	if err := c.donationRepo.CreateDonation(entities.OffChainDonation{
@@ -2099,6 +2190,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 		return response.UrlAPIResponse{}, err
 	}
 
+	var description string = fmt.Sprintf("Support Meal Need %s - %s for child", rawExpectedStart, rawExpectedEnd)
 	return response.UrlAPIResponse{
 			Url: data.CheckoutUrl,
 		}, c.paymentRepo.CreatePayment(entities.Payment{
@@ -2158,11 +2250,11 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 	var paymentId string = util.GenerateId()
 	var orderCode int = util.GenerateNumber()
 	var callbackUrl string = os.Getenv(payment.PAYMENT_CALLBACK_URL) + paymentId
-	var description string = fmt.Sprintf("Support Special Need Campaign")
+	var paymentDescription string = entities.SPECIAL_NEED_CAMPAIGN_PAYMENT_DESCRIPTION.GenerateSupportPaymentDescription()
 	data, err := payos.CreatePaymentLink(payos.CheckoutRequestType{
 		OrderCode:   int64(orderCode),
 		Amount:      int(req.Amount),
-		Description: description,
+		Description: paymentDescription,
 		ReturnUrl:   callbackUrl,
 		CancelUrl:   callbackUrl,
 	})
@@ -2195,7 +2287,7 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 			Currency:      shared.VIETNAMDONG_CURRENCY,
 			Status:        payment_pending_status,
 			Method:        shared.PAYMENT_PAYOS_METHOD,
-			Message:       req.Description,
+			Message:       strings.TrimSpace(req.Description),
 			ExpiredAt:     time.Unix(int64(*data.ExpiredAt), 0),
 			CreatedAt:     curTime,
 			UpdatedAt:     curTime,

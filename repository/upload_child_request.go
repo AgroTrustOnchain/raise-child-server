@@ -40,9 +40,9 @@ func (u *uploadChildRepo) CreateUploadChildRequest(req entities.UploadChildReque
 		"region, first_name, last_name, gender, date_of_birth, home_address, " +
 		"first_guardian_name, first_guardian_phone, first_guardian_relation, first_guardian_identity_card_blob_id, " +
 		"second_guardian_name, second_guardian_phone, second_guardian_relation, second_guardian_identity_card_blob_id, " +
-		"ai_evaluation, status, created_by, created_at, updated_at) " +
+		"ai_evaluation, status, created_by, created_at, updated_at, birth_certificate_blob_id) " +
 		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, " +
-		"$13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)"
+		"$13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "CreateUploadChildRequest - "
 	var secondGuardianName, secondGuardianPhone, secondGuardianRelation, secondGuardianIdentityBlob *string
@@ -57,7 +57,7 @@ func (u *uploadChildRepo) CreateUploadChildRequest(req entities.UploadChildReque
 		req.Region, req.FirstName, req.LastName, req.Gender, req.DateOfBirth, req.HomeAddress,
 		req.FirstGuardianProfile.FullName, req.FirstGuardianProfile.PhoneNumber, req.FirstGuardianProfile.Relation, req.FirstGuardianProfile.IdentityCardBlobID,
 		secondGuardianName, secondGuardianPhone, secondGuardianRelation, secondGuardianIdentityBlob,
-		req.AIEvaluation, req.Status, req.CreatedBy, req.UpdatedAt, req.ClosedAt); err != nil {
+		req.AIEvaluation, req.Status, req.CreatedBy, req.CreatedAt, req.UpdatedAt, req.BirthCertificateBlobID); err != nil {
 
 		u.errLogger.Println(errLogMsg + err.Error())
 		return errors.New(noti.INTERNALL_ERR_MSG)
@@ -81,7 +81,7 @@ func (u *uploadChildRepo) GetUploadChildRequest(id string, ctx context.Context) 
 		&secondGuardianName, &secondGuardianPhone, &secondGuardianRelation, &secondGuardianIdentityBlob,
 		pq.Array(&res.Approvers), pq.Array(&res.Refusers), pq.Array(&res.RefuseReasons),
 		&res.AIEvaluation, &res.Status, &res.ReviewStatus, &res.IsConfirmUpload,
-		&res.CreatedBy, &res.ReviewedBy, &res.CreatedAt, &res.UpdatedAt, &res.ClosedAt); err != nil {
+		&res.CreatedBy, &res.ReviewedBy, &res.CreatedAt, &res.UpdatedAt, &res.ClosedAt, &res.BirthCertificateBlobID); err != nil {
 
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -165,12 +165,11 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 		order = req.SortOrder
 	}
 
-	queryCondition += "ORDER BY created_at " + order
-
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       upload_child_request_table,
 		limitAmount: req.PageSize,
 		condition:   queryCondition,
+		order:       " ORDER BY created_at " + order,
 		page:        req.Page,
 		isGetCount:  false,
 	})
@@ -193,7 +192,7 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 			&secondGuardianName, &secondGuardianPhone, &secondGuardianRelation, &secondGuardianIdentityBlob,
 			pq.Array(&x.Approvers), pq.Array(&x.Refusers), pq.Array(&x.RefuseReasons),
 			&x.AIEvaluation, &x.Status, &x.ReviewStatus, &x.IsConfirmUpload,
-			&x.CreatedBy, &x.ReviewedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt); err != nil {
+			&x.CreatedBy, &x.ReviewedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt, &x.BirthCertificateBlobID); err != nil {
 
 			u.errLogger.Println(errLogMsg + err.Error())
 			return nil, 0, internalErr
@@ -249,7 +248,7 @@ func (u *uploadChildRepo) GetWalletUploadChildRequests(id string, page int, ctx 
 			&secondGuardianName, &secondGuardianPhone, &secondGuardianRelation, &secondGuardianIdentityBlob,
 			pq.Array(&x.Approvers), pq.Array(&x.Refusers), pq.Array(&x.RefuseReasons),
 			&x.AIEvaluation, &x.Status, &x.ReviewStatus, &x.IsConfirmUpload,
-			&x.CreatedBy, &x.ReviewedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt); err != nil {
+			&x.CreatedBy, &x.ReviewedBy, &x.CreatedAt, &x.UpdatedAt, &x.ClosedAt, &x.BirthCertificateBlobID); err != nil {
 
 			u.errLogger.Println(errLogMsg + err.Error())
 			return nil, 0, internalErr

@@ -29,7 +29,7 @@ func InitializeProfileRepository(db *sql.DB, errLogger *log.Logger) repository.I
 
 // IsPersonalInfoExist implements repository.IProfileRepository.
 func (p *profileRepo) IsPersonalInfoExist(identityCode string, phoneNumber string, email string, ctx context.Context) (bool, error) {
-	var query string = "SELECT id FROM " + profile_table + " WHERE LOWER(email) = LOWER(" + email + ") OR phone_number = " + phoneNumber + " OR identity_code = " + identityCode + " LIMIT 1"
+	var query string = "SELECT id FROM " + profile_table + " WHERE LOWER(email) = LOWER('" + email + "') OR phone_number = '" + phoneNumber + "' OR identity_code = '" + identityCode + "' LIMIT 1"
 
 	var id string
 	if err := p.db.QueryRowContext(ctx, query).Scan(&id); err != nil {
@@ -47,7 +47,7 @@ func (p *profileRepo) IsPersonalInfoExist(identityCode string, phoneNumber strin
 // IsEmailRegistered implements repository.IProfileRepository.
 func (p *profileRepo) IsEmailRegistered(email string, ctx context.Context) (bool, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "IsEmailRegistered - "
-	var query string = "SELECT id FROM " + profile_table + " WHERE LOWER(email) = LOWER(" + email + ") LIMIT 1"
+	var query string = "SELECT id FROM " + profile_table + " WHERE LOWER(email) = LOWER('" + email + "') LIMIT 1"
 
 	var id string
 	if err := p.db.QueryRowContext(ctx, query).Scan(&id); err != nil {

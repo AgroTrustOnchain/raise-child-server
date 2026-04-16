@@ -9,6 +9,7 @@ import (
 type AddChildArguments struct {
 	Center                           string
 	IdentityCode                     string
+	BirthCertificateBlobID           string
 	FirstName                        string
 	LastName                         string
 	Gender                           string
@@ -641,6 +642,7 @@ func (m *moduleChild) ToAddChildArguments(args AddChildArguments) []interface{} 
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		args.Center,
 		args.IdentityCode,
+		args.BirthCertificateBlobID,
 		args.FirstName,
 		args.LastName,
 		args.Gender,

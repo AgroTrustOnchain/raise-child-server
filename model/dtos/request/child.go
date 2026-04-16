@@ -11,17 +11,18 @@ type GetChildrenRequest struct {
 }
 
 type UploadChildRequest struct {
-	HomeBlobID     string                `json:"home_blob_id" validate:"required"`
-	IdentityCode   string                `json:"identity_code" validate:"required"`
-	Region         string                `json:"region" validate:"required"`
-	FirstName      string                `json:"first_name" validate:"required"`
-	LastName       string                `json:"last_name" validate:"required"`
-	Gender         string                `json:"gender" validate:"required"`
-	DateOfBirth    string                `json:"date_of_birth" validate:"required"`
-	HomeAddress    string                `json:"home_address" validate:"required"`
-	AvatarBlobId   string                `json:"avatar_blob_id" validate:"required"`
-	FirstGuardian  ChildGuardianProfile  `json:"first_guardian" validate:"required"`
-	SecondGuardian *ChildGuardianProfile `json:"second_guardian"`
+	HomeBlobID             string                `json:"home_blob_id" validate:"required"`
+	IdentityCode           string                `json:"identity_code" validate:"required"`
+	BirthCertificateBlobID string                `json:"birth_certificate_blob_id" validate:"required"`
+	Region                 string                `json:"region" validate:"required"`
+	FirstName              string                `json:"first_name" validate:"required"`
+	LastName               string                `json:"last_name" validate:"required"`
+	Gender                 string                `json:"gender" validate:"required"`
+	DateOfBirth            string                `json:"date_of_birth" validate:"required"`
+	HomeAddress            string                `json:"home_address" validate:"required"`
+	AvatarBlobId           string                `json:"avatar_blob_id" validate:"required"`
+	FirstGuardian          ChildGuardianProfile  `json:"first_guardian" validate:"required"`
+	SecondGuardian         *ChildGuardianProfile `json:"second_guardian"`
 }
 
 type ChildGuardianProfile struct {

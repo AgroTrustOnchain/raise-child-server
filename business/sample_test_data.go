@@ -53,6 +53,10 @@ var (
 			"id": "",
 		},
 	}
+	sampleDaoObjJson = map[string]interface{}{
+		"min_approved_rate": "8000",
+		"min_voters":        "10",
+	}
 )
 
 // Admin NFT
@@ -647,23 +651,159 @@ var (
 	}
 )
 
+// Donor NFT
+var (
+	sampleJsonDonor1 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleDonorNfts[0],
+		},
+		"owner":        sampleDonorIds[0],
+		"first_name":   "Minh",
+		"last_name":    "Nguyen",
+		"gender":       "Male",
+		"phone_number": "+84999001122",
+		"email":        "minh.nguyen@corp.it",
+		"name":         "AgroTrust Donor NFT",
+		"url":          "https://arweave.net",
+	}
+	sampleJsonDonor2 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleDonorNfts[1],
+		},
+		"owner":        sampleDonorIds[1],
+		"first_name":   "Linh",
+		"last_name":    "Tran",
+		"gender":       "Female",
+		"phone_number": "+84987654321",
+		"email":        "linh.tran@corp.it",
+		"name":         "AgroTrust Donor NFT",
+		"url":          "https://arweave.net",
+	}
+	sampleJsonDonor3 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleDonorNfts[2],
+		},
+		"first_name":   "Hoang",
+		"last_name":    "Pham",
+		"gender":       "Male",
+		"phone_number": "+84987654321",
+		"email":        "hoang.pham@corp.it",
+		"name":         "AgroTrust Donor NFT",
+		"url":          "https://arweave.net",
+	}
+	sampleJsonDonor4 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleDonorNfts[3],
+		},
+		"owner":        sampleDonorIds[3],
+		"first_name":   "An",
+		"last_name":    "Le",
+		"gender":       "Female",
+		"phone_number": "+84999001122",
+		"email":        "an.le@corp.it",
+		"name":         "AgroTrust Donor NFT",
+		"url":          "https://arweave.net",
+	}
+	sampleJsonDonor5 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleDonorNfts[4],
+		},
+		"owner":        sampleDonorIds[4],
+		"first_name":   "Bach",
+		"last_name":    "Vu",
+		"gender":       "Male",
+		"phone_number": "+84999001122",
+		"email":        "bach.vu@corp.it",
+		"name":         "AgroTrust Donor NFT",
+		"url":          "https://arweave.net",
+	}
+	sampleJsonDonor6 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleDonorNfts[5],
+		},
+		"owner":        sampleDonorIds[5],
+		"first_name":   "Thao",
+		"last_name":    "Do",
+		"gender":       "Female",
+		"phone_number": "+84999001122",
+		"email":        "thao.do@corp.it",
+		"name":         "AgroTrust Donor NFT",
+		"url":          "https://arweave.net",
+	}
+	sampleJsonDonor7 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleDonorNfts[6],
+		},
+		"owner":        sampleDonorIds[6],
+		"first_name":   "Dung",
+		"last_name":    "Bui",
+		"gender":       "Male",
+		"phone_number": "+84999001122",
+		"email":        "dung.bui@corp.it",
+		"name":         "AgroTrust Donor NFT",
+		"url":          "https://arweave.net",
+	}
+	sampleJsonDonor8 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleDonorNfts[7],
+		},
+		"owner":        sampleDonorIds[7],
+		"first_name":   "Nhi",
+		"last_name":    "Phan",
+		"gender":       "Female",
+		"phone_number": "+84999001122",
+		"email":        "nhi.phan@corp.it",
+		"name":         "AgroTrust Donor NFT",
+		"url":          "https://arweave.net",
+	}
+	sampleJsonDonor9 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleDonorNfts[8],
+		},
+		"owner":        sampleDonorIds[8],
+		"first_name":   "Kien",
+		"last_name":    "Dang",
+		"gender":       "Male",
+		"phone_number": "+84999001122",
+		"email":        "kien.dang@corp.it",
+		"name":         "AgroTrust Donor NFT",
+		"url":          "https://arweave.net",
+	}
+	sampleJsonDonor10 = map[string]interface{}{
+		"id": map[string]string{
+			"id": sampleDonorNfts[9],
+		},
+		"owner":        sampleDonorIds[9],
+		"first_name":   "Mai",
+		"last_name":    "Hoang",
+		"gender":       "Female",
+		"phone_number": "+84999001122",
+		"email":        "mai.hoang@corp.it",
+		"name":         "AgroTrust Donor NFT",
+		"url":          "https://arweave.net",
+	}
+)
+
 // Sample test child objects
 var (
 	sampleJsonChild1 = map[string]interface{}{
 		"id": map[string]string{
 			"id": sampleChildIds[0],
 		},
-		"identity_code":  "CHLD-001",
-		"first_name":     "Minh",
-		"last_name":      "Nguyễn Văn",
-		"gender":         "male",
-		"date_of_birth":  "2018-05-15",
-		"region":         sampleLocalRegions[0],
-		"avatar_blob_id": "blob-avatar-001",
-		"image_blob_ids": []string{"img-001-1", "img-001-2"},
-		"uploaded_by":    "0x123...abc",
-		"uploaded_at":    "1696149000000",
-		"updated_at":     "1696491300000",
+		"identity_code":         "CHLD-001",
+		"first_name":            "Minh",
+		"last_name":             "Nguyễn Văn",
+		"gender":                "male",
+		"date_of_birth":         "2018-05-15",
+		"region":                sampleLocalRegions[0],
+		"avatar_blob_id":        "blob-avatar-001",
+		"image_blob_ids":        []string{"img-001-1", "img-001-2"},
+		"books_needs":           []string{sampleAddress},
+		"meal_need":             sampleAddress,
+		"health_insurance_need": sampleAddress,
+		"uploaded_by":           "0x123...abc",
+		"uploaded_at":           "1696149000000",
+		"updated_at":            "1696491300000",
 	}
 	sampleJsonChild2 = map[string]interface{}{
 		"id": map[string]string{
@@ -822,6 +962,7 @@ var (
 		"year":            "1",
 		"value":           "10000",
 		"child":           sampleAddress,
+		"is_updated":      true,
 	}
 	sampleWithdrawnBooksNeedJson = map[string]interface{}{
 		"donations":          []string{"1", "2"},
@@ -866,9 +1007,58 @@ var (
 		"is_updated":           true,
 	}
 	sampleSpecialNeedCampaignJson = map[string]interface{}{
-		"child":         sampleAddress,
-		"target":        "1000000",
-		"total_donated": "900000",
+		"child":           sampleAddress,
+		"target":          "1000000",
+		"total_donated":   "900000",
+		"withdraw_amount": "800000",
+		"creator":         sampleAddress,
+	}
+	sampleSpecialNeedProposalJson = map[string]interface{}{
+		"child":           sampleAddress,
+		"target":          "1000000",
+		"total_donated":   "900000",
+		"withdraw_amount": "800000",
+		"creator":         sampleAddress,
+		"approvers":       []string{"", "", "", "", "", "", "", "", "", ""},
+		"refusers":        []string{""},
+		"approve_weight":  "500000",
+		"refuse_weight":   "50000",
+		"is_confirm":      false,
+		"closed_at":       "1262304000000", // year 2010
+	}
+)
+
+// Gifts (for center)
+var (
+	sampleGiftJson1 = map[string]interface{}{
+		"description": "happy anniversary day",
+	}
+	sampleGiftJson2 = map[string]interface{}{
+		"description": "happy new year",
+	}
+	sampleGiftJson3 = map[string]interface{}{
+		"description": "merry xmas",
+	}
+	sampleGiftJson4 = map[string]interface{}{
+		"description": "happpy easter day",
+	}
+	sampleGiftJson5 = map[string]interface{}{
+		"description": "present",
+	}
+	sampleGiftJson6 = map[string]interface{}{
+		"description": "gift",
+	}
+	sampleGiftJson7 = map[string]interface{}{
+		"description": "description",
+	}
+	sampleGiftJson8 = map[string]interface{}{
+		"carrier": "GHTK",
+	}
+	sampleGiftJson9 = map[string]interface{}{
+		"carrier": "VNP",
+	}
+	sampleGiftJson10 = map[string]interface{}{
+		"carrier": "YHN",
 	}
 )
 
@@ -941,6 +1131,31 @@ func getFoundJsonAdminNftsWithKeyWord() ([]map[string]interface{}, string) {
 	}, "ng"
 }
 
+func getFullJsonDonorNfts() []map[string]interface{} {
+	return []map[string]interface{}{
+		sampleJsonDonor1,
+		sampleJsonDonor2,
+		sampleJsonDonor3,
+		sampleJsonDonor4,
+		sampleJsonDonor5,
+		sampleJsonDonor6,
+		sampleJsonDonor7,
+		sampleJsonDonor8,
+		sampleJsonDonor9,
+		sampleJsonDonor10,
+	}
+}
+
+func getFoundJsonDonorNftsWithKeyWord() ([]map[string]interface{}, string) {
+	return []map[string]interface{}{
+		sampleJsonDonor1,
+		sampleJsonDonor3,
+		sampleJsonDonor7,
+		sampleJsonDonor9,
+		sampleJsonDonor10,
+	}, "ng"
+}
+
 func getFullJsonChildren() []map[string]interface{} {
 	return []map[string]interface{}{
 		sampleJsonChild1,
@@ -964,4 +1179,29 @@ func getFoundJsonChildrenWithKeyWord() ([]map[string]interface{}, string) {
 		sampleJsonChild7,
 		sampleJsonChild10,
 	}, "ng"
+}
+
+func getFullJsonGìts() []map[string]interface{} {
+	return []map[string]interface{}{
+		sampleGiftJson1,
+		sampleGiftJson2,
+		sampleGiftJson3,
+		sampleGiftJson4,
+		sampleGiftJson5,
+		sampleGiftJson6,
+		sampleGiftJson7,
+		sampleGiftJson8,
+		sampleGiftJson9,
+		sampleGiftJson10,
+	}
+}
+
+func getFoundJsonGìtsWithKeyWord() ([]map[string]interface{}, string) {
+	return []map[string]interface{}{
+		sampleJsonChild1,
+		sampleJsonChild2,
+		sampleJsonChild3,
+		sampleJsonChild4,
+		sampleJsonChild10,
+	}, "y"
 }

@@ -80,6 +80,35 @@ definitions:
       relation:
         type: string
     type: object
+  entities.PendingCampaign:
+    properties:
+      actor_address:
+        type: string
+      actor_profile_id:
+        type: string
+      ai_evaluation:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      pool_id:
+        type: string
+      pool_name:
+        type: string
+      proof_blob_id:
+        type: string
+      review_status:
+        type: string
+      reviewed_by:
+        type: string
+      target:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   entities.PendingChildSpecialNeedProposal:
     properties:
       actor_address:
@@ -231,6 +260,8 @@ definitions:
         type: array
       avatar_blob_id:
         type: string
+      birth_certificate_blob_id:
+        type: string
       closed_at:
         type: string
       created_at:
@@ -350,6 +381,22 @@ definitions:
     - bank_org
     - owner_name
     type: object
+  request.CreateCampaignWithdrawProposalRequest:
+    properties:
+      amount:
+        minimum: 2000
+        type: integer
+      campaign_id:
+        type: string
+      description:
+        type: string
+      proof_blob_id:
+        type: string
+    required:
+    - amount
+    - campaign_id
+    - description
+    type: object
   request.CreateCenterRequest:
     properties:
       address:
@@ -403,6 +450,22 @@ definitions:
         type: string
     required:
     - need_id
+    type: object
+  request.CreatePendingCampaignRequest:
+    properties:
+      description:
+        type: string
+      pool_name:
+        type: string
+      proof_blob_id:
+        type: string
+      target:
+        minimum: 50000
+        type: integer
+    required:
+    - description
+    - pool_name
+    - target
     type: object
   request.CreatePendingWithdrawProposalRequest:
     properties:
@@ -561,6 +624,17 @@ definitions:
     - address
     - sub
     type: object
+  request.SupportCampaignRequest:
+    properties:
+      amount:
+        minimum: 2000
+        type: integer
+      description:
+        type: string
+    required:
+    - amount
+    - description
+    type: object
   request.SupportMealNeadRequest:
     properties:
       months:
@@ -650,6 +724,8 @@ definitions:
     properties:
       avatar_blob_id:
         type: string
+      birth_certificate_blob_id:
+        type: string
       date_of_birth:
         type: string
       first_guardian:
@@ -672,6 +748,7 @@ definitions:
         $ref: '#/definitions/request.ChildGuardianProfile'
     required:
     - avatar_blob_id
+    - birth_certificate_blob_id
     - date_of_birth
     - first_guardian
     - first_name
@@ -732,6 +809,41 @@ definitions:
       owner_name:
         type: string
     type: object
+  response.BooksNeedResponse:
+    properties:
+      donations:
+        items:
+          type: string
+        type: array
+      donors:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      semester:
+        type: integer
+      supported_years:
+        items:
+          type: integer
+        type: array
+      value:
+        type: integer
+      withdraw_proposals:
+        items:
+          type: string
+        type: array
+      withdraws_for_need:
+        items:
+          type: string
+        type: array
+      year:
+        type: integer
+      year_changes:
+        items:
+          type: integer
+        type: array
+    type: object
   response.BuildTransactionResponse:
     properties:
       center_req:
@@ -748,6 +860,8 @@ definitions:
   response.ChildResponse:
     properties:
       avatar_blob_id:
+        type: string
+      birth_certificate_blob_id:
         type: string
       books_needs:
         items:
@@ -833,6 +947,10 @@ definitions:
         type: string
       phone_number:
         type: string
+      supported_childs:
+        items:
+          type: string
+        type: array
       total_donation:
         type: integer
       url:
@@ -875,10 +993,131 @@ definitions:
       uploaded_at:
         type: string
     type: object
+  response.HealthInsuranceNeedResponse:
+    properties:
+      donations:
+        items:
+          type: string
+        type: array
+      donors:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      supported_years:
+        items:
+          type: integer
+        type: array
+      value:
+        type: integer
+      withdraw_proposals:
+        items:
+          type: string
+        type: array
+      withdraws_for_need:
+        items:
+          type: string
+        type: array
+      year:
+        type: integer
+      year_changes:
+        items:
+          type: integer
+        type: array
+    type: object
+  response.MealNeedResponse:
+    properties:
+      donations:
+        items:
+          type: string
+        type: array
+      donors:
+        items:
+          type: string
+        type: array
+      durations:
+        items:
+          $ref: '#/definitions/response.WrapDuration'
+        type: array
+      id:
+        type: string
+      provide_meal_dates:
+        items:
+          type: string
+        type: array
+      provide_meal_periods:
+        items:
+          type: string
+        type: array
+      provide_meal_staffs:
+        items:
+          type: string
+        type: array
+      supported_years:
+        items:
+          $ref: '#/definitions/response.WrapSupportedYear'
+        type: array
+      total_supported_months:
+        type: integer
+      value:
+        type: integer
+      withdraw_proposals:
+        items:
+          type: string
+        type: array
+      withdraws_for_need:
+        items:
+          type: string
+        type: array
+      year:
+        type: integer
+    type: object
   response.MessageAPIResponse:
     properties:
       message:
         type: string
+    type: object
+  response.OnChainCampaignResponse:
+    properties:
+      created_at:
+        type: string
+      creator:
+        type: string
+      description:
+        type: string
+      donations:
+        items:
+          type: string
+        type: array
+      donors:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      pool_id:
+        type: string
+      pool_name:
+        type: string
+      proof_blob_id:
+        type: string
+      target:
+        type: integer
+      total_donated:
+        type: integer
+      updated_at:
+        type: string
+      withdraw_amount:
+        type: integer
+      withdraw_proposals:
+        items:
+          type: string
+        type: array
+      withdraws:
+        items:
+          type: string
+        type: array
     type: object
   response.PaginationDataResponse:
     properties:
@@ -919,6 +1158,10 @@ definitions:
         type: integer
       record_amount:
         type: integer
+      supported_childs:
+        items:
+          type: string
+        type: array
       total_donation:
         type: integer
       total_pages:
@@ -1076,6 +1319,20 @@ definitions:
       updated_at:
         type: string
       withdraw_amount:
+        type: integer
+    type: object
+  response.WrapDuration:
+    properties:
+      end_period:
+        type: string
+      start_period:
+        type: string
+    type: object
+  response.WrapSupportedYear:
+    properties:
+      supported_months:
+        type: integer
+      year:
         type: integer
     type: object
 host: locahost:8080
@@ -1654,6 +1911,96 @@ paths:
       summary: Get Center requests by a wallet
       tags:
       - center
+  /child-needs/books-need/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves books need of a child by its unique ID
+      parameters:
+      - description: Child Books Need ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BooksNeedResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get books need of a child
+      tags:
+      - child-needs
+  /child-needs/health-insurance-need/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves health insurance need of a child by its unique ID
+      parameters:
+      - description: Child Health Insurance Need ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.HealthInsuranceNeedResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get health insurance need of a child
+      tags:
+      - child-needs
+  /child-needs/meal-need/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves meal need of a child by its unique ID
+      parameters:
+      - description: Child Meal Need ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MealNeedResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get meal need of a child
+      tags:
+      - child-needs
   /child-upload-reqs:
     get:
       consumes:
@@ -3173,6 +3520,215 @@ paths:
       summary: Process a donation
       tags:
       - payment
+  /pending-pool-campaigns:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of Pending Pool Campaigns based on filter criteria
+      parameters:
+      - in: query
+        name: creator
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: max_amount
+        type: integer
+      - in: query
+        name: min_amount
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: pool_name
+        type: string
+      - in: query
+        name: reviewer
+        type: string
+      - in: query
+        name: sort_criteria
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: List Pending Pool Campaigns
+      tags:
+      - pending-pool-campaigns
+    post:
+      consumes:
+      - application/json
+      description: Create Pending Pool Campaign and wait for admin to review it
+      parameters:
+      - description: Create Pending Pool Campaign Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreatePendingCampaignRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.PendingCampaign'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Pending Pool Campaign
+      tags:
+      - pending-pool-campaigns
+  /pending-pool-campaigns/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves Pending Pool Campaign information by its unique ID
+      parameters:
+      - description: Pending Pool Campaign ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.PendingCampaign'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Pending Pool Campaign Detail
+      tags:
+      - pending-pool-campaigns
+  /pending-pool-campaigns/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Prepares and builds a transaction for approve and upload Pending
+        Pool Campaign on-chain
+      parameters:
+      - description: Pending Pool Campaign ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BuildTransactionResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Approve a Pending Pool Campaign and upload to Sui Blockchain
+      tags:
+      - pending-pool-campaigns
+  /pending-pool-campaigns/{id}/refuse:
+    post:
+      consumes:
+      - application/json
+      description: Refuse Pending Pool Campaign
+      parameters:
+      - description: Pending Pool Campaign ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Refuse Pending Pool Campaign
+      tags:
+      - pending-pool-campaigns
   /pending-special-needs:
     get:
       consumes:
@@ -3556,6 +4112,180 @@ paths:
       summary: Refuse a pending withdraw proposal
       tags:
       - Pending Withdrawal
+  /pool-campaigns:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of Pool Campaigns based on filter criteria
+      parameters:
+      - in: query
+        name: creator
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: max_amount
+        type: integer
+      - in: query
+        name: min_amount
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: pool_name
+        type: string
+      - in: query
+        name: sort_criteria
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: List Pool Campaigns
+      tags:
+      - pool-campaigns
+  /pool-campaigns/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves Pool Campaign information by its unique ID
+      parameters:
+      - description: Pool Campaign ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.OnChainCampaignResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Pool Campaign Detail
+      tags:
+      - pool-campaigns
+  /pool-campaigns/{id}/support:
+    post:
+      consumes:
+      - application/json
+      description: Support a Pool Campaign
+      parameters:
+      - description: Pool Campaign ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Support Pool Campaign Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.SupportCampaignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.UrlAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Support a Pool Campaign
+      tags:
+      - pool-campaigns
+  /pool-campaigns/withdraw-proposal:
+    post:
+      consumes:
+      - application/json
+      description: Create Pool Campaign Pending Withdraw Proposal and wait for admin
+        to review it
+      parameters:
+      - description: Create Pool Campaign Pending Withdraw Proposal Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateCampaignWithdrawProposalRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.PendingWithdrawProposal'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Pool Campaign Pending Withdraw Proposal
+      tags:
+      - pool-campaigns
   /profiles/{id}:
     post:
       consumes:
@@ -3609,12 +4339,37 @@ paths:
         name: id
         required: true
         type: string
-      - description: Filter criteria
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.GetTransactionRecordsRequest'
+      - description: e.g. "Withdraw", "Donate"
+        in: query
+        name: action_type
+        type: string
+      - in: query
+        name: actor
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: max_amount
+        type: integer
+      - in: query
+        name: min_amount
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: pool_id
+        type: string
+      - in: query
+        name: sort_criteria
+        type: string
+      - in: query
+        name: sort_order
+        type: string
       produces:
       - application/json
       responses:

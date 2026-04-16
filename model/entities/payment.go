@@ -30,4 +30,23 @@ const (
 	MEAL_NEED_PURPOSE             Purpose = "Child Meal Need"
 	SPECIAL_NEED_PURPOSE          Purpose = "Child Special Need"
 	HEALTH_INSURANCE_NEED_PURPOSE Purpose = "Child Health Insurance Need"
+	CAMPAIGN_PURPOSE              Purpose = "Pool Campaign"
 )
+
+type PaymentDescription string
+
+const (
+	MEAL_NEED_PAYMENT_DESCRIPTION             PaymentDescription = "Meal Need"
+	BOOKS_NEED_PAYMENT_DESCRIPTION            PaymentDescription = "Books Need"
+	HEALTH_INSRUANCE_PAYMENT_DESCRIPTION      PaymentDescription = "Health Insurance"
+	SPECIAL_NEED_CAMPAIGN_PAYMENT_DESCRIPTION PaymentDescription = "Special Campaign"
+	POOL_CAMPAIGN_PAYMENT_DESCRIPTION         PaymentDescription = "Pool Campaign"
+)
+
+func (p PaymentDescription) GenerateSupportPaymentDescription() string {
+	return "Support " + string(p)
+}
+
+func (p PaymentDescription) GenerateWithdrawPaymentDescription() string {
+	return "Withdraw " + string(p)
+}

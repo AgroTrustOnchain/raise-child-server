@@ -17,9 +17,11 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/ai"
 	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
+	walrus_pkg "raise-child/util/walrus_pkg"
 	"slices"
 	"strings"
 	"time"
@@ -49,6 +51,8 @@ const (
 type registrationRequestService struct {
 	registrationRequestRepo i_repository.IRegistrationRequestRepository
 	profileRepo             i_repository.IProfileRepository
+	aiProvider              ai.IAiClientProvider
+	walrusProvider          walrus_pkg.IWalrusProvider
 	redisCache              cache.IRedisCache
 	clients                 map[string]sui.ISuiAPI
 	errLogger               *log.Logger
@@ -66,12 +70,16 @@ func InitializeRegistrationRequestService(db *sql.DB, errLogger *log.Logger) bus
 func initializeRegistrationRequestService(
 	registrationRequestRepo i_repository.IRegistrationRequestRepository,
 	profileRepo i_repository.IProfileRepository,
+	aiProvider ai.IAiClientProvider,
+	walrusProvider walrus_pkg.IWalrusProvider,
 	clients map[string]sui.ISuiAPI,
 	errLogger *log.Logger,
 ) business.IRegistrationRequestService {
 	return &registrationRequestService{
 		registrationRequestRepo: registrationRequestRepo,
 		profileRepo:             profileRepo,
+		aiProvider:              aiProvider,
+		walrusProvider:          walrusProvider,
 		redisCache:              cache.InitializeRedisCache(),
 		clients:                 clients,
 		errLogger:               errLogger,
@@ -90,6 +98,8 @@ func GenerateRegistrationRequestService() (business.IRegistrationRequestService,
 	return initializeRegistrationRequestService(
 		repository.InitializeRegistrationRequestRepo(cnn, errLogger),
 		repository.InitializeProfileRepository(cnn, errLogger),
+		ai.InitializeAiProvider(nil, errLogger),
+		walrus_pkg.InitializeWalrusProvider(errLogger),
 		_networkAliases,
 		errLogger,
 	), nil
@@ -237,33 +247,59 @@ func (r *registrationRequestService) ConfirmRegistrationRequest(id string, ctx c
 
 // CreateRegistrationRequest implements business.IRegistrationRequestService.
 func (r *registrationRequestService) CreateRegistrationRequest(req request.CreateRegistrationRequest, ctx context.Context) (*entities.RegistrationRequest, error) {
-	var sender string = ctx.Value("address").(string)
-	reqs, err := r.registrationRequestRepo.GetWalletRegistrationRequests(sender, ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var role string = strings.TrimSpace(req.RegisterRole)
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if reqs != nil && len(reqs) > 0 {
-		for _, req := range reqs {
-			if req.RegisterRole == role && (req.Status == request_pending_status || req.Status == request_approved_status) {
-				return nil, genericErr
-			}
-		}
-	}
-
 	profile, err := r.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if profile == nil {
 		return nil, genericErr
 	}
 
 	if profile.IdentityCode == nil {
 		return nil, errors.New(noti.PROFILE_EMPTY_MESSAGE)
+	}
+
+	var client = r.clients[constant.SuiTestnet]
+	var sender string = ctx.Value("address").(string)
+	var role string = strings.TrimSpace(req.RegisterRole)
+	if req.RegisterRole != admin_role {
+		var staffModule = on_chain.InitializeModuleStaff()
+		nfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
+			Client:       client,
+			OwnerAddress: sender,
+			StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
+			ErrLogger:    r.errLogger,
+		}, ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if nfts != nil && len(nfts) > 0 {
+			for _, nft := range nfts {
+				if nft.Region != req.Region {
+					return nil, errors.New(noti.ALREADY_ANOTHER_REGION_STAFF_MESSAGE)
+				}
+
+				if nft.Role == role {
+					return nil, errors.New(noti.ALREADY_STAFF_ROLE_MESSAGE)
+				}
+			}
+		}
+	}
+
+	reqs, err := r.registrationRequestRepo.GetWalletRegistrationRequests(sender, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if reqs != nil && len(reqs) > 0 {
+		for _, req := range reqs {
+			if req.RegisterRole == role && (req.Status == request_pending_status || req.Status == request_approved_status) {
+				return nil, genericErr
+			}
+		}
 	}
 
 	// Admin registration request not contain region
@@ -277,7 +313,6 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 		return nil, genericErr
 	}
 
-	var client = r.clients[constant.SuiTestnet]
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
 		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
@@ -293,18 +328,29 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 		}
 	}
 
+	identityCardBytes, _ := r.walrusProvider.FetchBytesImage(req.IdentityCardBlobID)
+	avatarBytes, _ := r.walrusProvider.FetchBytesImage(req.AvatarBlobID)
+	if identityCardBytes == nil || avatarBytes == nil {
+		r.errLogger.Println("Err at walrus")
+		return nil, genericErr
+	}
+
+	var identityCode string = util.StanderizeString(*profile.IdentityCode)
+	var firstName string = strings.TrimSpace(*profile.FirstName)
+	var lastName string = strings.TrimSpace(*profile.LastName)
+
 	// todo: validate identity code
 	var curTime time.Time = time.Now()
 	var request = entities.RegistrationRequest{
 		ID:                   util.GenerateId(),
 		ProfileID:            ctx.Value("sub").(string),
 		RegisterRole:         role,
-		IdentityCode:         util.StanderizeString(*profile.IdentityCode),
+		IdentityCode:         identityCode,
 		IdentityCardBlobID:   strings.TrimSpace(req.IdentityCardBlobID),
 		AvatarBlobID:         strings.TrimSpace(req.AvatarBlobID),
 		Region:               req.Region,
-		FirstName:            strings.TrimSpace(*profile.FirstName),
-		LastName:             strings.TrimSpace(*profile.LastName),
+		FirstName:            firstName,
+		LastName:             lastName,
 		Gender:               *profile.Gender,
 		DateOfBirth:          *profile.DateOfBirth,
 		PhoneNumber:          *profile.PhoneNumber,

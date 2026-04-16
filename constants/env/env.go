@@ -6,4 +6,5 @@ const (
 	ENCRYPT_SECRET_KEY string = "ENCRYPT_SECRET_KEY"
 	SERVER_HOST        string = "SERVER_HOST"
 	REDIS_URL          string = "REDIS_URL"
+	GEMINI_API_KEY     string = "GEMINI_API_KEY"
 )

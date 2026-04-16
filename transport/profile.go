@@ -55,7 +55,7 @@ func UploadProfile(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        id       path      string                      true  "Wallet Address"
-// @Param        request  body      request.GetTransactionRecordsRequest true  "Filter criteria"
+// @Param        request  query      request.GetTransactionRecordsRequest true  "Filter criteria"
 // @Success      200      {object}  response.PersonalWalletProfileResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."

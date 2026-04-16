@@ -16,9 +16,11 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/ai"
 	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
+	walrus_pkg "raise-child/util/walrus_pkg"
 	"strings"
 	"time"
 
@@ -31,6 +33,8 @@ type taskProofService struct {
 	taskProofRepo       i_repository.ITaskProofRepository
 	childTaskDetailRepo i_repository.IChildTaskDetailRepository
 	taskRepo            i_repository.ITaskRepository
+	aiProvider          ai.IAiClientProvider
+	walrusProvider      walrus_pkg.IWalrusProvider
 	redisCache          cache.IRedisCache
 	clients             map[string]sui.ISuiAPI
 	errLogger           *log.Logger
@@ -41,6 +45,8 @@ func initializeTaskProofService(
 	taskProofRepo i_repository.ITaskProofRepository,
 	childTaskDetailRepo i_repository.IChildTaskDetailRepository,
 	taskRepo i_repository.ITaskRepository,
+	aiProvider ai.IAiClientProvider,
+	walrusProvider walrus_pkg.IWalrusProvider,
 	clients map[string]sui.ISuiAPI,
 	errLogger *log.Logger,
 ) business.ITaskProofService {
@@ -49,6 +55,8 @@ func initializeTaskProofService(
 		taskProofRepo:       taskProofRepo,
 		childTaskDetailRepo: childTaskDetailRepo,
 		taskRepo:            taskRepo,
+		aiProvider:          aiProvider,
+		walrusProvider:      walrusProvider,
 		redisCache:          cache.InitializeRedisCache(),
 		clients:             clients,
 		errLogger:           errLogger,
@@ -68,6 +76,8 @@ func GenerateTaskProofService() (business.ITaskProofService, error) {
 		repository.InitializeTaskProofRepository(cnn, errLogger),
 		repository.InitializeChildTaskDetailRepository(cnn, errLogger),
 		repository.InitializeTaskRepository(cnn, errLogger),
+		ai.InitializeAiProvider(nil, errLogger),
+		walrus_pkg.InitializeWalrusProvider(errLogger),
 		_networkAliases,
 		errLogger,
 	), nil
@@ -362,6 +372,42 @@ func (t *taskProofService) SubmitTaskProof(id string, req request.SubmitTaskProo
 		return errors.New(noti.TASK_PROOF_SUBMITTED_MESSAGE)
 	}
 
+	var aiEvaluation string
+	proofBytes, _ := t.walrusProvider.FetchBytesImage(req.ImageBlobID)
+	if proofBytes == nil {
+		return genericErr
+	}
+
+	if task.IsChildTask {
+		if childTaskDetail, err := t.childTaskDetailRepo.GetChildTaskDetail(*task.ChildTaskDetailID, ctx); err == nil {
+			child, _ := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+				Client:    t.clients[constant.SuiTestnet],
+				ObjectId:  childTaskDetail.ChildID,
+				ErrLogger: t.errLogger,
+			}, ctx)
+
+			if child != nil {
+				avatarBytes, _ := t.walrusProvider.FetchBytesImage(child.AvatarBlobId)
+				if avatarBytes != nil {
+					aiEvaluation = t.aiProvider.ValidateProvideMealForChildTaskProof(ai.ValidateProvideMealForChildTaskProof{
+						ChildAvatarBytesImage: avatarBytes,
+						ValidateTaskProof: ai.ValidateTaskProof{
+							TaskDescription: task.Description,
+							ProofBytesImage: proofBytes,
+							CreatedAt:       curTime,
+						},
+					}, ctx)
+				}
+			}
+		}
+	} else {
+		aiEvaluation = t.aiProvider.ValidateTaskProof(ai.ValidateTaskProof{
+			TaskDescription: task.Description,
+			ProofBytesImage: proofBytes,
+			CreatedAt:       curTime,
+		}, ctx)
+	}
+
 	// todo: AI validation
 	return t.taskProofRepo.CreateTaskProof(entities.TaskProof{
 		ID:             util.GenerateId(),
@@ -370,7 +416,7 @@ func (t *taskProofService) SubmitTaskProof(id string, req request.SubmitTaskProo
 		ActorProfileID: ctx.Value("sub").(string),
 		ActorAddress:   sender,
 		ImageBlobID:    req.ImageBlobID,
-		AIEvaluation:   "",
+		AIEvaluation:   aiEvaluation,
 		RawSubmitDate:  rawSubmitDate,
 		CreatedAt:      curTime,
 		UpdatedAt:      curTime,

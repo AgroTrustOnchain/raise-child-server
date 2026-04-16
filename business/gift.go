@@ -410,8 +410,9 @@ func (g *giftService) CreateGift(req request.CreateGiftRequest, ctx context.Cont
 
 // GetGift implements business.IGiftService.
 func (g *giftService) GetGift(id string, ctx context.Context) (response.GiftResponse, error) {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !util.IsValidSuiAddressStrict(id) {
-		return response.GiftResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+		return response.GiftResponse{}, genericErr
 	}
 
 	res, err := on_chain.GetOnChainObject[entities.Gift](on_chain.GetOnChainObjectRequest{
@@ -419,8 +420,15 @@ func (g *giftService) GetGift(id string, ctx context.Context) (response.GiftResp
 		ObjectId:  id,
 		ErrLogger: g.errLogger,
 	}, ctx)
+	if err != nil {
+		return response.GiftResponse{}, err
+	}
 
-	return res.ToGiftResponse(), err
+	if res == nil {
+		return response.GiftResponse{}, genericErr
+	}
+
+	return res.ToGiftResponse(), nil
 }
 
 // GetGiftsOfChild implements business.IGiftService.
@@ -573,6 +581,13 @@ func (g *giftService) GetGiftsOfRegion(region string, req request.GetGiftsReques
 	}, ctx)
 	if err != nil {
 		return response.PaginationDataResponse{}, err
+	}
+
+	if gifts == nil || len(gifts) == 0 {
+		return response.PaginationDataResponse{
+			Page:       req.Page,
+			TotalPages: 0,
+		}, nil
 	}
 
 	var filteredGifts []entities.Gift

@@ -1,6 +1,6 @@
 CREATE TABLE profiles (
     id character varying(100) PRIMARY KEY,
-    salt character varying(30) NOT NULL UNIQUE,
+    salt character varying(100) NOT NULL UNIQUE,
     status character varying(10) NOT NULL DEFAULT 'Active',
     identity_code character varying(20) UNIQUE,
     first_name character varying(20),
@@ -36,9 +36,9 @@ CREATE TABLE center_requests (
     address character varying(80) NOT NULL,
     phone_number character varying(20) NOT NULL,
     image_blob_id character varying(100) NOT NULL,
-    approvers TEXT[] DEFAULT '{}' NOT NULL,
-    refusers TEXT[] DEFAULT '{}' NOT NULL,
-    refuse_reasons TEXT[] DEFAULT '{}' NOT NULL,
+    approvers TEXT[],
+    refusers TEXT[],
+    refuse_reasons TEXT[],
     status character varying(10) NOT NULL,
     is_available_to_confirm BOOLEAN NOT NULL DEFAULT FALSE,
     is_confirm_register BOOLEAN NOT NULL DEFAULT FALSE,
@@ -86,7 +86,7 @@ CREATE TABLE payments (
     status character varying(10) NOT NULL,
     method character varying(10) NOT NULL,
     cancel_reason character varying(50),
-    message character varying(50) NOT NULL,
+    message TEXT NOT NULL,
     expired_at timestamptz NOT NULL,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -113,9 +113,9 @@ CREATE TABLE registration_requests (
     date_of_birth         character varying(10) NOT NULL,
     phone_number          character varying(20) NOT NULL,
     email                 character varying(25) NOT NULL,
-    approvers             TEXT[] DEFAULT '{}' NOT NULL,
-    refusers              TEXT[] DEFAULT '{}' NOT NULL,
-    refuse_reasons        TEXT[] DEFAULT '{}' NOT NULL,
+    approvers             TEXT[],
+    refusers              TEXT[],
+    refuse_reasons        TEXT[],
     status                character varying(10) NOT NULL DEFAULT 'Pending',
     is_available_to_confirm BOOLEAN NOT NULL DEFAULT FALSE,
     is_confirm_register   BOOLEAN NOT NULL DEFAULT FALSE,
@@ -146,9 +146,9 @@ CREATE TABLE upload_child_requests (
     second_guardian_phone  character varying(15),
     second_guardian_relation character varying(10),
     second_guardian_identity_card_blob_id character varying(100),
-    approvers             TEXT[] DEFAULT '{}' NOT NULL,
-    refusers              TEXT[] DEFAULT '{}' NOT NULL,
-    refuse_reasons        TEXT[] DEFAULT '{}' NOT NULL,
+    approvers             TEXT[],
+    refusers              TEXT[],
+    refuse_reasons        TEXT[],
     ai_evaluation         character varying(50) NOT NULL,
     status                character varying(10) NOT NULL DEFAULT 'Pending',
     review_status         character varying(10) NOT NULL DEFAULT 'Pending',
@@ -158,6 +158,7 @@ CREATE TABLE upload_child_requests (
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     closed_at timestamptz,
+    birth_certificate_blob_id        character varying(100) NOT NULL,
     CONSTRAINT fk_upload_child_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
@@ -200,7 +201,7 @@ CREATE TABLE pending_child_special_need_proposals(
     actor_profile_id character varying(100) NOT NULL,
     actor_address character varying(100) NOT NULL,
     target BIGINT NOT NULL,
-    description TEXT[] NOT NULL,
+    description TEXT NOT NULL,
     proof_blob_id character varying(100),
     ai_evaluation character varying(50) NOT NULL,
     review_status character varying(10) NOT NULL DEFAULT 'Pending',
@@ -273,11 +274,28 @@ CREATE TABLE task_proofs (
     image_blob_id character varying(100) NOT NULL,
     reviewed_by character varying(100),
     review_status character varying(10) NOT NULL DEFAULT 'Pending',
+    ai_evaluation character varying(50) NOT NULL,
     raw_submit_date character varying(10) NOT NULL,
-     created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT fk_proof_profile FOREIGN KEY (actor_profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
+
+CREATE TABLE pending_campaigns (
+    id character varying(100) PRIMARY KEY,
+    actor_profile_id character varying(100) NOT NULL,
+    actor_address character varying(100) NOT NULL,
+    target BIGINT NOT NULL,
+    description TEXT NOT NULL,
+    proof_blob_id character varying(100) NOT NULL,
+    ai_evaluation character varying(50) NOT NULL,
+    review_status character varying(10) NOT NULL DEFAULT 'Pending',
+    reviewed_by character varying(100),
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT fk_campaign_profile FOREIGN KEY (actor_profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+);
+
 
 -- Index for performance on common lookups
 CREATE INDEX idx_registration_status ON registration_requests(status);

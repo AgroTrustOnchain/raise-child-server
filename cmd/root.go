@@ -8,6 +8,8 @@ import (
 	"raise-child/constants/env"
 	"raise-child/constants/shared"
 	"raise-child/util"
+	"raise-child/util/ai"
+	walrus_pkg "raise-child/util/walrus_pkg"
 	"sync"
 	"syscall"
 	"time"
@@ -51,6 +53,12 @@ func Execute() {
 
 	// Setup payments
 	setupPayments(errLogger)
+
+	// Init AI provider
+	ai.InitializeAiProvider(ctx, errLogger)
+
+	// Init walrus provider
+	walrus_pkg.InitializeWalrusProvider(errLogger)
 
 	// Convert gin server to HTTP server
 	var httpServer = &http.Server{

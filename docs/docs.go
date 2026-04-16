@@ -868,6 +868,138 @@ const docTemplate = `{
                 }
             }
         },
+        "/child-needs/books-need/{id}": {
+            "get": {
+                "description": "Retrieves books need of a child by its unique ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "child-needs"
+                ],
+                "summary": "Get books need of a child",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Child Books Need ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BooksNeedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/child-needs/health-insurance-need/{id}": {
+            "get": {
+                "description": "Retrieves health insurance need of a child by its unique ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "child-needs"
+                ],
+                "summary": "Get health insurance need of a child",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Child Health Insurance Need ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.HealthInsuranceNeedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/child-needs/meal-need/{id}": {
+            "get": {
+                "description": "Retrieves meal need of a child by its unique ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "child-needs"
+                ],
+                "summary": "Get meal need of a child",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Child Meal Need ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.MealNeedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/child-upload-reqs": {
             "get": {
                 "description": "Retrieve a list of child upload requests based on query parameters.",
@@ -3149,6 +3281,329 @@ const docTemplate = `{
                 }
             }
         },
+        "/pending-pool-campaigns": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of Pending Pool Campaigns based on filter criteria",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pending-pool-campaigns"
+                ],
+                "summary": "List Pending Pool Campaigns",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "creator",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "max_amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "min_amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "pool_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "reviewer",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_criteria",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create Pending Pool Campaign and wait for admin to review it",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pending-pool-campaigns"
+                ],
+                "summary": "Create Pending Pool Campaign",
+                "parameters": [
+                    {
+                        "description": "Create Pending Pool Campaign Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreatePendingCampaignRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/entities.PendingCampaign"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pending-pool-campaigns/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves Pending Pool Campaign information by its unique ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pending-pool-campaigns"
+                ],
+                "summary": "Get Pending Pool Campaign Detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pending Pool Campaign ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entities.PendingCampaign"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pending-pool-campaigns/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for approve and upload Pending Pool Campaign on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pending-pool-campaigns"
+                ],
+                "summary": "Approve a Pending Pool Campaign and upload to Sui Blockchain",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pending Pool Campaign ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pending-pool-campaigns/{id}/refuse": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Refuse Pending Pool Campaign",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pending-pool-campaigns"
+                ],
+                "summary": "Refuse Pending Pool Campaign",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pending Pool Campaign ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/pending-special-needs": {
             "get": {
                 "security": [
@@ -3735,6 +4190,275 @@ const docTemplate = `{
                 }
             }
         },
+        "/pool-campaigns": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of Pool Campaigns based on filter criteria",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pool-campaigns"
+                ],
+                "summary": "List Pool Campaigns",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "creator",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "max_amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "min_amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "pool_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_criteria",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pool-campaigns/withdraw-proposal": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create Pool Campaign Pending Withdraw Proposal and wait for admin to review it",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pool-campaigns"
+                ],
+                "summary": "Create Pool Campaign Pending Withdraw Proposal",
+                "parameters": [
+                    {
+                        "description": "Create Pool Campaign Pending Withdraw Proposal Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateCampaignWithdrawProposalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/entities.PendingWithdrawProposal"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pool-campaigns/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves Pool Campaign information by its unique ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pool-campaigns"
+                ],
+                "summary": "Get Pool Campaign Detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pool Campaign ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.OnChainCampaignResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pool-campaigns/{id}/support": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Support a Pool Campaign",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pool-campaigns"
+                ],
+                "summary": "Support a Pool Campaign",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pool Campaign ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Support Pool Campaign Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SupportCampaignRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.UrlAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/profiles/personal-wallet-profile/{id}": {
             "get": {
                 "description": "Get a wallet personal profile",
@@ -3757,13 +4481,55 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Filter criteria",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.GetTransactionRecordsRequest"
-                        }
+                        "type": "string",
+                        "description": "e.g. \"Withdraw\", \"Donate\"",
+                        "name": "action_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "actor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "max_amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "min_amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "pool_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_criteria",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -5940,6 +6706,50 @@ const docTemplate = `{
                 }
             }
         },
+        "entities.PendingCampaign": {
+            "type": "object",
+            "properties": {
+                "actor_address": {
+                    "type": "string"
+                },
+                "actor_profile_id": {
+                    "type": "string"
+                },
+                "ai_evaluation": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "pool_id": {
+                    "type": "string"
+                },
+                "pool_name": {
+                    "type": "string"
+                },
+                "proof_blob_id": {
+                    "type": "string"
+                },
+                "review_status": {
+                    "type": "string"
+                },
+                "reviewed_by": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "entities.PendingChildSpecialNeedProposal": {
             "type": "object",
             "properties": {
@@ -6174,6 +6984,9 @@ const docTemplate = `{
                 "avatar_blob_id": {
                     "type": "string"
                 },
+                "birth_certificate_blob_id": {
+                    "type": "string"
+                },
                 "closed_at": {
                     "type": "string"
                 },
@@ -6339,6 +7152,29 @@ const docTemplate = `{
                 }
             }
         },
+        "request.CreateCampaignWithdrawProposalRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "campaign_id",
+                "description"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "minimum": 2000
+                },
+                "campaign_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "proof_blob_id": {
+                    "type": "string"
+                }
+            }
+        },
         "request.CreateCenterRequest": {
             "type": "object",
             "required": [
@@ -6413,6 +7249,29 @@ const docTemplate = `{
                 },
                 "proof_blob_id": {
                     "type": "string"
+                }
+            }
+        },
+        "request.CreatePendingCampaignRequest": {
+            "type": "object",
+            "required": [
+                "description",
+                "pool_name",
+                "target"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "pool_name": {
+                    "type": "string"
+                },
+                "proof_blob_id": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "integer",
+                    "minimum": 50000
                 }
             }
         },
@@ -6645,6 +7504,22 @@ const docTemplate = `{
                 }
             }
         },
+        "request.SupportCampaignRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "description"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "minimum": 2000
+                },
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
         "request.SupportMealNeadRequest": {
             "type": "object",
             "required": [
@@ -6773,6 +7648,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "avatar_blob_id",
+                "birth_certificate_blob_id",
                 "date_of_birth",
                 "first_guardian",
                 "first_name",
@@ -6785,6 +7661,9 @@ const docTemplate = `{
             ],
             "properties": {
                 "avatar_blob_id": {
+                    "type": "string"
+                },
+                "birth_certificate_blob_id": {
                     "type": "string"
                 },
                 "date_of_birth": {
@@ -6892,6 +7771,59 @@ const docTemplate = `{
                 }
             }
         },
+        "response.BooksNeedResponse": {
+            "type": "object",
+            "properties": {
+                "donations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "donors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "semester": {
+                    "type": "integer"
+                },
+                "supported_years": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "value": {
+                    "type": "integer"
+                },
+                "withdraw_proposals": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "withdraws_for_need": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "year": {
+                    "type": "integer"
+                },
+                "year_changes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
         "response.BuildTransactionResponse": {
             "type": "object",
             "properties": {
@@ -6916,6 +7848,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "avatar_blob_id": {
+                    "type": "string"
+                },
+                "birth_certificate_blob_id": {
                     "type": "string"
                 },
                 "books_needs": {
@@ -7044,6 +7979,12 @@ const docTemplate = `{
                 "phone_number": {
                     "type": "string"
                 },
+                "supported_childs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "total_donation": {
                     "type": "integer"
                 },
@@ -7108,11 +8049,194 @@ const docTemplate = `{
                 }
             }
         },
+        "response.HealthInsuranceNeedResponse": {
+            "type": "object",
+            "properties": {
+                "donations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "donors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "supported_years": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "value": {
+                    "type": "integer"
+                },
+                "withdraw_proposals": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "withdraws_for_need": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "year": {
+                    "type": "integer"
+                },
+                "year_changes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "response.MealNeedResponse": {
+            "type": "object",
+            "properties": {
+                "donations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "donors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "durations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.WrapDuration"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "provide_meal_dates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "provide_meal_periods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "provide_meal_staffs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "supported_years": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.WrapSupportedYear"
+                    }
+                },
+                "total_supported_months": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "integer"
+                },
+                "withdraw_proposals": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "withdraws_for_need": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "response.MessageAPIResponse": {
             "type": "object",
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "response.OnChainCampaignResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "creator": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "donations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "donors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "pool_id": {
+                    "type": "string"
+                },
+                "pool_name": {
+                    "type": "string"
+                },
+                "proof_blob_id": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "integer"
+                },
+                "total_donated": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "withdraw_amount": {
+                    "type": "integer"
+                },
+                "withdraw_proposals": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "withdraws": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -7174,6 +8298,12 @@ const docTemplate = `{
                 },
                 "record_amount": {
                     "type": "integer"
+                },
+                "supported_childs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "total_donation": {
                     "type": "integer"
@@ -7412,6 +8542,28 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "withdraw_amount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.WrapDuration": {
+            "type": "object",
+            "properties": {
+                "end_period": {
+                    "type": "string"
+                },
+                "start_period": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.WrapSupportedYear": {
+            "type": "object",
+            "properties": {
+                "supported_months": {
+                    "type": "integer"
+                },
+                "year": {
                     "type": "integer"
                 }
             }

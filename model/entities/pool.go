@@ -8,6 +8,8 @@ type MainPool struct {
 	TotalMealDonationAmount                string   `json:"total_meal_donation_amount"`
 	TotalBooksDonationAmount               string   `json:"total_books_donation_amount"`
 	TotalHealthInsuranceNeedDonationAmount string   `json:"total_health_insurance_donation_amount"`
+	Campaigns                              []string `json:"campaigns"`
+	AllCampaigns                           []string `json:"all_campaigns"`
 }
 
 type LocalPool struct {
@@ -18,4 +20,5 @@ type LocalPool struct {
 	TotalMealDonationAmount                string   `json:"total_meal_donation_amount"`
 	TotalBooksDonationAmount               string   `json:"total_books_donation_amount"`
 	TotalHealthInsuranceNeedDonationAmount string   `json:"total_health_insurance_donation_amount"`
+	Campaigns                              []string `json:"campaigns"`
 }

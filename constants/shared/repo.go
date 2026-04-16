@@ -23,5 +23,6 @@ const (
 	TASK_PROOF_REPOSITORY                          string = "Task Proof Repository"
 	CHILD_TASK_DETAIL_REPOSITORY                   string = "Child Task Detail Repository"
 	PENDING_CHILD_SPECIAL_NEED_PROPOSAL_REPOSITORY string = "Pending Child Special Need Proposal Repository"
+	PENDING_CAMPAIGN_REPOSITORY                    string = "Pending Campaign Repository"
 	TX_REPOSITORY                                  string = "Transaction Repository"
 )

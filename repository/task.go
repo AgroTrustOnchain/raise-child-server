@@ -120,18 +120,18 @@ func (t *taskRepo) GetTasks(req request.GetTasksRequest, ctx context.Context) ([
 		order = req.SortOrder
 	}
 
-	queryCondition += "ORDER BY created_at " + order
-
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       task_table,
 		limitAmount: req.PageSize,
 		condition:   queryCondition,
+		order:       " ORDER BY created_at " + order,
 		page:        req.Page,
 		isGetCount:  false,
 	})
 
 	rows, err := t.db.QueryContext(ctx, query)
 	if err != nil {
+		t.errLogger.Println("Query get tasks:", query)
 		t.errLogger.Println(errLogMsg + err.Error())
 		return nil, 0, internalErr
 	}

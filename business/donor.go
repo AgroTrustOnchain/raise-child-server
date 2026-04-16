@@ -30,7 +30,7 @@ type donorService struct {
 	errLogger  *log.Logger
 }
 
-func InitializeDonorService(clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IDonorService {
+func initializeDonorService(clients map[string]sui.ISuiAPI, errLogger *log.Logger) business.IDonorService {
 	return &donorService{
 		redisCache: cache.InitializeRedisCache(),
 		clients:    clients,
@@ -39,7 +39,7 @@ func InitializeDonorService(clients map[string]sui.ISuiAPI, errLogger *log.Logge
 }
 
 func GenerateDonorService() (business.IDonorService, error) {
-	return InitializeDonorService(_networkAliases, util.GetLogConfig(shared.ERROR_LEVEL)), nil
+	return initializeDonorService(_networkAliases, util.GetLogConfig(shared.ERROR_LEVEL)), nil
 }
 
 const (
@@ -129,7 +129,7 @@ func (s *donorService) GetDonors(req request.GetDonorsRequest, ctx context.Conte
 	}
 
 	var filteredDonors []entities.Donor
-	for i := len(donors) - 1; i >= 0; i++ {
+	for i := len(donors) - 1; i >= 0; i-- {
 		var donor entities.Donor = donors[i]
 
 		if req.Gender != "" {

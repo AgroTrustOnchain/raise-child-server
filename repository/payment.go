@@ -117,11 +117,11 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 		queryCondition += " "
 	}
 
-	queryCondition += fmt.Sprintf("ORDER BY %s %s", filterProp, sortOrder)
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       payment_table,
 		limitAmount: req.PageSize,
 		condition:   queryCondition,
+		order:       fmt.Sprintf(" ORDER BY %s %s", filterProp, sortOrder),
 		page:        req.Page,
 		isGetCount:  false,
 	})
