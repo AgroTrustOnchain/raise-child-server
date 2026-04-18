@@ -50,9 +50,9 @@ func TestGetChildren(t *testing.T) {
 	)
 
 	var fullJsons = getFullJsonChildren()
-	var exepectedFullJsonData []*models.SuiObjectResponse
+	var expectedFullJsonData []*models.SuiObjectResponse
 	for _, json := range fullJsons {
-		exepectedFullJsonData = append(exepectedFullJsonData, &models.SuiObjectResponse{
+		expectedFullJsonData = append(expectedFullJsonData, &models.SuiObjectResponse{
 			Data: &models.SuiObjectData{
 				Content: &models.SuiParsedData{
 					SuiMoveObject: models.SuiMoveObject{
@@ -64,9 +64,9 @@ func TestGetChildren(t *testing.T) {
 	}
 
 	keywordData, keyword := getFoundJsonChildrenWithKeyWord()
-	var exepectedDataWithKw []*models.SuiObjectResponse
+	var expectedDataWithKw []*models.SuiObjectResponse
 	for _, json := range keywordData {
-		exepectedDataWithKw = append(exepectedDataWithKw, &models.SuiObjectResponse{
+		expectedDataWithKw = append(expectedDataWithKw, &models.SuiObjectResponse{
 			Data: &models.SuiObjectData{
 				Content: &models.SuiParsedData{
 					SuiMoveObject: models.SuiMoveObject{
@@ -85,15 +85,15 @@ func TestGetChildren(t *testing.T) {
 		isEmpty     bool
 	}{
 		{
-			suiJsonData: exepectedFullJsonData,
+			suiJsonData: expectedFullJsonData,
 		},
 		{
-			suiJsonData: exepectedFullJsonData,
+			suiJsonData: expectedFullJsonData,
 			page:        2,
 			isEmpty:     true,
 		},
 		{
-			suiJsonData: exepectedDataWithKw,
+			suiJsonData: expectedDataWithKw,
 			keyword:     keyword,
 		},
 	}
