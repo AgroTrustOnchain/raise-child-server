@@ -31,6 +31,21 @@ type SupportCampaignArguments struct {
 	Message     string
 }
 
+type SupportCampaignArgumentsV2 struct {
+	LocalPoolID string
+	CampaignID  string
+	DonorNFT    string
+	Amount      int64
+	FirstName   string
+	LastName    string
+	Gender      string
+	PhoneNumber string
+	Email       string
+	Message     string
+	Creator     string
+	CreatedAt   int64
+}
+
 type CreateCampaignWithdrawProposalArguments struct {
 	LocalPoolID    string
 	CampaignID     string
@@ -52,11 +67,13 @@ type IModuleCampaign interface {
 	ToCreateCampaignForMainPoolArguments(args CreateCampaignForMainPoolArguments) []interface{}
 	ToCreateCampaignForRegionPoolArguments(args CreateCampaignForRegionPoolArguments) []interface{}
 	ToSupportCampaignArguments(args SupportCampaignArguments) []interface{}
+	ToSupportCampaignArgumentsV2(args SupportCampaignArgumentsV2) []interface{}
 	ToCreateCampaignWithdrawProposalArguments(args CreateCampaignWithdrawProposalArguments) []interface{}
 	ToWithdrawFromCampaignArguments(args WithdrawFromCampaignArguments) []interface{}
 	GetFunctionCreateCampaignForMainPool() string
 	GetFunctionCreateCampaignForRegionPool() string
 	GetFunctionSupportCampaign() string
+	GetFunctionSupportCampaignV2() string
 	GetFunctionCreateCampaignWithdrawProposal() string
 	GetFunctionWithdrawFromCampaign() string
 }
@@ -90,6 +107,11 @@ func (m *moduleCampaign) GetFunctionCreateCampaignWithdrawProposal() string {
 // GetFunctionSupportCampaign implements IModuleCampaign.
 func (m *moduleCampaign) GetFunctionSupportCampaign() string {
 	return sui.SUPPORT_CAMPAIGN_FUNCTION
+}
+
+// GetFunctionSupportCampaignV2 implements IModuleCampaign.
+func (m *moduleCampaign) GetFunctionSupportCampaignV2() string {
+	return sui.SUPPORT_CAMPAIGN_FUNCTION_v2
 }
 
 // GetFunctionWithdrawFromCampaign implements IModuleCampaign.
@@ -176,6 +198,26 @@ func (m *moduleCampaign) ToSupportCampaignArguments(args SupportCampaignArgument
 		args.Email,
 		args.Message,
 		sui.CLOCK_OBJECT_ID,
+	}
+}
+
+// ToSupportCampaignArgumentsV2 implements IModuleCampaign.
+func (m *moduleCampaign) ToSupportCampaignArgumentsV2(args SupportCampaignArgumentsV2) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		os.Getenv(env.POOL_ID),
+		args.LocalPoolID,
+		args.CampaignID,
+		args.DonorNFT,
+		uint64(args.Amount),
+		args.FirstName,
+		args.LastName,
+		args.Gender,
+		args.PhoneNumber,
+		args.Email,
+		args.Message,
+		args.Creator,
+		uint64(args.CreatedAt),
 	}
 }
 

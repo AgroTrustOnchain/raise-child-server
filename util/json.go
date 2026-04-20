@@ -4,7 +4,7 @@ import "encoding/json"
 
 func JsonStringToObject[T any](jsonStr string) T {
 	var res T
-	_ = json.Unmarshal([]byte(jsonStr), &res)
+	json.Unmarshal([]byte(jsonStr), &res)
 	return res
 }
 

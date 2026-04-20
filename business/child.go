@@ -196,14 +196,12 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 		req.PageSize = default_page_size
 	}
 
-	var keyword string = util.StandardizeString(req.Keyword)
-	var region string = util.StandardizeString(req.Region)
 	var filteredChildren []entities.Child
 	for i := len(children) - 1; i >= 0; i-- {
 		var child entities.Child = children[i]
 
-		if region != "" {
-			if util.StandardizeString(child.Region) != region { // Not matched
+		if req.Region != "" {
+			if child.Region != req.Region { // Not matched
 				continue
 			}
 		}
@@ -221,10 +219,10 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 			}
 		}
 
-		if keyword != "" {
+		if req.Keyword != "" {
 			var firstName string = util.StandardizeString(child.FirstName)
 			var lastName string = util.StandardizeString(child.LastName)
-			if !strings.Contains(firstName, keyword) && !strings.Contains(lastName, keyword) && !strings.Contains(child.IdentityCode, keyword) { // Not matched
+			if !strings.Contains(firstName, req.Keyword) && !strings.Contains(lastName, req.Keyword) && !strings.Contains(child.IdentityCode, req.Keyword) { // Not matched
 				continue
 			}
 		}
@@ -305,8 +303,8 @@ func (c *childService) UploadChild(req request.UploadChildRequest, ctx context.C
 
 }
 
-// AddNumberMetada implements business.IChildService.
-func (c *childService) AddNumberMetada(id string, req request.AddChildNumberMetadataRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+// AddNumberMetadata implements business.IChildService.
+func (c *childService) AddNumberMetadata(id string, req request.AddChildNumberMetadataRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
 	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
@@ -342,8 +340,8 @@ func (c *childService) AddNumberMetada(id string, req request.AddChildNumberMeta
 	}, err
 }
 
-// AddStringMetada implements business.IChildService.
-func (c *childService) AddStringMetada(id string, req request.AddChildStringMetadataRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+// AddStringMetadata implements business.IChildService.
+func (c *childService) AddStringMetadata(id string, req request.AddChildStringMetadataRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
 	if !util.IsValidSuiAddressStrict(id) {
 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
@@ -976,19 +974,19 @@ func (c *childService) CreateHealthInsuranceNeedWithdrawProposalV2(req request.C
 }
 
 // SupportHealthInsuranceNeed implements business.IChildService.
-func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context) (response.UrlAPIResponse, error) {
+func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context) (response.PaymentUrlResponse, error) {
 	profile, err := c.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
 	if err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	if profile == nil || profile.IdentityCode == nil {
-		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
+		return response.PaymentUrlResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !util.IsValidSuiAddressStrict(id) {
-		return response.UrlAPIResponse{}, genericErr
+		return response.PaymentUrlResponse{}, genericErr
 	}
 
 	var client = c.clients[constant.SuiTestnet]
@@ -998,15 +996,15 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	if need == nil {
-		return response.UrlAPIResponse{}, genericErr
+		return response.PaymentUrlResponse{}, genericErr
 	}
 
 	if slices.Contains(need.SupportedYears, need.Year) {
-		return response.UrlAPIResponse{}, errors.New(noti.NEED_SUPPORTED_MESSAGE)
+		return response.PaymentUrlResponse{}, errors.New(noti.NEED_SUPPORTED_MESSAGE)
 	}
 
 	var paymentId string = util.GenerateId()
@@ -1024,7 +1022,7 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.UrlAPIResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()
@@ -1035,12 +1033,20 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 		Target:    id,
 		CreatedAt: curTime,
 	}, ctx); err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	var description string = fmt.Sprintf("Support Health Insurance Need %s for child %s", need.Year, util.FormatAddress(need.ChildID))
-	return response.UrlAPIResponse{
-			Url: data.CheckoutUrl,
+	var expiredAt time.Time
+	if data.ExpiredAt != nil {
+		expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
+	} else {
+		expiredAt = time.Now().Add(1 * time.Minute) // Default 15p nếu PayOS ko trả về
+	}
+
+	return response.PaymentUrlResponse{
+			Url:       data.CheckoutUrl,
+			PaymentID: paymentId,
 		}, c.paymentRepo.CreatePayment(entities.Payment{
 			ID:            paymentId,
 			Actor:         ctx.Value("address").(string),
@@ -1053,7 +1059,7 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 			Status:        payment_pending_status,
 			Method:        shared.PAYMENT_PAYOS_METHOD,
 			Message:       description,
-			ExpiredAt:     time.Unix(int64(*data.ExpiredAt), 0),
+			ExpiredAt:     expiredAt,
 			CreatedAt:     curTime,
 			UpdatedAt:     curTime,
 		}, ctx)
@@ -1826,19 +1832,19 @@ func (c *childService) ConfirmProvideMealForChild(id string, req request.Confirm
 }
 
 // SupportBooksNeed implements business.IChildService.
-func (c *childService) SupportBooksNeed(id string, ctx context.Context) (response.UrlAPIResponse, error) {
+func (c *childService) SupportBooksNeed(id string, ctx context.Context) (response.PaymentUrlResponse, error) {
 	profile, err := c.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
 	if err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	if profile == nil || profile.IdentityCode == nil {
-		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
+		return response.PaymentUrlResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !util.IsValidSuiAddressStrict(id) {
-		return response.UrlAPIResponse{}, genericErr
+		return response.PaymentUrlResponse{}, genericErr
 	}
 
 	var client = c.clients[constant.SuiTestnet]
@@ -1848,15 +1854,15 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	if need == nil {
-		return response.UrlAPIResponse{}, genericErr
+		return response.PaymentUrlResponse{}, genericErr
 	}
 
 	if slices.Contains(need.SupportedYears, need.Year) {
-		return response.UrlAPIResponse{}, errors.New(noti.NEED_SUPPORTED_MESSAGE)
+		return response.PaymentUrlResponse{}, errors.New(noti.NEED_SUPPORTED_MESSAGE)
 	}
 
 	var paymentId string = util.GenerateId()
@@ -1874,19 +1880,19 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.UrlAPIResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	// leaderNoti, err := c.leaderNotiRepo.GetNotiByMealNeed(id, ctx)
 	// if err != nil {
-	// 	return response.UrlAPIResponse{}, err
+	// 	return response.PaymentUrlResponse{}, err
 	// }
 
 	// var curTime time.Time = time.Now()
 	// if leaderNoti != nil {
 	// 	leaderNoti.ExpectedWithdrawPeriods = append(leaderNoti.ExpectedWithdrawPeriods, "")
 	// 	if err := c.leaderNotiRepo.UpdateNoti(*leaderNoti, ctx); err != nil {
-	// 		return response.UrlAPIResponse{}, err
+	// 		return response.PaymentUrlResponse{}, err
 	// 	}
 	// } else {
 	// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
@@ -1895,7 +1901,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 	// 		ErrLogger: c.errLogger,
 	// 	}, ctx)
 	// 	if err != nil {
-	// 		return response.UrlAPIResponse{}, err
+	// 		return response.PaymentUrlResponse{}, err
 	// 	}
 
 	// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
@@ -1904,7 +1910,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 	// 		ErrLogger: c.errLogger,
 	// 	}, ctx)
 	// 	if err != nil {
-	// 		return response.UrlAPIResponse{}, err
+	// 		return response.PaymentUrlResponse{}, err
 	// 	}
 
 	// 	withdrawDates, err := on_chain.GetOnChainObject[entities.BooksNeedWithdrawDates](on_chain.GetOnChainObjectRequest{
@@ -1913,7 +1919,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 	// 		ErrLogger: c.errLogger,
 	// 	}, ctx)
 	// 	if err != nil {
-	// 		return response.UrlAPIResponse{}, err
+	// 		return response.PaymentUrlResponse{}, err
 	// 	}
 
 	// 	var withdrawDate string
@@ -1929,7 +1935,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 	// 		ErrLogger: c.errLogger,
 	// 	}, ctx)
 	// 	if err != nil {
-	// 		return response.UrlAPIResponse{}, err
+	// 		return response.PaymentUrlResponse{}, err
 	// 	}
 
 	// 	var leaders []string
@@ -1952,7 +1958,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 	// 		CreatedAt: curTime,
 	// 		UpdatedAt: curTime,
 	// 	}, ctx); err != nil {
-	// 		return response.UrlAPIResponse{}, err
+	// 		return response.PaymentUrlResponse{}, err
 	// 	}
 	// }
 
@@ -1964,12 +1970,20 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 		Target:    id,
 		CreatedAt: curTime,
 	}, ctx); err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	var description string = fmt.Sprintf("Support Books Need Semester %s - %s", need.Semster, need.Year)
-	return response.UrlAPIResponse{
-			Url: data.CheckoutUrl,
+	var expiredAt time.Time
+	if data.ExpiredAt != nil {
+		expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
+	} else {
+		expiredAt = time.Now().Add(1 * time.Minute) // Default 15p nếu PayOS ko trả về
+	}
+
+	return response.PaymentUrlResponse{
+			Url:       data.CheckoutUrl,
+			PaymentID: paymentId,
 		}, c.paymentRepo.CreatePayment(entities.Payment{
 			ID:            paymentId,
 			Actor:         ctx.Value("address").(string),
@@ -1982,26 +1996,26 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 			Status:        payment_pending_status,
 			Method:        shared.PAYMENT_PAYOS_METHOD,
 			Message:       description,
-			ExpiredAt:     time.Unix(int64(*data.ExpiredAt), 0),
+			ExpiredAt:     expiredAt,
 			CreatedAt:     curTime,
 			UpdatedAt:     curTime,
 		}, ctx)
 }
 
 // SupportMealNeed implements business.IChildService.
-func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadRequest, ctx context.Context) (response.UrlAPIResponse, error) {
+func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadRequest, ctx context.Context) (response.PaymentUrlResponse, error) {
 	profile, err := c.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
 	if err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	if profile == nil || profile.IdentityCode == nil {
-		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
+		return response.PaymentUrlResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !util.IsValidSuiAddressStrict(id) {
-		return response.UrlAPIResponse{}, genericErr
+		return response.PaymentUrlResponse{}, genericErr
 	}
 
 	var client = c.clients[constant.SuiTestnet]
@@ -2012,11 +2026,11 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	}, ctx)
 	if err != nil {
 		c.errLogger.Println("Fail at get object")
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	if need == nil {
-		return response.UrlAPIResponse{}, genericErr
+		return response.PaymentUrlResponse{}, genericErr
 	}
 
 	var curTime time.Time = time.Now()
@@ -2040,7 +2054,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 		c.errLogger.Println("Next year:", nextYear)
 		c.errLogger.Println("Next start period:", nextStartPeriod)
 		c.errLogger.Println("Next end period:", nextEndPeriod)
-		return response.UrlAPIResponse{}, errors.New(noti.MEAL_NEED_SUPPORT_DURATION_OUT_RANGE_MESSAGE)
+		return response.PaymentUrlResponse{}, errors.New(noti.MEAL_NEED_SUPPORT_DURATION_OUT_RANGE_MESSAGE)
 	}
 
 	rawExpectedStart = util.TimeToRawDate(nextStartPeriod)
@@ -2062,13 +2076,13 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
 		c.errLogger.Println("Fail at create payos")
-		return response.UrlAPIResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	// var expectedWithdrawDate time.Time = nextEndPeriod.AddDate(0, 0, -1)
 	// leaderNoti, err := c.leaderNotiRepo.GetNotiByMealNeed(id, ctx)
 	// if err != nil {
-	// 	return response.UrlAPIResponse{}, err
+	// 	return response.PaymentUrlResponse{}, err
 	// }
 
 	// child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
@@ -2077,7 +2091,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	// 	ErrLogger: c.errLogger,
 	// }, ctx)
 	// if err != nil {
-	// 	return response.UrlAPIResponse{}, err
+	// 	return response.PaymentUrlResponse{}, err
 	// }
 
 	// var expectedWithdrawDates []string
@@ -2089,7 +2103,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	// if leaderNoti != nil {
 	// 	leaderNoti.ExpectedWithdrawPeriods = append(leaderNoti.ExpectedWithdrawPeriods, expectedWithdrawDates...)
 	// 	if err := c.leaderNotiRepo.UpdateNoti(*leaderNoti, ctx); err != nil {
-	// 		return response.UrlAPIResponse{}, err
+	// 		return response.PaymentUrlResponse{}, err
 	// 	}
 	// } else {
 	// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
@@ -2098,7 +2112,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	// 		ErrLogger: c.errLogger,
 	// 	}, ctx)
 	// 	if err != nil {
-	// 		return response.UrlAPIResponse{}, err
+	// 		return response.PaymentUrlResponse{}, err
 	// 	}
 
 	// 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
@@ -2107,7 +2121,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	// 		ErrLogger: c.errLogger,
 	// 	}, ctx)
 	// 	if err != nil {
-	// 		return response.UrlAPIResponse{}, err
+	// 		return response.PaymentUrlResponse{}, err
 	// 	}
 
 	// 	var leaders []string
@@ -2129,7 +2143,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	// 		CreatedAt: curTime,
 	// 		UpdatedAt: curTime,
 	// 	}, ctx); err != nil {
-	// 		return response.UrlAPIResponse{}, err
+	// 		return response.PaymentUrlResponse{}, err
 	// 	}
 	// }
 
@@ -2139,7 +2153,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	// 	ErrLogger: c.errLogger,
 	// }, ctx)
 	// if err != nil {
-	// 	return response.UrlAPIResponse{}, err
+	// 	return response.PaymentUrlResponse{}, err
 	// }
 
 	// volunteers, err := on_chain.GetOnChainObjects[entities.StaffNft](on_chain.GetOnChainObjectsRequest{
@@ -2148,7 +2162,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	// 	ErrLogger: c.errLogger,
 	// }, ctx)
 	// if err != nil {
-	// 	return response.UrlAPIResponse{}, err
+	// 	return response.PaymentUrlResponse{}, err
 	// }
 
 	// var volunteerAddresses []string
@@ -2167,7 +2181,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	// 	StartPeriod:        nextStartPeriod,
 	// 	EndPeriod:          nextEndPeriod,
 	// }, ctx); err != nil {
-	// 	return response.UrlAPIResponse{}, err
+	// 	return response.PaymentUrlResponse{}, err
 	// }
 
 	var mealSupportDurationId string = util.GenerateId()
@@ -2176,7 +2190,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 		StartPeriod: rawExpectedStart,
 		EndPeriod:   rawExpectedEnd,
 	}, ctx); err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	var donationId string = util.GenerateId()
@@ -2187,12 +2201,20 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 		MealDurationID: &mealSupportDurationId,
 		CreatedAt:      curTime,
 	}, ctx); err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	var description string = fmt.Sprintf("Support Meal Need %s - %s for child", rawExpectedStart, rawExpectedEnd)
-	return response.UrlAPIResponse{
-			Url: data.CheckoutUrl,
+	var expiredAt time.Time
+	if data.ExpiredAt != nil {
+		expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
+	} else {
+		expiredAt = time.Now().Add(1 * time.Minute) // Default 15p nếu PayOS ko trả về
+	}
+
+	return response.PaymentUrlResponse{
+			Url:       data.CheckoutUrl,
+			PaymentID: paymentId,
 		}, c.paymentRepo.CreatePayment(entities.Payment{
 			ID:            paymentId,
 			Actor:         ctx.Value("address").(string),
@@ -2205,26 +2227,26 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 			Status:        payment_pending_status,
 			Method:        shared.PAYMENT_PAYOS_METHOD,
 			Message:       description,
-			ExpiredAt:     time.Unix(int64(*data.ExpiredAt), 0),
+			ExpiredAt:     expiredAt,
 			CreatedAt:     curTime,
 			UpdatedAt:     curTime,
 		}, ctx)
 }
 
 // SupportSpecialNeed implements business.IChildService.
-func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialNeedRequest, ctx context.Context) (response.UrlAPIResponse, error) {
+func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialNeedRequest, ctx context.Context) (response.PaymentUrlResponse, error) {
 	profile, err := c.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
 	if err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	if profile == nil || profile.IdentityCode == nil {
-		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
+		return response.PaymentUrlResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !util.IsValidSuiAddressStrict(id) {
-		return response.UrlAPIResponse{}, genericErr
+		return response.PaymentUrlResponse{}, genericErr
 	}
 
 	var client = c.clients[constant.SuiTestnet]
@@ -2234,17 +2256,17 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	if campaign == nil {
-		return response.UrlAPIResponse{}, genericErr
+		return response.PaymentUrlResponse{}, genericErr
 	}
 
 	target, _ := strconv.ParseInt(campaign.Target, 10, 64)
 	totalDonations, _ := strconv.ParseInt(campaign.TotalDonated, 10, 64)
 	if req.Amount > target-totalDonations {
-		return response.UrlAPIResponse{}, errors.New(noti.SUPPORT_SURPASS_CAMPAIGN_TARGET_MESSAGE)
+		return response.PaymentUrlResponse{}, errors.New(noti.SUPPORT_SURPASS_CAMPAIGN_TARGET_MESSAGE)
 	}
 
 	var paymentId string = util.GenerateId()
@@ -2260,7 +2282,7 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 	})
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.UrlAPIResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()
@@ -2271,11 +2293,19 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 		Target:    id,
 		CreatedAt: curTime,
 	}, ctx); err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
-	return response.UrlAPIResponse{
-			Url: data.CheckoutUrl,
+	var expiredAt time.Time
+	if data.ExpiredAt != nil {
+		expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
+	} else {
+		expiredAt = time.Now().Add(1 * time.Minute) // Default 15p nếu PayOS ko trả về
+	}
+
+	return response.PaymentUrlResponse{
+			Url:       data.CheckoutUrl,
+			PaymentID: paymentId,
 		}, c.paymentRepo.CreatePayment(entities.Payment{
 			ID:            paymentId,
 			Actor:         ctx.Value("address").(string),
@@ -2288,7 +2318,7 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 			Status:        payment_pending_status,
 			Method:        shared.PAYMENT_PAYOS_METHOD,
 			Message:       strings.TrimSpace(req.Description),
-			ExpiredAt:     time.Unix(int64(*data.ExpiredAt), 0),
+			ExpiredAt:     expiredAt,
 			CreatedAt:     curTime,
 			UpdatedAt:     curTime,
 		}, ctx)

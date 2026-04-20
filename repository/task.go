@@ -75,7 +75,7 @@ func (t *taskRepo) GetTasks(req request.GetTasksRequest, ctx context.Context) ([
 	var queryCondition string
 	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
-		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%%%%%s%%%%'))", req.Keyword)
+		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%s')", req.Keyword)
 		isHavePreviosCondition = true
 	}
 
@@ -84,7 +84,7 @@ func (t *taskRepo) GetTasks(req request.GetTasksRequest, ctx context.Context) ([
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%%%%%s%%%%')", req.Region)
+		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%s')", req.Region)
 		isHavePreviosCondition = true
 	}
 
@@ -93,7 +93,7 @@ func (t *taskRepo) GetTasks(req request.GetTasksRequest, ctx context.Context) ([
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%%%%%s%%%%')", req.Status)
+		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%s')", req.Status)
 		isHavePreviosCondition = true
 	}
 
@@ -102,7 +102,7 @@ func (t *taskRepo) GetTasks(req request.GetTasksRequest, ctx context.Context) ([
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("assgined_staff = '%%%%%s%%%%'", req.AssignedStaff)
+		queryCondition += fmt.Sprintf("assgined_staff = '%s'", req.AssignedStaff)
 		isHavePreviosCondition = true
 	}
 
@@ -111,7 +111,7 @@ func (t *taskRepo) GetTasks(req request.GetTasksRequest, ctx context.Context) ([
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("reviewed_by = '%%%%%s%%%%'", req.ReviewedBy)
+		queryCondition += fmt.Sprintf("reviewed_by = '%s'", req.ReviewedBy)
 		isHavePreviosCondition = true
 	}
 

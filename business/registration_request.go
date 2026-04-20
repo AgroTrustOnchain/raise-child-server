@@ -240,7 +240,7 @@ func (r *registrationRequestService) ConfirmRegistrationRequest(id string, ctx c
 	}, ctx)
 
 	return response.BuildTransactionResponse{
-		TxBytes:        txBytes,
+		TxBytes:         txBytes,
 		RegistrationReq: id,
 	}, err
 }
@@ -307,10 +307,10 @@ func (r *registrationRequestService) CreateRegistrationRequest(req request.Creat
 		if req.Region != "" {
 			return nil, genericErr
 		}
-	}
-
-	if !isRegionExist(req.Region) {
-		return nil, genericErr
+	} else {
+		if !isRegionExist(req.Region) {
+			return nil, genericErr
+		}
 	}
 
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
@@ -447,8 +447,9 @@ func (r *registrationRequestService) VoteRegistrationRequest(id string, req requ
 		return errors.New(noti.ALREADY_VOTE_MESSAGE)
 	}
 
+	var client = r.clients[constant.SuiTestnet]
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-		Client:    r.clients[constant.SuiTestnet],
+		Client:    client,
 		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
 		ErrLogger: r.errLogger,
 	}, ctx)
@@ -456,9 +457,43 @@ func (r *registrationRequestService) VoteRegistrationRequest(id string, req requ
 		return err
 	}
 
-	// Not admins or local leaders
-	if !slices.Contains(manageObj.AdminIds, voter) && !slices.Contains(manageObj.LocalLeaderIds, voter) {
-		return errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	// Not admin
+	if !slices.Contains(manageObj.AdminIds, voter) {
+		var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+		if request.RegisterRole == admin_role {
+			return genericRightErr
+		} else if request.RegisterRole == local_leader_role {
+			if !slices.Contains(manageObj.LocalLeaderIds, voter) {
+				return genericRightErr
+			}
+		} else {
+			var staffModule = on_chain.InitializeModuleStaff()
+			staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
+				Client:       client,
+				OwnerAddress: voter,
+				StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
+				ErrLogger:    r.errLogger,
+			}, ctx)
+			if err != nil {
+				return err
+			}
+
+			if staffNfts == nil || len(staffNfts) == 0 {
+				return genericRightErr
+			}
+
+			var isRegionLeader bool = false
+			for _, staffNft := range staffNfts {
+				if staffNft.Region == request.Region && staffNft.Role == local_leader_role {
+					isRegionLeader = true
+					break
+				}
+			}
+
+			if !isRegionLeader {
+				return genericRightErr
+			}
+		}
 	}
 
 	if req.IsVoteYes {

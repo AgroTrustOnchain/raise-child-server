@@ -30,6 +30,70 @@ func GetRegions(ctx *gin.Context) {
 	})
 }
 
+// GetEstablishedRegions godoc
+// @Summary      Get list of established regions
+// @Description  Retrieves a list of all established regions
+// @Tags         regions
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  response.RegionsResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /regions/established [get]
+func GetEstablishedRegions(ctx *gin.Context) {
+	service, err := business.GenerateRegionService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.GetEstablishedRegions(ctx)
+
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
+
+// GetRegionDetail godoc
+// @Summary      Get an established region detail
+// @Description  Retrieves an established region detail
+// @Tags         regions
+// @Accept       json
+// @Produce      json
+// @Param        region       path      string  true  "Region"
+// @Param        request  query     request.GetChildrenFromRegionDetailRequest  true  "Filter Criteria"
+// @Success      200  {object}  response.RegionsResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /regions/established/{region} [get]
+func GetRegionDetail(ctx *gin.Context) {
+	var request request.GetChildrenFromRegionDetailRequest
+	if ctx.ShouldBindQuery(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateRegionService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.GetRegionDetail(ctx.Param("region"), request, ctx)
+
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
+
 // GetSupportedRegionSuggestions godoc
 // @Summary      Get list of supported region proposals
 // @Description  Retrieves a list of supported region proposals based on filter criteria

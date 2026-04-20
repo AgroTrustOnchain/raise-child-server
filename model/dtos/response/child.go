@@ -33,3 +33,11 @@ type ChildResponse struct {
 	UpdatedAt              time.Time                     `json:"updated_at"`
 	DynamicValues          map[string]interface{}        `json:"dynamic_values"`
 }
+
+type ChildCardMinimumResponse struct {
+	ID           string `json:"id"`
+	IdentityCode string `json:"identity_code"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	Gender       string `json:"gender"`
+}

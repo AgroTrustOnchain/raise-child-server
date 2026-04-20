@@ -266,7 +266,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 	var firstGuardianProfile = entities.ChildGuardianProfile{
 		FullName:           strings.TrimSpace(req.FirstGuardian.FullName),
 		PhoneNumber:        strings.TrimSpace(req.FirstGuardian.PhoneNumber),
-		Relation:           req.FirstGuardian.Relation,
+		Relation:           util.StandardizeRelation(req.FirstGuardian.Relation),
 		IdentityCardBlobID: strings.TrimSpace(req.FirstGuardian.IdentityCardBlobID),
 	}
 
@@ -275,9 +275,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 	}
 
 	var secondGuardianProfile *entities.ChildGuardianProfile
-
 	if req.SecondGuardian != nil {
-
 		var relation string = util.StandardizeRelation(req.SecondGuardian.Relation)
 		if relation == "" {
 			return nil, errors.New(noti.UNDEFINED_RELATIONSHIP_MESSAGE)
@@ -291,7 +289,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 		}
 	}
 
-	var firstName string = strings.TrimSpace(req.FirstName)
+	var firstNasme string = strings.TrimSpace(req.FirstName)
 	var lastName string = strings.TrimSpace(req.LastName)
 	var homeAddr string = strings.TrimSpace(req.HomeAddress)
 
@@ -307,7 +305,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 			IdentityCode:                    identityCode,
 			ChildBirthCertificateBytesImage: birthCertBytes,
 			Region:                          req.Region,
-			FirstName:                       firstName,
+			FirstName:                       firstNasme,
 			LastName:                        lastName,
 			Gender:                          gender,
 			DateOfBirth:                     dateOfBirth,
@@ -346,7 +344,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 		AvatarBlobId:           req.AvatarBlobId,
 		HomeBlobID:             req.HomeBlobID,
 		Region:                 region,
-		FirstName:              firstName,
+		FirstName:              firstNasme,
 		LastName:               lastName,
 		Gender:                 gender,
 		DateOfBirth:            dateOfBirth,

@@ -81,9 +81,16 @@ func (b *backgroundService) ProcessBackgroundCenterRequests(ctx context.Context)
 		var functions []string
 		var args [][]interface{}
 		var module = on_chain.InitializeModuleManage()
-		for i, req := range approvedRes {
-			modules[i] = module.GetModule()
-			functions[i] = module.GetFunctionMintUploadCenterCap()
+		for _, req := range approvedRes {
+			// modules[i] = module.GetModule()
+			// functions[i] = module.GetFunctionMintUploadCenterCap()
+			// args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
+			// 	Recipient: req.Sender,
+			// }))
+
+			modules = append(modules, module.GetModule())
+			functions = append(functions, module.GetFunctionMintUploadCenterCap())
+
 			args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
 				Recipient: req.Sender,
 			}))
@@ -128,16 +135,32 @@ func (b *backgroundService) ProcessBackgroundRegistrationRequests(ctx context.Co
 		var functions []string
 		var args [][]interface{}
 		var module = on_chain.InitializeModuleManage()
-		for i, req := range approvedRes {
-			modules[i] = module.GetModule()
+		for _, req := range approvedRes {
+			// modules[i] = module.GetModule()
+			// switch req.Role {
+			// case admin_role:
+			// 	functions[i] = module.GetFunctionMintRegisterAdminCap()
+			// case local_leader_role:
+			// 	functions[i] = module.GetFunctionMintRegisterLeaderCap()
+			// case volunteer_role:
+			// 	functions[i] = module.GetFunctionMintRegisterVolunteerCap()
+			// }
+			// args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
+			// 	Recipient: req.Sender,
+			// }))
+
+			// Thêm phần tử vào cuối slice
+			modules = append(modules, module.GetModule())
+
 			switch req.Role {
 			case admin_role:
-				functions[i] = module.GetFunctionMintRegisterAdminCap()
+				functions = append(functions, module.GetFunctionMintRegisterAdminCap())
 			case local_leader_role:
-				functions[i] = module.GetFunctionMintRegisterLeaderCap()
+				functions = append(functions, module.GetFunctionMintRegisterLeaderCap())
 			case volunteer_role:
-				functions[i] = module.GetFunctionMintRegisterVolunteerCap()
+				functions = append(functions, module.GetFunctionMintRegisterVolunteerCap())
 			}
+
 			args = append(args, module.ToMintCapArguments(on_chain.MintCapArguments{
 				Recipient: req.Sender,
 			}))

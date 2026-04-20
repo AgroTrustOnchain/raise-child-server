@@ -67,7 +67,7 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestion(id string, ct
 
 // GetSupportedRegionSuggestions implements repository.ISupportedRegionSuggestionRepository.
 func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, isGuestView bool, ctx context.Context) ([]entities.SupportedRegionSuggestion, int, error) {
-	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "GetPayments - "
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.SUPPORTED_REGION_PROPOSAL) + "GetSupportedRegionSuggestions - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
@@ -82,7 +82,7 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("(LOWER(region) LIKE LOWER('%%%%%s%%%%') OR LOWER(content) LIKE LOWER('%%%%%s%%%%'))", req.Keyword, req.Keyword)
+		queryCondition += fmt.Sprintf("(LOWER(region) LIKE LOWER('%s') OR LOWER(content) LIKE LOWER('%s'))", req.Keyword, req.Keyword)
 		isHavePreviosCondition = true
 	}
 
@@ -91,7 +91,7 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("created_by = %s", req.CreatedBy)
+		queryCondition += fmt.Sprintf("created_by = '%s'", req.CreatedBy)
 		isHavePreviosCondition = true
 	}
 
@@ -136,7 +136,7 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.
 
 // IsRegionRequested implements repository.ISupportedRegionSuggestionRepository.
 func (s *supportedRegionProposalRepo) IsRegionRequested(region string, ctx context.Context) (bool, error) {
-	var query string = "SELECT id FROM " + supported_region_proposal_table + " WHERE LOWER(region) = LOWER($1) ADN (status = 'Pending' OR status 'Approved') LIMIT 1"
+	var query string = "SELECT id FROM " + supported_region_proposal_table + " WHERE LOWER(region) = LOWER($1) AND (status = 'Pending' OR status = 'Approved') LIMIT 1"
 
 	var id string
 	if err := s.db.QueryRowContext(ctx, query, region).Scan(&id); err != nil {

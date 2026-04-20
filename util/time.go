@@ -12,7 +12,7 @@ func ToMilliseconds(time time.Time) int64 {
 }
 
 func RawDateToTime(rawDate string) time.Time {
-	parsedTime, _ := time.ParseInLocation(dateFormat, rawDate, time.Local)
+	parsedTime, _ := time.Parse(dateFormat, rawDate)
 	return parsedTime
 }
 
@@ -25,11 +25,11 @@ func MilliSecToTime(milliseconds int64) time.Time {
 }
 
 func GetRequestDuration() time.Time {
-	return time.Now().Add(request_duration)
+	return time.Now().Add(time.Minute)
 }
 
 func GetBankTransactionDuration() time.Time {
-	return time.Now().Add(bank_request_duration)
+	return time.Now().Add(time.Minute)
 }
 
 func ToStartOfDate(date time.Time) time.Time {

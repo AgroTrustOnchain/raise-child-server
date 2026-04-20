@@ -101,7 +101,7 @@ func (v *volunteerRequestRepo) GetRegistrationRequests(req request.GetNormalStaf
 
 		var operation string = ">"
 		if *req.IsClosed {
-			operation = "<"
+			operation = "<="
 		}
 
 		queryCondition += fmt.Sprintf("closed_at %s NOW()", operation)

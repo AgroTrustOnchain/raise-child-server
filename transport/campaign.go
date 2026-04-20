@@ -86,7 +86,7 @@ func GetCampaign(ctx *gin.Context) {
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Pool Campaign ID"
 // @Param        request  body      request.SupportCampaignRequest   true  "Support Pool Campaign Detail"
-// @Success      200      {object}  response.UrlAPIResponse
+// @Success      200      {object}  response.PaymentUrlResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."

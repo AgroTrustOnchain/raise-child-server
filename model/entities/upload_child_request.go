@@ -15,7 +15,7 @@ type UploadChildRequest struct {
 	Gender                 string                `json:"gender" validate:"required"`
 	DateOfBirth            string                `json:"date_of_birth" validate:"required"`
 	HomeAddress            string                `json:"home_address"`
-	FirstGuardianProfile   ChildGuardianProfile  `json:"first_guardian_profile" validate:"required"`
+	FirstGuardianProfile   ChildGuardianProfile  `json:"first_guardian_profile"`
 	SecondGuardianProfile  *ChildGuardianProfile `json:"second_guardian_profile"`
 	Approvers              []string              `json:"approvers"`
 	Refusers               []string              `json:"refusers"`
@@ -32,8 +32,8 @@ type UploadChildRequest struct {
 }
 
 type ChildGuardianProfile struct {
-	FullName           string `json:"full_name" validate:"required"`
-	PhoneNumber        string `json:"phone_number" validate:"required"`
-	Relation           string `json:"relation" validate:"required"`
-	IdentityCardBlobID string `json:"identity_card_blob_id" `
+	FullName           string `json:"full_name"`
+	PhoneNumber        string `json:"phone_number"`
+	Relation           string `json:"relation"`
+	IdentityCardBlobID string `json:"identity_card_blob_id"`
 }

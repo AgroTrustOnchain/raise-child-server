@@ -117,6 +117,10 @@ const (
 	ALREADY_ANOTHER_REGION_STAFF_MESSAGE string = "You are already a staff of another region."
 
 	ALREADY_STAFF_ROLE_MESSAGE string = "You are already a staff."
+
+	STILL_PENDING_PAYMENT_MESSAGE string = "This payment is still pending."
+
+	PAYMENT_NOT_TRANSFERRED_MESSAGE string = "This payment is not transferred yet."
 )
 
 const (

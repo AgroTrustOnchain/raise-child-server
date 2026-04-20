@@ -17,3 +17,7 @@ type Manage struct {
 	DonorNfts             []string `json:"donor_nfts"`
 	TransactionRecords    []string `json:"transaction_records"`
 }
+
+func (m *Manage) GetRedisKey() string {
+	return "manage"
+}

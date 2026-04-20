@@ -11,5 +11,5 @@ type ICampaignService interface {
 	GetCampaigns(req request.GetCampaignsRequest, ctx context.Context) (response.PaginationDataResponse, error)
 	GetCampaign(id string, ctx context.Context) (response.OnChainCampaignResponse, error)
 	CreateCampaignWithdrawProposal(req request.CreateCampaignWithdrawProposalRequest, ctx context.Context) (*entities.PendingWithdrawProposal, error)
-	SupportCampaign(id string, req request.SupportCampaignRequest, ctx context.Context) (response.UrlAPIResponse, error)
+	SupportCampaign(id string, req request.SupportCampaignRequest, ctx context.Context) (response.PaymentUrlResponse, error)
 }

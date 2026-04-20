@@ -9,6 +9,8 @@ import (
 
 type IRegionService interface {
 	GetRegions() response.RegionsResponse
+	GetEstablishedRegions(ctx context.Context) (response.RegionsResponse, error)
+	GetRegionDetail(region string, req request.GetChildrenFromRegionDetailRequest, ctx context.Context) (response.RegionDetailResponse, error)
 	GetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, ctx context.Context) (response.PaginationDataResponse, error)
 	GetWalletSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, ctx context.Context) (response.PaginationDataResponse, error)
 	AdminGetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, ctx context.Context) (response.PaginationDataResponse, error)

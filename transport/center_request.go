@@ -13,14 +13,14 @@ import (
 // GetCenterRequests godoc
 // @Summary      Get a list of center requests
 // @Description  Retrieve center requests with filtering based on query parameters
-// @Tags         center
+// @Tags         center-reqs
 // @Accept       json
 // @Produce      json
 // @Param        request  query     request.GetCenterRequests  true  "Filter Criteria"
 // @Success      200      {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /centers [get]
+// @Router       /center-reqs [get]
 func GetCenterRequests(ctx *gin.Context) {
 	var request request.GetCenterRequests
 	if ctx.ShouldBindQuery(&request) != nil {
@@ -47,14 +47,14 @@ func GetCenterRequests(ctx *gin.Context) {
 // GetWalletCenterRequests godoc
 // @Summary      Get Center requests by a wallet
 // @Description  Retrieve specific center requests associated with a unique wallet address
-// @Tags         center
+// @Tags         center-reqs
 // @Accept       json
 // @Produce      json
 // @Param        id       path      string  true  "User Wallet Address"
 // @Success      200      {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /centers/user/{id} [get]
+// @Router       /center-reqs/user/{id} [get]
 func GetWalletCenterRequests(ctx *gin.Context) {
 	service, err := business.GenerateCenterRequestService()
 	if err != nil {
@@ -75,14 +75,14 @@ func GetWalletCenterRequests(ctx *gin.Context) {
 // GetCenterRequest godoc
 // @Summary      Get center request details
 // @Description  Retrieve the full details of a single Center request by its unique ID
-// @Tags         center
+// @Tags         center-reqs
 // @Accept       json
 // @Produce      json
 // @Param        id       path      string  true  "Center Request ID (UUID)"
 // @Success      200      {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /centers/{id} [get]
+// @Router       /center-reqs/{id} [get]
 func GetCenterRequest(ctx *gin.Context) {
 	service, err := business.GenerateCenterRequestService()
 	if err != nil {
@@ -103,7 +103,7 @@ func GetCenterRequest(ctx *gin.Context) {
 // CreateCenterRequest godoc
 // @Summary      Create a new center request
 // @Description  Submit a new center request
-// @Tags         center
+// @Tags         center-reqs
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
@@ -112,7 +112,7 @@ func GetCenterRequest(ctx *gin.Context) {
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /centers [post]
+// @Router       /center-reqs [post]
 func CreateCenterRequest(ctx *gin.Context) {
 	var request request.CreateCenterRequest
 	if ctx.ShouldBindJSON(&request) != nil {
@@ -139,7 +139,7 @@ func CreateCenterRequest(ctx *gin.Context) {
 // VoteCenterRequest godoc
 // @Summary      Vote on a center request
 // @Description  Submit an approval or refusal vote for a specific center request.
-// @Tags         center
+// @Tags         center-reqs
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
@@ -149,7 +149,7 @@ func CreateCenterRequest(ctx *gin.Context) {
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /centers/{id}/vote [post]
+// @Router       /center-reqs/{id}/vote [post]
 func VoteCenterRequest(ctx *gin.Context) {
 	var request request.VoteRequest
 	if ctx.ShouldBindJSON(&request) != nil {
@@ -173,7 +173,7 @@ func VoteCenterRequest(ctx *gin.Context) {
 // ConfirmCenterRequest godoc
 // @Summary      Confirm and upload center information to Sui Blockhain
 // @Description  Prepares and builds a transaction for uploading center information on-chain
-// @Tags         center
+// @Tags         center-reqs
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
@@ -182,7 +182,7 @@ func VoteCenterRequest(ctx *gin.Context) {
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /centers/{id}/confirm [post]
+// @Router       /center-reqs/{id}/confirm [post]
 func ConfirmCenterRequest(ctx *gin.Context) {
 	service, err := business.GenerateCenterRequestService()
 	if err != nil {

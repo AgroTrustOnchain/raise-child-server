@@ -76,7 +76,7 @@ func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx cont
 	var queryCondition string
 	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
-		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%%%%%s%%%%'))", req.Keyword)
+		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%s'))", req.Keyword)
 		isHavePreviosCondition = true
 	}
 
@@ -85,7 +85,7 @@ func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx cont
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%%%%%s%%%%')", req.Status)
+		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%s')", req.Status)
 		isHavePreviosCondition = true
 	}
 
@@ -94,7 +94,7 @@ func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx cont
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("actor_address = '%%%%%s%%%%'", req.ActorAddress)
+		queryCondition += fmt.Sprintf("actor_address = '%s'", req.ActorAddress)
 		isHavePreviosCondition = true
 	}
 
@@ -103,7 +103,7 @@ func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx cont
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("reviewed_by = '%%%%%s%%%%'", req.ReviewedBy)
+		queryCondition += fmt.Sprintf("reviewed_by = '%s'", req.ReviewedBy)
 		isHavePreviosCondition = true
 	}
 

@@ -388,14 +388,20 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 				return nil, errors.New(noti.INTERNALL_ERR_MSG)
 			}
 
-			expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
+			if data.ExpiredAt != nil {
+				expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
+			} else {
+				expiredAt = time.Now().Add(15 * time.Minute) // Default 15p nếu PayOS ko trả về
+			}
+
 			paymentMethod = shared.PAYMENT_PAYOS_METHOD
-			res["checkout_url"] = data.CheckoutUrl
+			res["url"] = data.CheckoutUrl
+			res["payment_id"] = paymentId
 		}
 	}
 
 	if !isPayosAvailable {
-		expiredAt = util.GetBankTransactionDuration()
+		expiredAt = time.Now().Add(15 * time.Minute) // Default 15p nếu PayOS ko trả về
 		paymentMethod = shared.MANUAL_BANK_METHOD
 		res["owner"] = bankProfile.OwnerName
 		res["bank_org"] = bankProfile.BankOrg

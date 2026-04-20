@@ -94,7 +94,7 @@ func (v *localLeaderRequestRepo) GetRegistrationRequests(req request.GetNormalSt
 
 		var operation string = ">"
 		if *req.IsClosed {
-			operation = "<"
+			operation = "<="
 		}
 
 		queryCondition += fmt.Sprintf("closed_at %s NOW()", operation)

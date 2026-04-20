@@ -17,9 +17,27 @@ type DonateToPoolArguments struct {
 	Message     string
 }
 
+type DonateToPoolArgumentsV2 struct {
+	DonorID     string
+	Amount      int64
+	FirstName   string
+	LastName    string
+	Gender      string
+	PhoneNumber string
+	Email       string
+	Message     string
+	Creator     string
+	CreatedAt   int64
+}
+
 type DonateToLocalPoolArguments struct {
 	LocalPoolId string
 	DonateToPoolArguments
+}
+
+type DonateToLocalPoolArgumentsV2 struct {
+	LocalPoolId string
+	DonateToPoolArgumentsV2
 }
 
 type CreateWithdrawProposalArguments struct {
@@ -60,7 +78,9 @@ type EditWithdrawDaoRateArguements struct {
 type IModulePool interface {
 	GetModule() string
 	ToDonateToPoolArguments(args DonateToPoolArguments) []interface{}
+	ToDonateToPoolArgumentsV2(args DonateToPoolArgumentsV2) []interface{}
 	ToDonateToLocalPoolArguments(args DonateToLocalPoolArguments) []interface{}
+	ToDonateToLocalPoolArgumentsV2(args DonateToLocalPoolArgumentsV2) []interface{}
 	ToCreateWithdrawProposalArguments(args CreateWithdrawProposalArguments) []interface{}
 	ToCreateWithdrawProposalV2Arguments(args CreateWithdrawProposalV2Arguments) []interface{}
 	ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguments) []interface{}
@@ -68,7 +88,9 @@ type IModulePool interface {
 	ToEditWithdrawDaoRateArguements(args EditWithdrawDaoRateArguements) []interface{}
 	GetWithdrawProposalEventEmittedStruct() string
 	GetFunctionDonateToPool() string
+	GetFunctionDonateToPoolV2() string
 	GetFunctionDonateToLocalPool() string
+	GetFunctionDonateToLocalPoolV2() string
 	GetFunctionWithdrawFromPool() string
 	GetFunctionCreateWithdrawProposal() string
 	GetFunctionCreateWithdrawProposalV2() string
@@ -110,6 +132,53 @@ func (m *modulePool) GetFunctionVoteWithdrawProposal() string {
 // GetWithdrawProposalEventEmittedStruct implements IModulePool.
 func (m *modulePool) GetWithdrawProposalEventEmittedStruct() string {
 	return sui.WITHDRAW_PROPOSAL_EVENT
+}
+
+// GetFunctionDonateToLocalPoolV2 implements IModulePool.
+func (m *modulePool) GetFunctionDonateToLocalPoolV2() string {
+	return sui.DONATE_TO_LOCAL_POOL_FUNCTION_V2
+}
+
+// GetFunctionDonateToPoolV2 implements IModulePool.
+func (m *modulePool) GetFunctionDonateToPoolV2() string {
+	return sui.DONATE_TO_POOL_FUNCTION_V2
+}
+
+// ToDonateToLocalPoolArgumentsV2 implements IModulePool.
+func (m *modulePool) ToDonateToLocalPoolArgumentsV2(args DonateToLocalPoolArgumentsV2) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		os.Getenv(env.POOL_ID),
+		args.LocalPoolId,
+		args.DonorID,
+		uint64(args.Amount),
+		args.FirstName,
+		args.LastName,
+		args.Gender,
+		args.PhoneNumber,
+		args.Email,
+		args.Message,
+		args.Creator,
+		uint64(args.CreatedAt),
+	}
+}
+
+// ToDonateToPoolArgumentsV2 implements IModulePool.
+func (m *modulePool) ToDonateToPoolArgumentsV2(args DonateToPoolArgumentsV2) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		os.Getenv(env.POOL_ID),
+		args.DonorID,
+		uint64(args.Amount),
+		args.FirstName,
+		args.LastName,
+		args.Gender,
+		args.PhoneNumber,
+		args.Email,
+		args.Message,
+		args.Creator,
+		uint64(args.CreatedAt),
+	}
 }
 
 // ToEditWithdrawDaoRateArguements implements IModulePool.

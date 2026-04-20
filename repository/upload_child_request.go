@@ -111,8 +111,8 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 	var queryCondition string
 	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
-		queryCondition += fmt.Sprintf("(identity_code LIKE '%s' OR LOWER(first_name) LIKE LOWER('%%%%%s%%%%') OR LOWER(last_name) LIKE LOWER('%%%%%s%%%%') OR date_of_birth LIKE '%%%%%s%%%%' OR LOWER(home_address) LIKE LOWER('%%%%%s%%%%') OR LOWER(first_guardian_name) LIKE LOWER('%%%%%s%%%%')  OR LOWER(first_guardian_phone) LIKE LOWER('%%%%%s%%%%') OR LOWER(second_guardian_name) LIKE LOWER('%%%%%s%%%%') OR LOWER(second_guardian_phone) LIKE LOWER('%%%%%s%%%%'))",
-			req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword)
+		queryCondition += fmt.Sprintf("(identity_code LIKE '%s' OR LOWER(first_name) LIKE LOWER('%%%%%s%%%%') OR LOWER(last_name) LIKE LOWER('%%%%%s%%%%') OR date_of_birth LIKE '%%%%%s%%%%' OR LOWER(home_address) LIKE LOWER('%%%%%s%%%%') OR LOWER(first_guardian_name) LIKE LOWER('%%%%%s%%%%')  OR LOWER(first_guardian_phone) LIKE LOWER('%%%%%s%%%%') LOWER(second_guardian_name) LIKE LOWER('%%%%%s%%%%') OR LOWER(second_guardian_phone) LIKE LOWER('%%%%%s%%%%'))",
+			req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword)
 		isHavePreviosCondition = true
 	}
 
@@ -121,7 +121,7 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(region) LIKE LOWER('%%%%%s%%%%')", req.Region)
+		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%%%%%s%%%%')", req.Region)
 		isHavePreviosCondition = true
 	}
 
@@ -130,7 +130,7 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(gender) LIKE LOWER('%%%%%s%%%%')", req.Gender)
+		queryCondition += fmt.Sprintf("LOWER(gender) = LOWER('%%%%%s%%%%')", req.Gender)
 		isHavePreviosCondition = true
 	}
 
@@ -139,7 +139,7 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(status) LIKE LOWER('%%%%%s%%%%')", req.Status)
+		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%%%%%s%%%%')", req.Status)
 		isHavePreviosCondition = true
 	}
 
@@ -150,7 +150,7 @@ func (u *uploadChildRepo) GetUploadChildRequests(req request.GetUploadChildReque
 
 		var operation string = ">"
 		if *req.IsClosed {
-			operation = "<"
+			operation = "<="
 		}
 
 		queryCondition += fmt.Sprintf("closed_at %s NOW()", operation)
@@ -221,7 +221,7 @@ func (u *uploadChildRepo) GetWalletUploadChildRequests(id string, page int, ctx 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.UPLOAD_CHILD_REQUEST_REPOSITORY) + "GetWalletUploadChildRequests - "
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	var queryCondition string = fmt.Sprintf("created_by = '%s' ORDER BY created_at DESC", id)
+	var queryCondition string = fmt.Sprintf("created_by = %s ORDER BY created_at DESC", id)
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       upload_child_request_table,
 		limitAmount: upload_child_request_limit_record,

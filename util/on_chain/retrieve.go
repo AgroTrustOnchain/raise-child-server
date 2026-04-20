@@ -47,6 +47,8 @@ type GetOnChainSpecificTypeObjectsRequest struct {
 }
 
 func GetOnChainObject[T any](req GetOnChainObjectRequest, ctx context.Context) (*T, error) {
+	req.ErrLogger.Println("On-chain object id:", req.ObjectId)
+
 	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 	var retrieveReq = models.SuiGetObjectRequest{
 		ObjectId: req.ObjectId,

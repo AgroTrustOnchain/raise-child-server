@@ -12,3 +12,12 @@ type CenterResponse struct {
 	UploadedAt        time.Time `json:"uploaded_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }
+
+type CenterCardMinimumResponse struct {
+	ID                string    `json:"id"`
+	Region            string    `json:"region"`
+	CenterAddress     string    `json:"center_address"`
+	CenterPhoneNumber string    `json:"center_phone_number"`
+	UploadedAt        time.Time `json:"uploaded_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}

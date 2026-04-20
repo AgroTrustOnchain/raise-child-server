@@ -167,7 +167,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 	var queryCondition string
 	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
-		queryCondition += fmt.Sprintf("(LOWER(identity_code) LIKE LOWER('%%%%%s%%%%') OR LOWER(first_name) LIKE LOWER('%%%%%s%%%%') OR LOWER(last_name) LIKE LOWER('%%%%%s%%%%') OR date_of_birth LIKE '%%%%%s%%%%' OR phone_number LIKE '%%%%%s%%%%' OR LOWER(email) LIKE LOWER('%%%%%s%%%%'))", req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword)
+		queryCondition += fmt.Sprintf("(LOWER(identity_code) LIKE LOWER('%s') OR LOWER(first_name) LIKE LOWER('%s') OR LOWER(last_name) LIKE LOWER('%s') OR date_of_birth LIKE '%s' OR phone_number LIKE '%s' OR LOWER(email) LIKE LOWER('%s'))", req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword)
 		isHavePreviosCondition = true
 	}
 
@@ -176,7 +176,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(register_role) = LOWER('%%%%%s%%%%')", req.RegisterRole)
+		queryCondition += fmt.Sprintf("LOWER(register_role) = LOWER('%s')", req.RegisterRole)
 		isHavePreviosCondition = true
 	}
 
@@ -185,7 +185,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%%%%%s%%%%')", req.Region)
+		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%s')", req.Region)
 		isHavePreviosCondition = true
 	}
 
@@ -194,7 +194,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(gender) = LOWER('%%%%%s%%%%')", req.Gender)
+		queryCondition += fmt.Sprintf("LOWER(gender) = LOWER('%s')", req.Gender)
 		isHavePreviosCondition = true
 	}
 
@@ -203,7 +203,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%%%%%s%%%%')", req.Status)
+		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%s')", req.Status)
 		isHavePreviosCondition = true
 	}
 
@@ -223,7 +223,7 @@ func (r *registratioRequestRepo) GetRegistrationRequests(req request.GetRegistra
 
 		var operation string = ">"
 		if *req.IsClosed {
-			operation = "<"
+			operation = "<="
 		}
 
 		queryCondition += fmt.Sprintf("closed_at %s NOW()", operation)
@@ -355,6 +355,10 @@ func (r *registratioRequestRepo) GetPendingRequests(ctx context.Context) ([]enti
 
 // SetApprovedStatuses implements repository.IRegistrationRequestRepository.
 func (r *registratioRequestRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
+	if reqs == nil || len(reqs) == 0 {
+		return nil
+	}
+
 	var query string = "UPDATE " + registration_request_table + " SET status = 'Approved', is_available_to_confirm = true, updated_at = $1 WHERE "
 	for i, req := range reqs {
 		query += fmt.Sprintf("id = '%s'", req.ID)
@@ -373,6 +377,10 @@ func (r *registratioRequestRepo) SetApprovedStatuses(reqs []entities.BackgroundR
 
 // SetRefusedStatuses implements repository.IRegistrationRequestRepository.
 func (r *registratioRequestRepo) SetRefusedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
+	if reqs == nil || len(reqs) == 0 {
+		return nil
+	}
+
 	var query string = "UPDATE " + registration_request_table + " SET status = 'Refused', updated_at = $1 WHERE "
 	for i, req := range reqs {
 		query += fmt.Sprintf("id = '%s'", req.ID)

@@ -22,9 +22,9 @@ type SuiGraphQlObjectResponse struct {
 }
 
 type BuildTransactionResponse struct {
-	TxBytes        string `json:"tx_bytes"`
-	ProposalId     string `json:"proposal_id"`
-	CenterReq      string `json:"center_req"`
-	UploadChildReq string `json:"upload_child_req"`
+	TxBytes         string `json:"tx_bytes"`
+	ProposalId      string `json:"proposal_id"`
+	CenterReq       string `json:"center_req"`
+	UploadChildReq  string `json:"upload_child_req"`
 	RegistrationReq string `json:"registration_req"`
 }

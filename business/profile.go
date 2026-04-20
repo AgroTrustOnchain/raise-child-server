@@ -290,15 +290,15 @@ func (p *profileService) GetWalletPersonalProfile(id string, req request.GetTran
 
 	totalDonation, _ := strconv.ParseInt(nfts[0].TotalDonation, 10, 64)
 	res = response.PersonalWalletProfileResponse{
-		WalletAddress:     id,
-		FirstName:         nfts[0].FirstName,
-		LastName:          nfts[0].LastName,
-		TotalDonation:     totalDonation,
-		SupportedChildren: nfts[0].SupportedChilds,
-		TxRecords:         data,
-		RecordAmount:      len(data),
-		Page:              req.Page,
-		TotalPages:        int(math.Ceil(float64(len(filteredTxs)) / float64(req.PageSize))),
+		WalletAddress:   id,
+		FirstName:       nfts[0].FirstName,
+		LastName:        nfts[0].LastName,
+		TotalDonation:   totalDonation,
+		SupportedChilds: nfts[0].SupportedChilds,
+		TxRecords:       data,
+		RecordAmount:    len(data),
+		Page:            req.Page,
+		TotalPages:      int(math.Ceil(float64(len(filteredTxs)) / float64(req.PageSize))),
 	}
 
 	p.redisCache.Set(redisKey, res, time.Minute*5, ctx)

@@ -6,7 +6,7 @@ const (
 	PAYMENT_REPOSITORY                             string = "Payment Repository"
 	BANK_PROFILE_REPOSITORY                        string = "Bank Profile Repository"
 	PROFILE_REPOSITORY                             string = "Profile Repository"
-	REIGSTRATION_REQUEST_REPOSITORY                 string = "Registration Request Repository"
+	REIGSTRATION_REQUEST_REPOSITORY                string = "Registration Request Repository"
 	CENTER_REQUEST_REPOSITORY                      string = "Center Request Repository"
 	ADMIN_REQUEST_REPOSITORY                       string = "Admin Request Repository"
 	LEADER_REQUEST_REPOSITORY                      string = "Leader Request Repository"

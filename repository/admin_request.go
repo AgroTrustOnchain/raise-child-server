@@ -92,7 +92,7 @@ func (a *adminRequestRepo) GetRegistrationRequests(req request.GetAdminRegistrat
 
 		var operation string = ">"
 		if *req.IsClosed {
-			operation = "<"
+			operation = "<="
 		}
 
 		queryCondition += fmt.Sprintf("closed_at %s NOW()", operation)

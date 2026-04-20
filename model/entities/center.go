@@ -59,3 +59,21 @@ func (c Center) ToCenterResponse() response.CenterResponse {
 		UpdatedAt:         util.MilliSecToTime(updatedAt),
 	}
 }
+
+func (c Center) ToCenterCardMinimumResponse() response.CenterCardMinimumResponse {
+	if c.ID.ID == "" {
+		return response.CenterCardMinimumResponse{}
+	}
+
+	uploadedAt, _ := strconv.ParseInt(c.UploadedAt, 10, 64)
+	updatedAt, _ := strconv.ParseInt(c.UpdatedAt, 10, 64)
+
+	return response.CenterCardMinimumResponse{
+		ID:                c.ID.ID,
+		Region:            c.Region,
+		CenterAddress:     c.CenterAddress,
+		CenterPhoneNumber: c.CenterPhoneNumber,
+		UploadedAt:        util.MilliSecToTime(uploadedAt),
+		UpdatedAt:         util.MilliSecToTime(updatedAt),
+	}
+}

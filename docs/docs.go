@@ -529,7 +529,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/centers": {
+        "/center-reqs": {
             "get": {
                 "description": "Retrieve center requests with filtering based on query parameters",
                 "consumes": [
@@ -539,7 +539,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "center"
+                    "center-reqs"
                 ],
                 "summary": "Get a list of center requests",
                 "parameters": [
@@ -619,7 +619,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "center"
+                    "center-reqs"
                 ],
                 "summary": "Create a new center request",
                 "parameters": [
@@ -661,7 +661,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/centers/user/{id}": {
+        "/center-reqs/user/{id}": {
             "get": {
                 "description": "Retrieve specific center requests associated with a unique wallet address",
                 "consumes": [
@@ -671,7 +671,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "center"
+                    "center-reqs"
                 ],
                 "summary": "Get Center requests by a wallet",
                 "parameters": [
@@ -705,7 +705,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/centers/{id}": {
+        "/center-reqs/{id}": {
             "get": {
                 "description": "Retrieve the full details of a single Center request by its unique ID",
                 "consumes": [
@@ -715,7 +715,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "center"
+                    "center-reqs"
                 ],
                 "summary": "Get center request details",
                 "parameters": [
@@ -749,7 +749,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/centers/{id}/confirm": {
+        "/center-reqs/{id}/confirm": {
             "post": {
                 "security": [
                     {
@@ -764,7 +764,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "center"
+                    "center-reqs"
                 ],
                 "summary": "Confirm and upload center information to Sui Blockhain",
                 "parameters": [
@@ -804,7 +804,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/centers/{id}/vote": {
+        "/center-reqs/{id}/vote": {
             "post": {
                 "security": [
                     {
@@ -819,7 +819,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "center"
+                    "center-reqs"
                 ],
                 "summary": "Vote on a center request",
                 "parameters": [
@@ -855,6 +855,63 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/centers": {
+            "get": {
+                "description": "Retrieves a list of centers based on filter criteria",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "centers"
+                ],
+                "summary": "List centers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
                         "schema": {
                             "$ref": "#/definitions/response.MessageAPIResponse"
                         }
@@ -1519,6 +1576,120 @@ const docTemplate = `{
                 }
             }
         },
+        "/children/Metadata/number/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for adding new field information to a child information (e.g., height, weight) on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Add a new number Metadata to a child object",
+                "parameters": [
+                    {
+                        "description": "Add child number Metadata details (e.g., key, value)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.AddChildStringMetadataRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/children/Metadata/string/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for adding new field information to a child information (e.g., height, weight) on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "children"
+                ],
+                "summary": "Add a new string Metadata to a child object",
+                "parameters": [
+                    {
+                        "description": "Add child string Metadata details (e.g., key, value)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.AddChildStringMetadataRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/children/books-need": {
             "put": {
                 "security": [
@@ -1664,7 +1835,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.UrlAPIResponse"
+                            "$ref": "#/definitions/response.PaymentUrlResponse"
                         }
                     },
                     "400": {
@@ -1833,7 +2004,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.UrlAPIResponse"
+                            "$ref": "#/definitions/response.PaymentUrlResponse"
                         }
                     },
                     "400": {
@@ -2011,121 +2182,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.UrlAPIResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid data. Please try again.",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageAPIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "You have no rights to access this action.",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "There is something wrong in the system during the process. Please try again later.",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageAPIResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/children/metadata/number/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Prepares and builds a transaction for adding new field information to a child information (e.g., height, weight) on-chain",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "children"
-                ],
-                "summary": "Add a new number metadata to a child object",
-                "parameters": [
-                    {
-                        "description": "Add child number metadata details (e.g., key, value)",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AddChildStringMetadataRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.BuildTransactionResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid data. Please try again.",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageAPIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "You have no rights to access this action.",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "There is something wrong in the system during the process. Please try again later.",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageAPIResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/children/metadata/string/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Prepares and builds a transaction for adding new field information to a child information (e.g., height, weight) on-chain",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "children"
-                ],
-                "summary": "Add a new string metadata to a child object",
-                "parameters": [
-                    {
-                        "description": "Add child string metadata details (e.g., key, value)",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AddChildStringMetadataRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                            "$ref": "#/definitions/response.PaymentUrlResponse"
                         }
                     },
                     "400": {
@@ -2422,7 +2479,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.UrlAPIResponse"
+                            "$ref": "#/definitions/response.PaymentUrlResponse"
                         }
                     },
                     "400": {
@@ -3124,14 +3181,111 @@ const docTemplate = `{
                 }
             }
         },
-        "/payments/auth-callback/{id}": {
+        "/payments": {
             "get": {
+                "description": "Retrieves a list of Payments based on filter criteria",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "List Payments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "actor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "filter_prop",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "is_donate_payment",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "is_payment_expired",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "max_amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "method",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "min_amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginationDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/auth-callback/{id}": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Handles the transaction callback/webhook from the payment provider to update transaction status by ID and build on-chain transaction.",
+                "description": "Process payment callback with authorization",
                 "consumes": [
                     "application/json"
                 ],
@@ -3151,22 +3305,30 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Captured Image Blob ID",
-                        "name": "imageBlobId",
-                        "in": "query",
-                        "required": true
+                        "description": "Auth Payment Callback Detail",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.PaymentAuthCallbackRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Success",
                         "schema": {
-                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                            "$ref": "#/definitions/response.MessageAPIResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
                         "schema": {
                             "$ref": "#/definitions/response.MessageAPIResponse"
                         }
@@ -3182,7 +3344,7 @@ const docTemplate = `{
         },
         "/payments/callback/{id}": {
             "get": {
-                "description": "Handles the transaction callback/webhook from the payment provider to update transaction status by ID and build on-chain transaction.",
+                "description": "Process payment callback",
                 "consumes": [
                     "application/json"
                 ],
@@ -3204,9 +3366,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Success",
                         "schema": {
-                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                            "$ref": "#/definitions/response.MessageAPIResponse"
                         }
                     },
                     "400": {
@@ -3258,6 +3420,160 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/response.UrlAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/{id}": {
+            "get": {
+                "description": "Retrieve a payment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Retrieve a payment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Payment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entities.Payment"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prepares and builds a transaction for approve and upload Payment on-chain",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Approve a Payment and upload to Sui Blockchain",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Payment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BuildTransactionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/{id}/refuse": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Refuse Payment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Refuse Payment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Payment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
                         }
                     },
                     "400": {
@@ -4435,7 +4751,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.UrlAPIResponse"
+                            "$ref": "#/definitions/response.PaymentUrlResponse"
                         }
                     },
                     "400": {
@@ -4686,6 +5002,105 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "You have no rights to access this action.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/regions/established": {
+            "get": {
+                "description": "Retrieves a list of all established regions",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "regions"
+                ],
+                "summary": "Get list of established regions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.RegionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "There is something wrong in the system during the process. Please try again later.",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/regions/established/{region}": {
+            "get": {
+                "description": "Retrieves an established region detail",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "regions"
+                ],
+                "summary": "Get an established region detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Region",
+                        "name": "region",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.RegionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data. Please try again.",
                         "schema": {
                             "$ref": "#/definitions/response.MessageAPIResponse"
                         }
@@ -6706,6 +7121,77 @@ const docTemplate = `{
                 }
             }
         },
+        "entities.Payment": {
+            "type": "object",
+            "properties": {
+                "actor": {
+                    "type": "string"
+                },
+                "amount": {
+                    "type": "integer"
+                },
+                "cancel_reason": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "currency": {
+                    "description": "e.g. \"VND\"",
+                    "type": "string"
+                },
+                "donation_id": {
+                    "type": "string"
+                },
+                "expired_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_donate_tx": {
+                    "type": "boolean"
+                },
+                "is_transferred": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "method": {
+                    "description": "e.g. \"VNPay\", \"Momo\", \"Payos\"",
+                    "type": "string"
+                },
+                "profile_id": {
+                    "type": "string"
+                },
+                "proof_blob_id": {
+                    "type": "string"
+                },
+                "proposal_id": {
+                    "type": "string"
+                },
+                "review_status": {
+                    "type": "string"
+                },
+                "reviewed_by": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "e.g. \"Pending\", \"Cancel\", \"Success\"",
+                    "type": "string"
+                },
+                "transaction_id": {
+                    "type": "string"
+                },
+                "transferred_at": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "entities.PendingCampaign": {
             "type": "object",
             "properties": {
@@ -7504,6 +7990,17 @@ const docTemplate = `{
                 }
             }
         },
+        "request.PaymentAuthCallbackRequest": {
+            "type": "object",
+            "required": [
+                "proof_blob_id"
+            ],
+            "properties": {
+                "proof_blob_id": {
+                    "type": "string"
+                }
+            }
+        },
         "request.SupportCampaignRequest": {
             "type": "object",
             "required": [
@@ -8252,6 +8749,17 @@ const docTemplate = `{
                 },
                 "total_pages": {
                     "type": "integer"
+                }
+            }
+        },
+        "response.PaymentUrlResponse": {
+            "type": "object",
+            "properties": {
+                "payment_id": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },

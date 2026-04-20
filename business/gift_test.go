@@ -82,7 +82,7 @@ func TestGetGift(t *testing.T) {
 
 func TestGetGiftsOfRegion(t *testing.T) {
 	var mockClient = pkg.InitializeSuiMockApi()
-	var _ = initializeGiftService(
+	var service = initializeGiftService(
 		nil,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,

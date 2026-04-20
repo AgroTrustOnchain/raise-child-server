@@ -376,19 +376,19 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 }
 
 // SupportCampaign implements business.ICampaignService.
-func (c *campaignService) SupportCampaign(id string, req request.SupportCampaignRequest, ctx context.Context) (response.UrlAPIResponse, error) {
+func (c *campaignService) SupportCampaign(id string, req request.SupportCampaignRequest, ctx context.Context) (response.PaymentUrlResponse, error) {
 	profile, err := c.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
 	if err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	if profile == nil || profile.IdentityCode == nil {
-		return response.UrlAPIResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
+		return response.PaymentUrlResponse{}, errors.New(noti.PROFILE_EMPTY_MESSAGE)
 	}
 
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !util.IsValidSuiAddressStrict(id) {
-		return response.UrlAPIResponse{}, genericErr
+		return response.PaymentUrlResponse{}, genericErr
 	}
 
 	var client = c.clients[constant.SuiTestnet]
@@ -398,17 +398,17 @@ func (c *campaignService) SupportCampaign(id string, req request.SupportCampaign
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
 	if campaign == nil {
-		return response.UrlAPIResponse{}, genericErr
+		return response.PaymentUrlResponse{}, genericErr
 	}
 
 	target, _ := strconv.ParseInt(campaign.Target, 10, 64)
 	totalDonations, _ := strconv.ParseInt(campaign.TotalDonated, 10, 64)
 	if req.Amount > target-totalDonations {
-		return response.UrlAPIResponse{}, errors.New(noti.SUPPORT_SURPASS_CAMPAIGN_TARGET_MESSAGE)
+		return response.PaymentUrlResponse{}, errors.New(noti.SUPPORT_SURPASS_CAMPAIGN_TARGET_MESSAGE)
 	}
 
 	var paymentId string = util.GenerateId()
@@ -424,7 +424,7 @@ func (c *campaignService) SupportCampaign(id string, req request.SupportCampaign
 	})
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.UrlAPIResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()
@@ -435,11 +435,19 @@ func (c *campaignService) SupportCampaign(id string, req request.SupportCampaign
 		Target:    id,
 		CreatedAt: curTime,
 	}, ctx); err != nil {
-		return response.UrlAPIResponse{}, err
+		return response.PaymentUrlResponse{}, err
 	}
 
-	return response.UrlAPIResponse{
-			Url: data.CheckoutUrl,
+	var expiredAt time.Time
+	if data.ExpiredAt != nil {
+		expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
+	} else {
+		expiredAt = time.Now().Add(1 * time.Minute) // Default 15p nếu PayOS ko trả về
+	}
+
+	return response.PaymentUrlResponse{
+			Url:       data.CheckoutUrl,
+			PaymentID: paymentId,
 		}, c.paymentRepo.CreatePayment(entities.Payment{
 			ID:            paymentId,
 			Actor:         ctx.Value("address").(string),
@@ -452,7 +460,7 @@ func (c *campaignService) SupportCampaign(id string, req request.SupportCampaign
 			Status:        payment_pending_status,
 			Method:        shared.PAYMENT_PAYOS_METHOD,
 			Message:       strings.TrimSpace(req.Description),
-			ExpiredAt:     time.Unix(int64(*data.ExpiredAt), 0),
+			ExpiredAt:     expiredAt,
 			CreatedAt:     curTime,
 			UpdatedAt:     curTime,
 		}, ctx)

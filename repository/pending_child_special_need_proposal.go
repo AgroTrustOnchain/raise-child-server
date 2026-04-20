@@ -80,7 +80,7 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 	var queryCondition string
 	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
-		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%%%%%s%%%%')", req.Keyword)
+		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%s')", req.Keyword)
 		isHavePreviosCondition = true
 	}
 
@@ -89,7 +89,7 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%%%%%s%%%%')", req.Region)
+		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%s')", req.Region)
 		isHavePreviosCondition = true
 	}
 
@@ -98,7 +98,7 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(review_status) = LOWER('%%%%%s%%%%')", req.Status)
+		queryCondition += fmt.Sprintf("LOWER(review_status) = LOWER('%s')", req.Status)
 		isHavePreviosCondition = true
 	}
 
@@ -107,7 +107,7 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("actor_address = '%%%%%s%%%%'", req.Creator)
+		queryCondition += fmt.Sprintf("actor_address = '%s'", req.Creator)
 		isHavePreviosCondition = true
 	}
 
@@ -116,7 +116,7 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("reviewed_bdy = '%%%%%s%%%%'", req.Creator)
+		queryCondition += fmt.Sprintf("reviewed_bdy = '%s'", req.Creator)
 		isHavePreviosCondition = true
 	}
 

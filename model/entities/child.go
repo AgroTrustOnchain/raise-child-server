@@ -61,16 +61,6 @@ func (c Child) ToMinimumChildResponse() response.ChildResponse {
 		}
 	}
 
-	var firstGuardianProfile request.ChildGuardianProfile
-	if c.GuardianProfiles != nil && c.GuardianProfiles[0].Fields.FullName != "" {
-		firstGuardianProfile = request.ChildGuardianProfile{
-			FullName:           c.GuardianProfiles[0].Fields.FullName,
-			PhoneNumber:        c.GuardianProfiles[0].Fields.PhoneNumber,
-			Relation:           c.GuardianProfiles[0].Fields.Relation,
-			IdentityCardBlobID: c.GuardianProfiles[0].Fields.IdentityCardBlobID,
-		}
-	}
-
 	return response.ChildResponse{
 		ID:                     c.ID.ID,
 		IdentityCode:           c.IdentityCode,
@@ -83,18 +73,23 @@ func (c Child) ToMinimumChildResponse() response.ChildResponse {
 		Region:                 c.Region,
 		AvatarBlobId:           c.AvatarBlobId,
 		HomeBlobID:             c.HomeBlobID,
-		FirstGuardian:          firstGuardianProfile,
-		SecondGuardian:         secondGuardianProfile,
-		ImageBlobIds:           c.ImageBlobIds,
-		BooksNeeds:             c.BooksNeeds,
-		HealthInsuranceNeed:    c.HealthInsuranceNeed,
-		MealNeed:               c.MealNeed,
-		SpecialNeedProposals:   c.SpecialNeedProposals,
-		SpecialNeedCampaigns:   c.SpecialNeedCampaigns,
-		Gifts:                  c.Gifts,
-		UploadedBy:             c.UploadedBy,
-		UploadedAt:             util.MilliSecToTime(uploadedAt),
-		UpdatedAt:              util.MilliSecToTime(updatedAt),
+		FirstGuardian: request.ChildGuardianProfile{
+			FullName:           c.GuardianProfiles[0].Fields.FullName,
+			PhoneNumber:        c.GuardianProfiles[0].Fields.PhoneNumber,
+			Relation:           c.GuardianProfiles[0].Fields.Relation,
+			IdentityCardBlobID: c.GuardianProfiles[0].Fields.IdentityCardBlobID,
+		},
+		SecondGuardian:       secondGuardianProfile,
+		ImageBlobIds:         c.ImageBlobIds,
+		BooksNeeds:           c.BooksNeeds,
+		HealthInsuranceNeed:  c.HealthInsuranceNeed,
+		MealNeed:             c.MealNeed,
+		SpecialNeedProposals: c.SpecialNeedProposals,
+		SpecialNeedCampaigns: c.SpecialNeedCampaigns,
+		Gifts:                c.Gifts,
+		UploadedBy:           c.UploadedBy,
+		UploadedAt:           util.MilliSecToTime(uploadedAt),
+		UpdatedAt:            util.MilliSecToTime(updatedAt),
 	}
 }
 
@@ -122,16 +117,6 @@ func (c Child) ToChildResponse() response.ChildResponse {
 		}
 	}
 
-	var firstGuardianProfile request.ChildGuardianProfile
-	if c.GuardianProfiles != nil && c.GuardianProfiles[0].Fields.FullName != "" {
-		firstGuardianProfile = request.ChildGuardianProfile{
-			FullName:           c.GuardianProfiles[0].Fields.FullName,
-			PhoneNumber:        c.GuardianProfiles[0].Fields.PhoneNumber,
-			Relation:           c.GuardianProfiles[0].Fields.Relation,
-			IdentityCardBlobID: c.GuardianProfiles[0].Fields.IdentityCardBlobID,
-		}
-	}
-
 	return response.ChildResponse{
 		ID:                     c.ID.ID,
 		IdentityCode:           c.IdentityCode,
@@ -144,18 +129,37 @@ func (c Child) ToChildResponse() response.ChildResponse {
 		Region:                 c.Region,
 		AvatarBlobId:           c.AvatarBlobId,
 		HomeBlobID:             c.HomeBlobID,
-		FirstGuardian:          firstGuardianProfile,
-		SecondGuardian:         secondGuardianProfile,
-		ImageBlobIds:           c.ImageBlobIds,
-		UploadImagePeriods:     uploadImagePeriods,
-		BooksNeeds:             c.BooksNeeds,
-		HealthInsuranceNeed:    c.HealthInsuranceNeed,
-		MealNeed:               c.MealNeed,
-		SpecialNeedProposals:   c.SpecialNeedProposals,
-		SpecialNeedCampaigns:   c.SpecialNeedCampaigns,
-		Gifts:                  c.Gifts,
-		UploadedBy:             c.UploadedBy,
-		UploadedAt:             util.MilliSecToTime(uploadedAt),
-		UpdatedAt:              util.MilliSecToTime(updatedAt),
+		FirstGuardian: request.ChildGuardianProfile{
+			FullName:           c.GuardianProfiles[0].Fields.FullName,
+			PhoneNumber:        c.GuardianProfiles[0].Fields.PhoneNumber,
+			Relation:           c.GuardianProfiles[0].Fields.Relation,
+			IdentityCardBlobID: c.GuardianProfiles[0].Fields.IdentityCardBlobID,
+		},
+		SecondGuardian:       secondGuardianProfile,
+		ImageBlobIds:         c.ImageBlobIds,
+		UploadImagePeriods:   uploadImagePeriods,
+		BooksNeeds:           c.BooksNeeds,
+		HealthInsuranceNeed:  c.HealthInsuranceNeed,
+		MealNeed:             c.MealNeed,
+		SpecialNeedProposals: c.SpecialNeedProposals,
+		SpecialNeedCampaigns: c.SpecialNeedCampaigns,
+		Gifts:                c.Gifts,
+		UploadedBy:           c.UploadedBy,
+		UploadedAt:           util.MilliSecToTime(uploadedAt),
+		UpdatedAt:            util.MilliSecToTime(updatedAt),
+	}
+}
+
+func (c Child) ToChildCardMinimumResponse() response.ChildCardMinimumResponse {
+	if c.ID.ID == "" {
+		return response.ChildCardMinimumResponse{}
+	}
+
+	return response.ChildCardMinimumResponse{
+		ID:           c.ID.ID,
+		IdentityCode: c.IdentityCode,
+		FirstName:    c.FirstName,
+		LastName:     c.LastName,
+		Gender:       c.Gender,
 	}
 }

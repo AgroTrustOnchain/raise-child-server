@@ -20,6 +20,8 @@ func InitializeRegionRoutes(server *gin.Engine) {
 	// Normal group
 	var norGroup = server.Group(contextPath)
 	norGroup.GET("", middleware.RateLimitMiddleware(listLimit), transport.GetRegions)
+	norGroup.GET("/established", middleware.RateLimitMiddleware(listLimit), transport.GetEstablishedRegions)
+	norGroup.GET("/established/:region", middleware.RateLimitMiddleware(viewLimit), transport.GetRegionDetail)
 	norGroup.GET("/supported-suggestions", middleware.RateLimitMiddleware(listLimit), transport.GetSupportedRegionSuggestions)
 	norGroup.GET("/supported-suggestions/:id", middleware.RateLimitMiddleware(viewLimit), transport.GetSupportedRegionSuggestion)
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"raise-child/constants/env"
 	"raise-child/constants/noti"
@@ -19,6 +20,8 @@ import (
 	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -101,6 +104,191 @@ func GenerateRegionService() (business.IRegionService, error) {
 	}
 
 	return initalizeRegionService(repository.InitializeSupportedRegionSuggestionRepository(cnn, errLogger), _networkAliases, _regions, errLogger), nil
+}
+
+// GetEstablishedRegions implements business.IRegionService.
+func (r *regionService) GetEstablishedRegions(ctx context.Context) (response.RegionsResponse, error) {
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    r.clients[constant.SuiTestnet],
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: r.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.RegionsResponse{}, err
+	}
+
+	var res []string
+	for i, region := range manage.LocalRegions {
+		if manage.CenterConfirmStatuses[i] {
+			res = append(res, region)
+		}
+	}
+
+	return response.RegionsResponse{
+		Regions: res,
+	}, nil
+}
+
+// GetRegionDetail implements business.IRegionService.
+func (r *regionService) GetRegionDetail(region string, req request.GetChildrenFromRegionDetailRequest, ctx context.Context) (response.RegionDetailResponse, error) {
+	req.Keyword = util.StandardizeString(req.Keyword)
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var res response.RegionDetailResponse
+	var redisKey string = r.getGetRegionDetailRedisKey(region, req)
+	if r.redisCache.Get(redisKey, &res, ctx) {
+		return res, nil
+	}
+
+	var client = r.clients[constant.SuiTestnet]
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: r.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.RegionDetailResponse{}, err
+	}
+
+	var centerId string
+	for i, localRegion := range manage.LocalRegions {
+		if localRegion == region {
+			if manage.CenterConfirmStatuses[i] {
+				centerId = manage.ChildrenCenters[i]
+				break
+			}
+		}
+	}
+
+	if centerId == "" {
+		return response.RegionDetailResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	center, err := on_chain.GetOnChainObject[entities.Center](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  centerId,
+		ErrLogger: r.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.RegionDetailResponse{}, err
+	}
+
+	var skippedRecords int = (req.Page - 1) * req.PageSize
+	var paginationChildrenResponse response.PaginationDataResponse
+	if skippedRecords >= len(center.ChildIDs) {
+		paginationChildrenResponse = response.PaginationDataResponse{
+			Page: req.Page,
+		}
+	} else {
+		children, err := on_chain.GetOnChainObjects[entities.Child](on_chain.GetOnChainObjectsRequest{
+			Client:    client,
+			ObjectIds: center.ChildIDs,
+			ErrLogger: r.errLogger,
+		}, ctx)
+		if err != nil {
+			return response.RegionDetailResponse{}, err
+		}
+
+		var filteredChildren []entities.Child
+		for i := len(center.ChildIDs) - 1; i >= 0; i-- {
+			var child = children[i]
+			if req.Keyword != "" {
+				var firstName string = util.StandardizeString(child.FirstName)
+				var lastName string = util.StandardizeString(child.LastName)
+				if !strings.Contains(firstName, req.Keyword) && !strings.Contains(lastName, req.Keyword) && !strings.Contains(child.IdentityCode, req.Keyword) { // Not matched
+					continue
+				}
+			}
+
+			filteredChildren = append(filteredChildren, child)
+		}
+
+		if len(filteredChildren) > skippedRecords {
+			sort.Slice(filteredChildren, func(i, j int) bool {
+				var name1 string = filteredChildren[i].LastName + " " + filteredChildren[i].FirstName
+				var name2 string = filteredChildren[j].LastName + " " + filteredChildren[j].FirstName
+
+				if req.SortOrder == "ASC" {
+					return name1 < name2
+				}
+
+				return name2 > name1
+			})
+
+			var data []response.ChildCardMinimumResponse
+			for i := skippedRecords; i < len(filteredChildren); i++ {
+				data = append(data, filteredChildren[i].ToChildCardMinimumResponse())
+				if len(data) == req.PageSize {
+					break
+				}
+			}
+
+			paginationChildrenResponse = response.PaginationDataResponse{
+				Data:       data,
+				Amount:     len(data),
+				Page:       req.Page,
+				TotalPages: int(math.Ceil(float64(len(filteredChildren)) / float64(req.PageSize))),
+			}
+		} else {
+			paginationChildrenResponse = response.PaginationDataResponse{
+				Page: req.Page,
+			}
+		}
+	}
+
+	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.POOL_ID),
+		ErrLogger: r.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.RegionDetailResponse{}, err
+	}
+
+	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+		Client:    client,
+		ObjectIds: pool.LocalPools,
+		ErrLogger: r.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.RegionDetailResponse{}, err
+	}
+
+	var total int64
+	var poolId string
+	for _, localPool := range localPools {
+		if localPool.Region == region {
+			totalDonated, _ := strconv.ParseInt(localPool.TotalAmount, 10, 64)
+			total = totalDonated
+			poolId = localPool.ID.ID
+			break
+		}
+	}
+
+	var centerBlobId string
+	if center.ImageBlobIDs != nil && len(center.ImageBlobIDs) > 0 {
+		centerBlobId = center.ImageBlobIDs[len(center.ImageBlobIDs)-1]
+	}
+	res = response.RegionDetailResponse{
+		Region:            region,
+		PoolID:            poolId,
+		CenterPhoneNumber: center.CenterPhoneNumber,
+		CenterAddress:     center.CenterAddress,
+		CenterImageBlobID: centerBlobId,
+		TotalDonated:      total,
+		Children:          paginationChildrenResponse,
+	}
+
+	r.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+
+	return res, nil
 }
 
 // CreateSupportedRegionSuggestion implements business.IRegionService.
@@ -425,6 +613,16 @@ func (r *regionService) getGetAuthenticatedSupportedRegionSuggestionsRedisKey(re
 
 	return fmt.Sprintf("auth_region_suggestion:kw:%s:of:%s:o:%s:s:%d:p:%d",
 		keyword, createdBy, req.SortOrder, req.PageSize, req.Page)
+}
+
+func (r *regionService) getGetRegionDetailRedisKey(region string, req request.GetChildrenFromRegionDetailRequest) string {
+	var keyword string = "empty"
+	if req.Keyword != "" {
+		keyword = req.Keyword
+	}
+
+	return fmt.Sprintf("region_detail:region:%s:kw:%s:o:%s:s:%d:p:%d",
+		region, keyword, req.SortOrder, req.PageSize, req.Page)
 }
 
 func isRegionExist(region string) bool {

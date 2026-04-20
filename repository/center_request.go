@@ -83,7 +83,7 @@ func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequest
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%%%%%s%%%%')", req.Status)
+		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%s')", req.Status)
 		isHavePreviosCondition = true
 	}
 
@@ -92,7 +92,7 @@ func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequest
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("(LOWER(address) LIKE LOWER('%%%%%s%%%%') OR phone_number LIKE '%%%%%s%%%%')", req.Keyword, req.Keyword)
+		queryCondition += fmt.Sprintf("(LOWER(address) LIKE LOWER('%s') OR phone_number LIKE '%s')", req.Keyword, req.Keyword)
 		isHavePreviosCondition = true
 	}
 
@@ -112,7 +112,7 @@ func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequest
 
 		var operation string = ">"
 		if *req.IsClosed {
-			operation = "<"
+			operation = "<="
 		}
 
 		queryCondition += fmt.Sprintf("closed_at %s NOW()", operation)
@@ -312,6 +312,10 @@ func (c *centerRequestRepo) GetPendingRequests(ctx context.Context) ([]entities.
 
 // SetApprovedStatuses implements repository.ICenterRequestRepository.
 func (c *centerRequestRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
+	if reqs == nil || len(reqs) == 0 {
+		return nil
+	}
+
 	var query string = "UPDATE " + center_request_table + " SET status = 'Approved', is_available_to_confirm = true, updated_at = $1 WHERE "
 	for i, req := range reqs {
 		query += fmt.Sprintf("id = '%s'", req.ID)
@@ -330,6 +334,10 @@ func (c *centerRequestRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord
 
 // SetRefusedStatuses implements repository.ICenterRequestRepository.
 func (c *centerRequestRepo) SetRefusedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
+	if reqs == nil || len(reqs) == 0 {
+		return nil
+	}
+
 	var query string = "UPDATE " + center_request_table + " SET status = 'Refused', updated_at = $1 WHERE "
 	for i, req := range reqs {
 		query += fmt.Sprintf("id = '%s'", req.ID)

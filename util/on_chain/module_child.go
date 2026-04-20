@@ -51,6 +51,22 @@ type SupportChildBooksNeedArguments struct {
 	Message     string
 }
 
+type SupportChildBooksNeedArgumentsV2 struct {
+	NeedID      string
+	LocalPool   string
+	ChildID     string
+	DonorNft    string
+	Amount      int64
+	FirstName   string
+	LastName    string
+	Gender      string
+	PhoneNumber string
+	Email       string
+	Message     string
+	Creator     string
+	CreatedAt   int64
+}
+
 type SupportChildHealthInsuranceNeedArguments struct {
 	NeedID      string
 	LocalPool   string
@@ -65,8 +81,30 @@ type SupportChildHealthInsuranceNeedArguments struct {
 	Message     string
 }
 
+type SupportChildHealthInsuranceNeedArgumentsV2 struct {
+	NeedID      string
+	LocalPool   string
+	ChildID     string
+	DonorNft    string
+	Amount      int64
+	FirstName   string
+	LastName    string
+	Gender      string
+	PhoneNumber string
+	Email       string
+	Message     string
+	Creator     string
+	CreatedAt   int64
+}
+
 type SupportChildMealNeedArguments struct {
 	SupportChildBooksNeedArguments
+	StartPeriod string
+	EndPeriod   string
+}
+
+type SupportChildMealNeedArgumentsV2 struct {
+	SupportChildBooksNeedArgumentsV2
 	StartPeriod string
 	EndPeriod   string
 }
@@ -83,6 +121,22 @@ type SupportChildSpeicalNeedArguments struct {
 	PhoneNumber string
 	Email       string
 	Message     string
+}
+
+type SupportChildSpeicalNeedArgumentsV2 struct {
+	CampaignID  string
+	LocalPool   string
+	ChildID     string
+	DonorNft    string
+	Amount      int64
+	FirstName   string
+	LastName    string
+	Gender      string
+	PhoneNumber string
+	Email       string
+	Message     string
+	Creator     string
+	CreatedAt   int64
 }
 
 type ConfirmProvideMealForChildArguments struct {
@@ -191,9 +245,13 @@ type IModuleChild interface {
 	ToAddChildArguments(args AddChildArguments) []interface{}
 	ToCreateCenterArguments(args CreateCenterArguments) []interface{}
 	ToSupportChildBooksNeedArguments(args SupportChildBooksNeedArguments) []interface{}
+	ToSupportChildBooksNeedArgumentsV2(args SupportChildBooksNeedArgumentsV2) []interface{}
 	ToSupportChildHealthInsuranceNeedArguments(args SupportChildHealthInsuranceNeedArguments) []interface{}
+	ToSupportChildHealthInsuranceNeedArgumentsV2(args SupportChildHealthInsuranceNeedArgumentsV2) []interface{}
 	ToSupportChildMealNeedArguments(args SupportChildMealNeedArguments) []interface{}
+	ToSupportChildMealNeedArgumentsV2(args SupportChildMealNeedArgumentsV2) []interface{}
 	ToSupportChildSpeicalNeedArguments(args SupportChildSpeicalNeedArguments) []interface{}
+	ToSupportChildSpeicalNeedArgumentsV2(args SupportChildSpeicalNeedArgumentsV2) []interface{}
 	ToConfirmProvideMealForChildArguments(args ConfirmProvideMealForChildArguments) []interface{}
 	ToConfirmProvideMealForChildArgumentsV2(args ConfirmProvideMealForChildArgumentsV2) []interface{}
 	ToCreateChildNormalNeedWithdrawProposalArguments(args CreateChildNormalNeedWithdrawProposalArguments) []interface{}
@@ -229,9 +287,13 @@ type IModuleChild interface {
 	GetFunctionWithdrawFromMealNeedProposal() string
 	GetFunctionWithdrawFromSpecialNeedCampaign() string
 	GetFunctionSupportChildBooksNeed() string
+	GetFunctionSupportChildBooksNeedV2() string
 	GetFunctionSupportChildHealthInsuranceNeed() string
+	GetFunctionSupportChildHealthInsuranceNeedV2() string
 	GetFunctionSupportChildMealNeed() string
+	GetFunctionSupportChildMealNeedV2() string
 	GetFunctionSupportChildSpecialNeedCampaign() string
+	GetFunctionSupportChildSpecialNeedCampaignV2() string
 	GetFunctionConfirmProvideMealForChild() string
 	GetFunctionConfirmProvideMealForChildV2() string
 	GetFunctionSubmitTask() string
@@ -241,6 +303,26 @@ type IModuleChild interface {
 }
 
 type moduleChild struct{}
+
+// GetFunctionSupportChildBooksNeedV2 implements IModuleChild.
+func (m *moduleChild) GetFunctionSupportChildBooksNeedV2() string {
+	return sui.SUPPORT_CHILD_BOOKS_NEED_FUNCTION_V2
+}
+
+// GetFunctionSupportChildHealthInsuranceNeedV2 implements IModuleChild.
+func (m *moduleChild) GetFunctionSupportChildHealthInsuranceNeedV2() string {
+	return sui.SUPPORT_CHILD_HEALTH_INSURANCE_NEED_FUNCTION_V2
+}
+
+// GetFunctionSupportChildMealNeedV2 implements IModuleChild.
+func (m *moduleChild) GetFunctionSupportChildMealNeedV2() string {
+	return sui.SUPPORT_CHILD_MEAL_NEED_FUNCTION_V2
+}
+
+// GetFunctionSupportChildSpecialNeedCampaignV2 implements IModuleChild.
+func (m *moduleChild) GetFunctionSupportChildSpecialNeedCampaignV2() string {
+	return sui.SUPPORT_CHILD_SPECIAL_NEED_CAMPAIGN_FUNCTION_V2
+}
 
 func InitializeModuleChild() IModuleChild {
 	return &moduleChild{}
@@ -311,7 +393,7 @@ func (m *moduleChild) ToCreateChildSpecialNeedWithdrawProposalArgumentsV2(args C
 
 // GetFunctionSupportChildHealthInsuranceNeed implements IModuleChild.
 func (m *moduleChild) GetFunctionSupportChildHealthInsuranceNeed() string {
-	panic("unimplemented")
+	return sui.SUPPORT_CHILD_HEALTH_INSURANCE_NEED_FUNCTION
 }
 
 // ToSupportChildHealthInsuranceNeedArguments implements IModuleChild.
@@ -331,6 +413,91 @@ func (m *moduleChild) ToSupportChildHealthInsuranceNeedArguments(args SupportChi
 		args.Email,
 		args.Message,
 		sui.CLOCK_OBJECT_ID,
+	}
+}
+
+// ToSupportChildBooksNeedArgumentsV2 implements IModuleChild.
+func (m *moduleChild) ToSupportChildBooksNeedArgumentsV2(args SupportChildBooksNeedArgumentsV2) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		os.Getenv(env.POOL_ID),
+		args.NeedID,
+		args.LocalPool,
+		args.ChildID,
+		args.DonorNft,
+		uint64(args.Amount),
+		args.FirstName,
+		args.LastName,
+		args.Gender,
+		args.PhoneNumber,
+		args.Email,
+		args.Message,
+		args.Creator,
+		uint64(args.CreatedAt),
+	}
+}
+
+// ToSupportChildHealthInsuranceNeedArgumentsV2 implements IModuleChild.
+func (m *moduleChild) ToSupportChildHealthInsuranceNeedArgumentsV2(args SupportChildHealthInsuranceNeedArgumentsV2) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		os.Getenv(env.POOL_ID),
+		args.NeedID,
+		args.LocalPool,
+		args.ChildID,
+		args.DonorNft,
+		uint64(args.Amount),
+		args.FirstName,
+		args.LastName,
+		args.Gender,
+		args.PhoneNumber,
+		args.Email,
+		args.Message,
+		args.Creator,
+		uint64(args.CreatedAt),
+	}
+}
+
+// ToSupportChildMealNeedArgumentsV2 implements IModuleChild.
+func (m *moduleChild) ToSupportChildMealNeedArgumentsV2(args SupportChildMealNeedArgumentsV2) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		os.Getenv(env.POOL_ID),
+		args.NeedID,
+		args.LocalPool,
+		args.ChildID,
+		args.DonorNft,
+		uint64(args.Amount),
+		args.StartPeriod,
+		args.EndPeriod,
+		args.FirstName,
+		args.LastName,
+		args.Gender,
+		args.PhoneNumber,
+		args.Email,
+		args.Message,
+		args.Creator,
+		uint64(args.CreatedAt),
+	}
+}
+
+// ToSupportChildSpeicalNeedArgumentsV2 implements IModuleChild.
+func (m *moduleChild) ToSupportChildSpeicalNeedArgumentsV2(args SupportChildSpeicalNeedArgumentsV2) []interface{} {
+	return []interface{}{
+		os.Getenv(env.MANAGE_OBJECT_ID),
+		os.Getenv(env.POOL_ID),
+		args.CampaignID,
+		args.ChildID,
+		args.LocalPool,
+		args.DonorNft,
+		uint64(args.Amount),
+		args.FirstName,
+		args.LastName,
+		args.Gender,
+		args.PhoneNumber,
+		args.Email,
+		args.Creator,
+		uint64(args.CreatedAt),
 	}
 }
 

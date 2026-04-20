@@ -10,7 +10,7 @@ import (
 )
 
 func InitializeCenterRequestRoute(server *gin.Engine) {
-	var contextPath string = "centers"
+	var contextPath string = "center-reqs"
 
 	// Rate limits
 	var listLimit = middleware.InitializeRateLimiter(rate.Every(time.Second/2), 15)
