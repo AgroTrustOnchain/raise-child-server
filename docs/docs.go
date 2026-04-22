@@ -7283,7 +7283,7 @@ const docTemplate = `{
         "entities.PendingWithdrawProposal": {
             "type": "object",
             "properties": {
-                "aiEvaluation": {
+                "aievaluation": {
                     "type": "string"
                 },
                 "createdAt": {
@@ -7326,7 +7326,8 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "withdrawAmount": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int64"
                 }
             }
         },
