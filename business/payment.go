@@ -1566,7 +1566,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 
 					withdrawDate, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeedWithdrawDate](on_chain.GetOnChainObjectRequest{
 						Client:    client,
-						ObjectId:  os.Getenv(env.HEALTH_INSURANCE_NEED_ITHDRAW_DATE_ID),
+						ObjectId:  os.Getenv(env.HEALTH_INSURANCE_NEED_WITHDRAW_DATE_ID),
 						ErrLogger: p.errLogger,
 					}, ctx)
 

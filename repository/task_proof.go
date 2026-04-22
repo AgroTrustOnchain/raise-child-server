@@ -149,7 +149,7 @@ func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx cont
 	return res, calculateTotalPages(totalRecords, req.PageSize), nil
 }
 
-// IsTaskProofSumittedWithDetail implements repository.ITaskProofRepository.
+// IsTaskProofSubmittedWithDetail implements repository.ITaskProofRepository.
 func (t *taskProofRepo) IsTaskProofSubmittedWithDetail(taskId string, description string, actorAddress string, rawSubmitDate string, ctx context.Context) (bool, error) {
 	var query string = "SELECT id FROM " + task_proof_table + " WHERE task_id = $1 AND description = $2 AND actor_address = $3 AND raw_submit_date = $4 AND (review_status = 'Pending' OR review_status = 'Approved') LIMIT 1"
 
@@ -159,7 +159,7 @@ func (t *taskProofRepo) IsTaskProofSubmittedWithDetail(taskId string, descriptio
 			return false, nil
 		}
 
-		t.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_PROOF_REPOSITORY) + "IsTaskProofSumittedWithDetail - " + err.Error())
+		t.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_PROOF_REPOSITORY) + "IsTaskProofSubmittedWithDetail - " + err.Error())
 		return false, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
