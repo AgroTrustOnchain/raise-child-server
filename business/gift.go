@@ -78,6 +78,10 @@ func (g *giftService) CancelGift(id string, req request.CancelGiftRequest, ctx c
 		return response.BuildTransactionResponse{}, err
 	}
 
+	if gift == nil {
+		return response.BuildTransactionResponse{}, genericErr
+	}
+
 	if gift.Status == "Delivered" || gift.Status == "Canceled" {
 		return response.BuildTransactionResponse{}, genericErr
 	}
@@ -123,6 +127,10 @@ func (g *giftService) ConfirmReceiveGift(id string, req request.ConfirmReceiveGi
 	}, ctx)
 	if err != nil {
 		return response.BuildTransactionResponse{}, err
+	}
+
+	if gift == nil {
+		return response.BuildTransactionResponse{}, genericErr
 	}
 
 	if gift.Status == "Delivered" || gift.Status == "Canceled" {
