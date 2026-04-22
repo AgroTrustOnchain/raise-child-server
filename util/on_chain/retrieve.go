@@ -49,7 +49,7 @@ type GetOnChainSpecificTypeObjectsRequest struct {
 func GetOnChainObject[T any](req GetOnChainObjectRequest, ctx context.Context) (*T, error) {
 	req.ErrLogger.Println("On-chain object id:", req.ObjectId)
 
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 	var retrieveReq = models.SuiGetObjectRequest{
 		ObjectId: req.ObjectId,
 		Options: models.SuiObjectDataOptions{
@@ -81,7 +81,7 @@ func GetOnChainObject[T any](req GetOnChainObjectRequest, ctx context.Context) (
 
 func GetOnChainObjects[T any](req GetOnChainObjectsRequest, ctx context.Context) ([]T, error) {
 	// VER 1
-	// var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	// var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 	// var retrieveReq = models.SuiMultiGetObjectsRequest{
 	// 	ObjectIds: req.ObjectIds,
 	// 	Options: models.SuiObjectDataOptions{
@@ -167,7 +167,7 @@ func GetOnChainObjects[T any](req GetOnChainObjectsRequest, ctx context.Context)
 
 	var objects []T
 	if suiRes == nil {
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	for batchRes := range suiRes {
@@ -187,7 +187,7 @@ func GetOnChainObjects[T any](req GetOnChainObjectsRequest, ctx context.Context)
 
 func GetOnChainOwnedObjects[T any](req GetOnChainOwnedObjectsRequest, ctx context.Context) ([]T, error) {
 	// VER 1
-	// var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	// var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 	// var filter = map[string]interface{}{
 	// 	"StructType": req.StructType,
 	// }
@@ -252,7 +252,7 @@ func GetOnChainOwnedObjects[T any](req GetOnChainOwnedObjectsRequest, ctx contex
 			}
 
 			req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
-			return nil, errors.New(noti.INTERNALL_ERR_MSG)
+			return nil, errors.New(noti.INTERNAL_ERR_MSG)
 		}
 
 		for _, object := range res.Data {
@@ -279,13 +279,13 @@ func GetOnChainOwnedObjects[T any](req GetOnChainOwnedObjectsRequest, ctx contex
 }
 
 func GetDynamicFields(id string, client sui.ISuiAPI, errLogger *log.Logger, ctx context.Context) (map[string]interface{}, error) {
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 	fields, err := client.SuiXGetDynamicField(ctx, models.SuiXGetDynamicFieldRequest{
 		ObjectId: id,
 	})
 
 	if err != nil {
-		errLogger.Println(noti.ApproRETRIEVE_DYNAMIC_FIELDS_ERR_MSGvers + err.Error())
+		errLogger.Println(noti.RETRIEVE_DYNAMIC_FIELDS_ERR_MSG + err.Error())
 		return nil, internalErr
 	}
 
@@ -300,7 +300,7 @@ func GetDynamicFields(id string, client sui.ISuiAPI, errLogger *log.Logger, ctx 
 		})
 
 		if err != nil {
-			errLogger.Println(noti.ApproRETRIEVE_DYNAMIC_FIELDS_ERR_MSGvers + err.Error())
+			errLogger.Println(noti.RETRIEVE_DYNAMIC_FIELDS_ERR_MSG + err.Error())
 			return nil, internalErr
 		}
 
@@ -337,7 +337,7 @@ func GetOnChainSpecificTypeObjects[T any](req GetOnChainSpecificTypeObjectsReque
 	var res response.SuiGraphQlObjectResponse
 	if err := req.Client.Run(ctx, retrieveReq, &res); err != nil {
 		req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	var objects []T

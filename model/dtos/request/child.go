@@ -45,7 +45,7 @@ type AddChildNumberMetadataRequest struct {
 // childs/books-need/{id}/support
 
 // childs/meal-need/{id}/support
-type SupportMealNeadRequest struct {
+type SupportMealNeedRequest struct {
 	Months int `json:"months" validate:"required,min=1,max=12"`
 }
 

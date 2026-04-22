@@ -20,7 +20,7 @@ func FaucetTestnetBalance(client sui.ISuiAPI, address string, errLogger *log.Log
 		return errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 	res, err := client.SuiXGetBalance(ctx, models.SuiXGetBalanceRequest{
 		Owner:    address,
 		CoinType: internal_sui.SUI_COIN_TYPE,

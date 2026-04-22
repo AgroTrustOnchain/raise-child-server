@@ -81,7 +81,7 @@ func GetTaskProof(ctx *gin.Context) {
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Task ID"
 // @Param        request  query     request.SubmitTaskProofRequest  true  "Submit Task Proof Detail"
-// @Success      200      {object}  response.MessageAPIResponse "Sucsess"
+// @Success      200      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -145,7 +145,7 @@ func ApproveTaskProof(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Task Proof ID"
-// @Success      200      {object}  response.MessageAPIResponse "Sucsess"
+// @Success      200      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."

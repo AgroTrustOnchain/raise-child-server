@@ -32,7 +32,7 @@ type BooksNeedResponse struct {
 	ID                string   `json:"id"`
 	Year              int      `json:"year"`
 	YearChanges       []int    `json:"year_changes"`
-	Semster           int      `json:"semester"`
+	Semester           int      `json:"semester"`
 	Value             int64    `json:"value"`
 	SupportedYears    []int    `json:"supported_years"`
 	Donors            []string `json:"donors"`

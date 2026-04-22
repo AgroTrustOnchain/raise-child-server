@@ -39,7 +39,7 @@ type LocalLeaderRegistrationRequest struct {
 }
 
 // For Admin role
-type GetAdminRegistrationRequets struct {
+type GetAdminRegistrationRequest struct {
 	Keyword   string `form:"keyword"`
 	Gender    string `form:"gender"`
 	Status    string `form:"status"`
@@ -53,7 +53,7 @@ type GetAdminRegistrationRequets struct {
 // For Volunteer, Local Leader role
 type GetNormalStaffRegistrationRequests struct {
 	Region string `form:"region"`
-	GetAdminRegistrationRequets
+	GetAdminRegistrationRequest
 }
 
 type CreateRegistrationRequest struct {

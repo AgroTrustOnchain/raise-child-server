@@ -38,7 +38,7 @@ func (p *profileRepo) IsPersonalInfoExist(identityCode string, phoneNumber strin
 		}
 
 		p.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "IsPersonalInfoExist - " + err.Error())
-		return false, errors.New(noti.INTERNALL_ERR_MSG)
+		return false, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return id != "", nil
@@ -56,7 +56,7 @@ func (p *profileRepo) IsEmailRegistered(email string, ctx context.Context) (bool
 		}
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return false, errors.New(noti.INTERNALL_ERR_MSG)
+		return false, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return id != "", nil
@@ -74,7 +74,7 @@ func (p *profileRepo) IsPhoneNumberRegistered(phoneNumber string, ctx context.Co
 		}
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return false, errors.New(noti.INTERNALL_ERR_MSG)
+		return false, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return id != "", nil
@@ -84,7 +84,7 @@ func (p *profileRepo) IsPhoneNumberRegistered(phoneNumber string, ctx context.Co
 func (p *profileRepo) UploadProfile(pfl entities.Profile, ctx context.Context) error {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "UploadProfile - "
 	var query string = "UPDATE " + profile_table + " SET identity_code = $1, first_name = $2, last_name = $3, gender = $4, date_of_birth = $5, phone_number = $6, email = $7, updated_at = $8 WHERE id = $9"
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	res, err := p.db.ExecContext(ctx, query, pfl.IdentityCode, pfl.FirstName, pfl.LastName,
 		pfl.Gender, pfl.DateOfBirth, pfl.PhoneNumber, pfl.Email, pfl.UpdatedAt, pfl.ID)
@@ -110,7 +110,7 @@ func (p *profileRepo) UploadProfile(pfl entities.Profile, ctx context.Context) e
 func (p *profileRepo) Login(id string, token string, ctx context.Context) error {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "Login - "
 	var query string = "UPDATE " + profile_table + " SET token = $1, updated_at = $2 WHERE id = $3"
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	res, err := p.db.ExecContext(ctx, query, token, time.Now(), id)
 	if err != nil {
@@ -135,7 +135,7 @@ func (p *profileRepo) Login(id string, token string, ctx context.Context) error 
 func (p *profileRepo) Logout(id string, ctx context.Context) error {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PROFILE_REPOSITORY) + "Logout - "
 	var query string = "UPDATE " + profile_table + " SET token = '', updated_at = $1 WHERE id = $2"
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	res, err := p.db.ExecContext(ctx, query, time.Now(), id)
 	if err != nil {
@@ -166,7 +166,7 @@ func (p *profileRepo) CreateProfile(pfl entities.Profile, ctx context.Context) e
 	if _, err := p.db.ExecContext(ctx, query, pfl.ID, pfl.Salt, pfl.CreatedAt, pfl.UpdatedAt); err != nil {
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNALL_ERR_MSG)
+		return errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return nil
@@ -188,7 +188,7 @@ func (p *profileRepo) GetProfile(id string, ctx context.Context) (*entities.Prof
 		}
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -210,7 +210,7 @@ func (p *profileRepo) GetFirstProfile(ctx context.Context) (*entities.Profile, e
 		}
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -232,7 +232,7 @@ func (p *profileRepo) GetProfileOfFirsts(position int, ctx context.Context) (*en
 		}
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return &res, nil

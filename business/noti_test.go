@@ -94,7 +94,7 @@ func TestGetCurrentWalletNotis(t *testing.T) {
 			wallet: "invalid", expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
 		},
 		{ // UTCID03: Fetch On-chain Objects Fail
-			wallet: sampleAddress, mockOwnedErr: errors.New("onchain error"), expectedErr: errors.New(noti.INTERNALL_ERR_MSG),
+			wallet: sampleAddress, mockOwnedErr: errors.New("onchain error"), expectedErr: errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // UTCID04: Empty NFT Results
 			wallet: sampleAddress, mockOwnedNfts: []models.SuiObjectResponse{}, expectedErr: errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG),

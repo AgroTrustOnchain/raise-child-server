@@ -43,7 +43,7 @@ type PaymentDescription string
 const (
 	MEAL_NEED_PAYMENT_DESCRIPTION             PaymentDescription = "Meal Need"
 	BOOKS_NEED_PAYMENT_DESCRIPTION            PaymentDescription = "Books Need"
-	HEALTH_INSRUANCE_PAYMENT_DESCRIPTION      PaymentDescription = "Health Insurance"
+	HEALTH_INSURANCE_PAYMENT_DESCRIPTION      PaymentDescription = "Health Insurance"
 	SPECIAL_NEED_CAMPAIGN_PAYMENT_DESCRIPTION PaymentDescription = "Special Campaign"
 	POOL_CAMPAIGN_PAYMENT_DESCRIPTION         PaymentDescription = "Pool Campaign"
 )

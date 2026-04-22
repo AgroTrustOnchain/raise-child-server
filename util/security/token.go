@@ -33,7 +33,7 @@ func GenerateActionToken(address, sub, role string, logger *log.Logger) (string,
 	}).SignedString(bytes)
 	if err != nil {
 		logger.Print(errMsg + fmt.Sprint(err))
-		return "", 0, errors.New(noti.INTERNALL_ERR_MSG)
+		return "", 0, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return token, exp, nil
@@ -52,7 +52,7 @@ func GenerateActionTokenV2(address, sub string, roles []string, logger *log.Logg
 	}).SignedString(bytes)
 	if err != nil {
 		logger.Print(errMsg + fmt.Sprint(err))
-		return "", 0, errors.New(noti.INTERNALL_ERR_MSG)
+		return "", 0, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return token, exp, nil
@@ -250,7 +250,7 @@ func ExtractDataFromTokenV2(tokenString string, logger *log.Logger) (string, str
 // 	}).SignedString(bytes)
 // 	if err != nil {
 // 		logger.Print(errMsg + fmt.Sprint(err))
-// 		return "", 0, errors.New(noti.INTERNALL_ERR_MSG)
+// 		return "", 0, errors.New(noti.INTERNAL_ERR_MSG)
 // 	}
 
 // ---------------------------------------------

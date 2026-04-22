@@ -272,7 +272,7 @@ func (p *paymentService) ApprovePayment(id string, ctx context.Context) (respons
 				}, ctx)
 
 				var withdrawDate string
-				if need.Semster == "1" {
+				if need.Semester == "1" {
 					withdrawDate = withdrawDates.FirstSemesterDate
 				} else {
 					withdrawDate = withdrawDates.SecondSemesterDate
@@ -280,8 +280,8 @@ func (p *paymentService) ApprovePayment(id string, ctx context.Context) (respons
 
 				withdrawDate += fmt.Sprintf("/%d", curTime.Year())
 				expectedWithdrawPeriods = append(expectedWithdrawPeriods, withdrawDate)
-				contentFormats = append(contentFormats, "Withdraw books need semester "+need.Semster+" - "+need.Year+" for child %s %s - %s")
-				generalContentFormat = "Withdraw books need semester " + need.Semster + " for child %s %s - %s"
+				contentFormats = append(contentFormats, "Withdraw books need semester "+need.Semester+" - "+need.Year+" for child %s %s - %s")
+				generalContentFormat = "Withdraw books need semester " + need.Semester + " for child %s %s - %s"
 				childId = need.ChildID
 				function = childModule.GetFunctionSupportChildBooksNeedV2()
 			case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
@@ -296,7 +296,7 @@ func (p *paymentService) ApprovePayment(id string, ctx context.Context) (respons
 
 				withdrawDate, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeedWithdrawDate](on_chain.GetOnChainObjectRequest{
 					Client:    client,
-					ObjectId:  os.Getenv(env.HEALTH_INSURANCE_NEED_wITHDRAW_DATE_ID),
+					ObjectId:  os.Getenv(env.HEALTH_INSURANCE_NEED_WITHDRAW_DATE_ID),
 					ErrLogger: p.errLogger,
 				}, ctx)
 
@@ -510,7 +510,7 @@ func (p *paymentService) ApprovePayment(id string, ctx context.Context) (respons
 					})
 				}
 			} else {
-				args = childModule.ToSupportChildSpeicalNeedArgumentsV2(on_chain.SupportChildSpeicalNeedArgumentsV2{
+				args = childModule.ToSupportChildSpecialNeedArgumentsV2(on_chain.SupportChildSpecialNeedArgumentsV2{
 					CampaignID:  detail.Target,
 					LocalPool:   localPoolId,
 					ChildID:     childId,
@@ -731,7 +731,7 @@ func (p *paymentService) CallbackV2(id string, ctx context.Context) error {
 	data, err := payos.GetPaymentLinkInformation(payment.TransactionId)
 	if err != nil {
 		p.errLogger.Println("Error while get payos payment link information: " + err.Error())
-		return errors.New(noti.INTERNALL_ERR_MSG)
+		return errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	switch data.Status {
@@ -824,7 +824,7 @@ func (p *paymentService) DonateV2(req request.DonateRequest, ctx context.Context
 
 	if err != nil {
 		p.errLogger.Println("Err: ", err.Error())
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()
@@ -903,7 +903,7 @@ func (p *paymentService) ConfirmWithdrawProposal(id string, ctx context.Context)
 // 	data, err := payos.GetPaymentLinkInformation(payment.TransactionId)
 // 	if err != nil {
 // 		p.errLogger.Println("Error while get payos payment link information: " + err.Error())
-// 		return response.BuildTransactionResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+// 		return response.BuildTransactionResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
 // 	}
 
 // 	switch data.Status {
@@ -1017,7 +1017,7 @@ func (p *paymentService) Donate(req request.DonateRequest, ctx context.Context) 
 
 	if err != nil {
 		p.errLogger.Println("Err: ", err.Error())
-		return response.UrlAPIResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.UrlAPIResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()
@@ -1074,7 +1074,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 	if payment.ExpiredAt.Before(time.Now()) {
 		return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
 			OrderCode: payment.TransactionId,
-			Status:    shared.PAYAMENT_EXPIRED_STATUS,
+			Status:    shared.PAYMENT_EXPIRED_STATUS,
 			Message:   noti.PAYMENT_EXPIRED_MESSAGE,
 		}), nil
 	}
@@ -1082,7 +1082,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 	data, err := payos.GetPaymentLinkInformation(payment.TransactionId)
 	if err != nil {
 		p.errLogger.Println("Error while get payos payment link information: " + err.Error())
-		return "", errors.New(noti.INTERNALL_ERR_MSG)
+		return "", errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	switch data.Status {
@@ -1221,7 +1221,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 				// 	}, ctx)
 
 				// 	var withdrawDate string
-				// 	if need.Semster == "1" {
+				// 	if need.Semester == "1" {
 				// 		withdrawDate = withdrawDates.FirstSemesterDate
 				// 	} else {
 				// 		withdrawDate = withdrawDates.SecondSemesterDate
@@ -1244,7 +1244,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 				// 	}
 
 				// 	var rawExpectedDate string = withdrawDate + "/" + need.Year
-				// 	var content string = fmt.Sprintf("Withdraw books need semester %s - %s for child %s %s - %s", need.Semster, need.Year, child.LastName, child.FirstName, util.FormatAddress(child.ID.ID))
+				// 	var content string = fmt.Sprintf("Withdraw books need semester %s - %s for child %s %s - %s", need.Semester, need.Year, child.LastName, child.FirstName, util.FormatAddress(child.ID.ID))
 				// 	if leaderNoti == nil {
 				// 		var curTime time.Time = time.Now()
 				// 		p.leaderNotiRepo.CreateNoti(entities.LeaderNoti{
@@ -1256,7 +1256,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 				// 			AssignedLeaders:         leaders,
 				// 			ExpectedWithdrawPeriods: []string{rawExpectedDate},
 				// 			Contents:                []string{content},
-				// 			GeneralContent:          fmt.Sprintf("Withdraw books need semester %s for child %s %s - %s", need.Semster, child.LastName, child.FirstName, util.FormatAddress(child.ID.ID)),
+				// 			GeneralContent:          fmt.Sprintf("Withdraw books need semester %s for child %s %s - %s", need.Semester, child.LastName, child.FirstName, util.FormatAddress(child.ID.ID)),
 				// 			CreatedAt:               curTime,
 				// 			UpdatedAt:               curTime,
 				// 		}, ctx)
@@ -1460,7 +1460,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 				// 		ID:                 util.GenerateId(),
 				// 		ChildID:            need.ChildID,
 				// 		Region:             child.Region,
-				// 		AssginedVolunteers: volunteerAddresses,
+				// 		AssignedVolunteers: volunteerAddresses,
 				// 		Content:            fmt.Sprintf("Provide meal for child %s %s - %s from %s to %s", child.LastName, child.FirstName, childFormattedAddr, duration.StartPeriod, duration.EndPeriod),
 				// 		StartPeriod:        startPeriod,
 				// 		EndPeriod:          endPeriod,
@@ -1499,7 +1499,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 				// 	}
 
 				// 	function = childModule.GetFunctionSupportChildSpecialNeedCampaign()
-				// 	args = childModule.ToSupportChildSpeicalNeedArguments(on_chain.SupportChildSpeicalNeedArguments{
+				// 	args = childModule.ToSupportChildSpecialNeedArguments(on_chain.SupportChildSpecialNeedArguments{
 				// 		CampaignID:  detail.Target,
 				// 		LocalPool:   detail.LocalPoolID,
 				// 		ChildID:     campaign.ChildID,
@@ -1539,15 +1539,15 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 					}, ctx)
 
 					var withdrawDate string
-					if need.Semster == "1" {
+					if need.Semester == "1" {
 						withdrawDate = withdrawDates.FirstSemesterDate
 					} else {
 						withdrawDate = withdrawDates.SecondSemesterDate
 					}
 
 					expectedWithdrawPeriods = append(expectedWithdrawPeriods, withdrawDate)
-					contentFormats = append(contentFormats, "Withdraw books need semester "+need.Semster+" - "+need.Year+" for child %s %s - %s")
-					generalContentFormat = "Withdraw books need semester " + need.Semster + " for child %s %s - %s"
+					contentFormats = append(contentFormats, "Withdraw books need semester "+need.Semester+" - "+need.Year+" for child %s %s - %s")
+					generalContentFormat = "Withdraw books need semester " + need.Semester + " for child %s %s - %s"
 					childId = need.ChildID
 					function = childModule.GetFunctionSupportChildBooksNeed()
 				case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
@@ -1566,7 +1566,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 
 					withdrawDate, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeedWithdrawDate](on_chain.GetOnChainObjectRequest{
 						Client:    client,
-						ObjectId:  os.Getenv(env.HEALTH_INSURANCE_NEED_wITHDRAW_DATE_ID),
+						ObjectId:  os.Getenv(env.HEALTH_INSURANCE_NEED_ITHDRAW_DATE_ID),
 						ErrLogger: p.errLogger,
 					}, ctx)
 
@@ -1795,7 +1795,7 @@ func (p *paymentService) Callback(id string, ctx context.Context) (string, error
 						})
 					}
 				} else {
-					args = childModule.ToSupportChildSpeicalNeedArguments(on_chain.SupportChildSpeicalNeedArguments{
+					args = childModule.ToSupportChildSpecialNeedArguments(on_chain.SupportChildSpecialNeedArguments{
 						CampaignID:  detail.Target,
 						LocalPool:   localPoolId,
 						ChildID:     childId,
@@ -1979,7 +1979,7 @@ func (p *paymentService) CallbackWithAuth(id string, capturedImgBlobId string, c
 	if payment.ExpiredAt.Before(time.Now()) {
 		return util.GeneratePaymentRedirectUrl(util.GenerateRedirectParamRequest{
 			OrderCode: payment.TransactionId,
-			Status:    shared.PAYAMENT_EXPIRED_STATUS,
+			Status:    shared.PAYMENT_EXPIRED_STATUS,
 			Message:   noti.PAYMENT_EXPIRED_MESSAGE,
 		}), nil
 	}
@@ -1987,7 +1987,7 @@ func (p *paymentService) CallbackWithAuth(id string, capturedImgBlobId string, c
 	data, err := payos.GetPaymentLinkInformation(payment.TransactionId)
 	if err != nil {
 		p.errLogger.Println("Error while get payos payment link information: " + err.Error())
-		return "", errors.New(noti.INTERNALL_ERR_MSG)
+		return "", errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	switch data.Status {

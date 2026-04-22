@@ -70,7 +70,7 @@ type WithdrawFromPoolArguments struct {
 	WithdrawProposalId string
 }
 
-type EditWithdrawDaoRateArguements struct {
+type EditWithdrawDaoRateArguments struct {
 	MinRate   int64
 	MinVoters int
 }
@@ -85,7 +85,7 @@ type IModulePool interface {
 	ToCreateWithdrawProposalV2Arguments(args CreateWithdrawProposalV2Arguments) []interface{}
 	ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguments) []interface{}
 	ToWithdrawFromPoolArguments(args WithdrawFromPoolArguments) []interface{}
-	ToEditWithdrawDaoRateArguements(args EditWithdrawDaoRateArguements) []interface{}
+	ToEditWithdrawDaoRateArguments(args EditWithdrawDaoRateArguments) []interface{}
 	GetWithdrawProposalEventEmittedStruct() string
 	GetFunctionDonateToPool() string
 	GetFunctionDonateToPoolV2() string
@@ -181,8 +181,8 @@ func (m *modulePool) ToDonateToPoolArgumentsV2(args DonateToPoolArgumentsV2) []i
 	}
 }
 
-// ToEditWithdrawDaoRateArguements implements IModulePool.
-func (m *modulePool) ToEditWithdrawDaoRateArguements(args EditWithdrawDaoRateArguements) []interface{} {
+// ToEditWithdrawDaoRateArguments implements IModulePool.
+func (m *modulePool) ToEditWithdrawDaoRateArguments(args EditWithdrawDaoRateArguments) []interface{} {
 	return []interface{}{
 		os.Getenv(env.ADMIN_CAP_ID_1),
 		os.Getenv(env.POOL_WITHDRAW_DAO_OBJECT_ID),

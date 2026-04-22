@@ -171,7 +171,7 @@ func VoteCenterRequest(ctx *gin.Context) {
 }
 
 // ConfirmCenterRequest godoc
-// @Summary      Confirm and upload center information to Sui Blockhain
+// @Summary      Confirm and upload center information to Sui Blockchain
 // @Description  Prepares and builds a transaction for uploading center information on-chain
 // @Tags         center-reqs
 // @Accept       json

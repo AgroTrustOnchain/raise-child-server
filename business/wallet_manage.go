@@ -71,8 +71,8 @@ func setLoggedIn(addr string, exp int64) {
 func isLoggedIn(addr string) bool {
 	_shareMu.RLock()
 	defer _shareMu.RUnlock()
-	_, isLoggin := _addresses[addr]
-	return isLoggin
+	_, isLogin := _addresses[addr]
+	return isLogin
 }
 
 func removeLoggedIn(addr string) {

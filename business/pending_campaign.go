@@ -232,7 +232,7 @@ func (p *pendingCampaignService) CreatePendingCampaign(req request.CreatePending
 		proofBytes, _ := p.walrusProvider.FetchBytesImage(*req.ProofBlobID)
 		if proofBytes != nil {
 			aiEvaluation = p.aiProvider.ValidatePoolCampaign(ai.ValidatePoolCampaign{
-				CamapaignTarget: req.Target,
+				CampaignTarget: req.Target,
 				Description:     description,
 				ProofBytesImage: proofBytes,
 			}, ctx)

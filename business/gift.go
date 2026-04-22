@@ -546,7 +546,7 @@ func (g *giftService) GetGiftsOfRegion(region string, req request.GetGiftsReques
 	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
 	req.Category = strings.TrimSpace(req.Category)
 	var res response.PaginationDataResponse
-	var redisKey string = g.getGetGiftsOfegionRedisKey(region, req)
+	var redisKey string = g.getGetGiftsRegionRedisKey(region, req)
 	if g.redisCache.Get(redisKey, &res, ctx) {
 		return res, nil
 	}
@@ -562,8 +562,8 @@ func (g *giftService) GetGiftsOfRegion(region string, req request.GetGiftsReques
 	}
 
 	var centerId string
-	for i, localReion := range manageObj.LocalRegions {
-		if localReion == region {
+	for i, localRegion := range manageObj.LocalRegions {
+		if localRegion == region {
 			centerId = manageObj.ChildrenCenters[i]
 			break
 		}
@@ -681,7 +681,7 @@ func (g *giftService) getGetGiftsRedisKey(id string, req request.GetGiftsRequest
 		id, keyword, status, category, req.SortOrder, req.PageSize, req.Page)
 }
 
-func (g *giftService) getGetGiftsOfegionRedisKey(region string, req request.GetGiftsRequest) string {
+func (g *giftService) getGetGiftsRegionRedisKey(region string, req request.GetGiftsRequest) string {
 	var keyword string = "empty"
 	if req.Keyword != "" {
 		keyword = req.Keyword

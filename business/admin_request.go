@@ -209,7 +209,7 @@ func (a *adminRequestService) GetRequest(id string, ctx context.Context) (*entit
 }
 
 // GetRequests implements business.IAdminRequestService.
-func (a *adminRequestService) GetRequests(req request.GetAdminRegistrationRequets, ctx context.Context) (response.PaginationDataResponse, error) {
+func (a *adminRequestService) GetRequests(req request.GetAdminRegistrationRequest, ctx context.Context) (response.PaginationDataResponse, error) {
 	if req.Page < 1 {
 		req.Page = 1
 	}

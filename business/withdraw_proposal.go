@@ -114,8 +114,8 @@ func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithd
 		}
 	}
 
-	var poolNotEnoughBalenceErr error = errors.New(noti.POOL_CURRENTLY_NOT_ENOUGH_BALENCE)
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var poolNotEnoughBalanceErr error = errors.New(noti.POOL_CURRENTLY_NOT_ENOUGH_BALANCE)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 	var localPoolId string
 	if !isMainPoolRequested {
 		localPool, _ := on_chain.GetOnChainObject[entities.LocalPool](on_chain.GetOnChainObjectRequest{
@@ -144,7 +144,7 @@ func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithd
 
 		totalAmount, _ := strconv.ParseInt(localPool.TotalAmount, 10, 64)
 		if totalAmount < req.WithdrawAmount {
-			return response.BuildTransactionResponse{}, poolNotEnoughBalenceErr
+			return response.BuildTransactionResponse{}, poolNotEnoughBalanceErr
 		}
 
 		localPoolId = reqPoolId
@@ -176,7 +176,7 @@ func (w *withdrawProposalService) CreateWithdrawProposal(req request.CreateWithd
 		totalAmount, _ := strconv.ParseInt(mainPool.TotalAmount, 10, 64)
 		var mainPoolAmount int64 = totalAmount - localPoolsTotalAmount
 		if mainPoolAmount < req.WithdrawAmount {
-			return response.BuildTransactionResponse{}, poolNotEnoughBalenceErr
+			return response.BuildTransactionResponse{}, poolNotEnoughBalanceErr
 		}
 
 		localPoolId = mainPool.LocalPools[0]
@@ -242,7 +242,7 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 		}
 	}
 
-	// var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	// var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 	// manageObj, _ := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 	// 	Client:    client,
 	// 	ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
@@ -271,7 +271,7 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 	}
 
 	if proposal.IsExecuted {
-		return nil, errors.New(noti.WITHDRAW_PROPOSAL_EXECUTED_MESSSAGE)
+		return nil, errors.New(noti.WITHDRAW_PROPOSAL_EXECUTED_MESSAGE)
 	}
 
 	if !proposal.IsFromLocalPool {
@@ -360,7 +360,7 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 	case string(entities.MEAL_NEED_PURPOSE):
 		paymentDescription = entities.MEAL_NEED_PAYMENT_DESCRIPTION.GenerateWithdrawPaymentDescription()
 	case string(entities.HEALTH_INSURANCE_NEED_PURPOSE):
-		paymentDescription = entities.HEALTH_INSRUANCE_PAYMENT_DESCRIPTION.GenerateWithdrawPaymentDescription()
+		paymentDescription = entities.HEALTH_INSURANCE_PAYMENT_DESCRIPTION.GenerateWithdrawPaymentDescription()
 	case string(entities.SPECIAL_NEED_PURPOSE):
 		paymentDescription = entities.SPECIAL_NEED_CAMPAIGN_PAYMENT_DESCRIPTION.GenerateWithdrawPaymentDescription()
 	case string(entities.CAMPAIGN_PURPOSE):
@@ -385,7 +385,7 @@ func (w *withdrawProposalService) ConfirmWithdrawProposal(id string, ctx context
 
 			if err != nil {
 				w.errLogger.Println("Err: ", err.Error())
-				return nil, errors.New(noti.INTERNALL_ERR_MSG)
+				return nil, errors.New(noti.INTERNAL_ERR_MSG)
 			}
 
 			if data.ExpiredAt != nil {
@@ -443,7 +443,7 @@ func (w *withdrawProposalService) ConfirmMainPoolWithdrawProposal(id string, cap
 	}
 
 	var client = w.clients[constant.SuiTestnet]
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 	manageObj, _ := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
 		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
@@ -472,7 +472,7 @@ func (w *withdrawProposalService) ConfirmMainPoolWithdrawProposal(id string, cap
 	}
 
 	if proposal.IsExecuted {
-		return response.BuildTransactionResponse{}, errors.New(noti.WITHDRAW_PROPOSAL_EXECUTED_MESSSAGE)
+		return response.BuildTransactionResponse{}, errors.New(noti.WITHDRAW_PROPOSAL_EXECUTED_MESSAGE)
 	}
 
 	if proposal.IsFromLocalPool {

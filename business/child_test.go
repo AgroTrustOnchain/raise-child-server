@@ -251,8 +251,8 @@ func TestSupportBooksNeed(t *testing.T) {
 		// 	isCallCreatePayment:  true,
 		// },
 		{ // Error get profile case
-			getProfileErr: errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:   errors.New(noti.INTERNALL_ERR_MSG),
+			getProfileErr: errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:   errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ //
 			expectedErr: errors.New(noti.PROFILE_EMPTY_MESSAGE),
@@ -300,8 +300,8 @@ func TestSupportBooksNeed(t *testing.T) {
 				},
 			},
 			isCallCreateDonation: true,
-			createDonateRes:      errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			createDonateRes:      errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:          errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Create payment fail case
 			needId:  sampleAddress,
@@ -317,8 +317,8 @@ func TestSupportBooksNeed(t *testing.T) {
 			},
 			isCallCreateDonation: true,
 			isCallCreatePayment:  true,
-			createPaymentRes:     errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			createPaymentRes:     errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:          errors.New(noti.INTERNAL_ERR_MSG),
 		},
 	}
 
@@ -408,8 +408,8 @@ func TestSupportHealthInsuranceNeed(t *testing.T) {
 		// 	isCallCreatePayment:  true,
 		// },
 		{ // Error get profile case
-			getProfileErr: errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:   errors.New(noti.INTERNALL_ERR_MSG),
+			getProfileErr: errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:   errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ //
 			expectedErr: errors.New(noti.PROFILE_EMPTY_MESSAGE),
@@ -457,8 +457,8 @@ func TestSupportHealthInsuranceNeed(t *testing.T) {
 				},
 			},
 			isCallCreateDonation: true,
-			createDonateRes:      errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			createDonateRes:      errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:          errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Create payment fail case
 			needId:  sampleAddress,
@@ -474,8 +474,8 @@ func TestSupportHealthInsuranceNeed(t *testing.T) {
 			},
 			isCallCreateDonation: true,
 			isCallCreatePayment:  true,
-			createPaymentRes:     errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			createPaymentRes:     errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:          errors.New(noti.INTERNAL_ERR_MSG),
 		},
 	}
 
@@ -538,7 +538,7 @@ func TestSupportMealNeed(t *testing.T) {
 	ctx = context.WithValue(ctx, "sub", sampleSub)
 	var tcsInfo = []struct {
 		needId                          string
-		req                             request.SupportMealNeadRequest
+		req                             request.SupportMealNeedRequest
 		profile                         *entities.Profile
 		getProfileErr                   error
 		suiRes                          models.SuiObjectResponse
@@ -551,8 +551,8 @@ func TestSupportMealNeed(t *testing.T) {
 		expectedErr                     error
 	}{
 		{ // Error get profile case
-			getProfileErr: errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:   errors.New(noti.INTERNALL_ERR_MSG),
+			getProfileErr: errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:   errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ //
 			expectedErr: errors.New(noti.PROFILE_EMPTY_MESSAGE),
@@ -575,7 +575,7 @@ func TestSupportMealNeed(t *testing.T) {
 		},
 		{ // Support out of range case
 			needId: sampleAddress,
-			req: request.SupportMealNeadRequest{
+			req: request.SupportMealNeedRequest{
 				Months: 2,
 			},
 			profile: &sampleProfileObj,
@@ -592,7 +592,7 @@ func TestSupportMealNeed(t *testing.T) {
 		},
 		{ // Create meal support duration fail case
 			needId: sampleAddress,
-			req: request.SupportMealNeadRequest{
+			req: request.SupportMealNeedRequest{
 				Months: 1,
 			},
 			profile: &sampleProfileObj,
@@ -606,12 +606,12 @@ func TestSupportMealNeed(t *testing.T) {
 				},
 			},
 			isCallCreateMealSupportDuration: true,
-			createMealSupportDurationRes:    errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:                     errors.New(noti.INTERNALL_ERR_MSG),
+			createMealSupportDurationRes:    errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:                     errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Create donation fail case
 			needId: sampleAddress,
-			req: request.SupportMealNeadRequest{
+			req: request.SupportMealNeedRequest{
 				Months: 1,
 			},
 			profile: &sampleProfileObj,
@@ -626,12 +626,12 @@ func TestSupportMealNeed(t *testing.T) {
 			},
 			isCallCreateMealSupportDuration: true,
 			isCallCreateDonation:            true,
-			createDonateRes:                 errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:                     errors.New(noti.INTERNALL_ERR_MSG),
+			createDonateRes:                 errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:                     errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Create payment fail case
 			needId: sampleAddress,
-			req: request.SupportMealNeadRequest{
+			req: request.SupportMealNeedRequest{
 				Months: 1,
 			},
 			profile: &sampleProfileObj,
@@ -647,8 +647,8 @@ func TestSupportMealNeed(t *testing.T) {
 			isCallCreateMealSupportDuration: true,
 			isCallCreateDonation:            true,
 			isCallCreatePayment:             true,
-			createPaymentRes:                errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:                     errors.New(noti.INTERNALL_ERR_MSG),
+			createPaymentRes:                errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:                     errors.New(noti.INTERNAL_ERR_MSG),
 		},
 	}
 
@@ -726,8 +726,8 @@ func TestSupportSpecialNeed(t *testing.T) {
 		expectedErr          error
 	}{
 		{ // Error get profile case
-			getProfileErr: errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:   errors.New(noti.INTERNALL_ERR_MSG),
+			getProfileErr: errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:   errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ //
 			expectedErr: errors.New(noti.PROFILE_EMPTY_MESSAGE),
@@ -781,8 +781,8 @@ func TestSupportSpecialNeed(t *testing.T) {
 				},
 			},
 			isCallCreateDonation: true,
-			createDonateRes:      errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			createDonateRes:      errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:          errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Create payment fail case
 			needId:  sampleAddress,
@@ -801,8 +801,8 @@ func TestSupportSpecialNeed(t *testing.T) {
 			},
 			isCallCreateDonation: true,
 			isCallCreatePayment:  true,
-			createPaymentRes:     errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			createPaymentRes:     errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:          errors.New(noti.INTERNAL_ERR_MSG),
 		},
 	}
 
@@ -1047,8 +1047,8 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 			staffNftsRes:   validStaffsRes,
 			isStaffChecked: true,
 			isGetNoti:      true,
-			getNotiErr:     errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:    errors.New(noti.INTERNALL_ERR_MSG),
+			getNotiErr:     errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:    errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Still not withdraw date case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
@@ -1091,8 +1091,8 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 			noti:             &notiObj,
 			isGetNoti:        true,
 			isGetProposal:    true,
-			getIsProposedErr: errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:      errors.New(noti.INTERNALL_ERR_MSG),
+			getIsProposedErr: errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:      errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Proposal proposed case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
@@ -1127,8 +1127,8 @@ func TestCreateBooksNeedWithdrawProposalV2(t *testing.T) {
 			isGetPools:           true,
 			isCallCreateProposal: true,
 			isCallAiValidate:     true,
-			createProposalRes:    errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			createProposalRes:    errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:          errors.New(noti.INTERNAL_ERR_MSG),
 		},
 	}
 
@@ -1417,8 +1417,8 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 			staffNftsRes:   validStaffsRes,
 			isStaffChecked: true,
 			isGetNoti:      true,
-			getNotiErr:     errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:    errors.New(noti.INTERNALL_ERR_MSG),
+			getNotiErr:     errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:    errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Still not withdraw date case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
@@ -1461,8 +1461,8 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 			noti:             &notiObj,
 			isGetNoti:        true,
 			isGetProposal:    true,
-			getIsProposedErr: errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:      errors.New(noti.INTERNALL_ERR_MSG),
+			getIsProposedErr: errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:      errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Proposal proposed case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
@@ -1496,9 +1496,9 @@ func TestCreateHealthInsuranceNeedWithdrawProposalV2(t *testing.T) {
 			isGetProposal:        true,
 			isGetPools:           true,
 			isCallCreateProposal: true,
-			createProposalRes:    errors.New(noti.INTERNALL_ERR_MSG),
+			createProposalRes:    errors.New(noti.INTERNAL_ERR_MSG),
 			isCallAiValidate:     true,
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:          errors.New(noti.INTERNAL_ERR_MSG),
 		},
 	}
 
@@ -1841,8 +1841,8 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 			staffNftsRes:   validStaffsRes,
 			isStaffChecked: true,
 			isGetNoti:      true,
-			getNotiErr:     errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:    errors.New(noti.INTERNALL_ERR_MSG),
+			getNotiErr:     errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:    errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Check proposal fail case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
@@ -1857,8 +1857,8 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 			noti:             &notiObj,
 			isGetNoti:        true,
 			isGetProposal:    true,
-			getIsProposedErr: errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:      errors.New(noti.INTERNALL_ERR_MSG),
+			getIsProposedErr: errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:      errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // Proposal proposed case
 			req: request.CreateNormalNeedWithdrawProposalRequest{
@@ -1892,9 +1892,9 @@ func TestCreateMealNeedWithdrawProposalV2(t *testing.T) {
 			isGetProposal:        true,
 			isGetPools:           true,
 			isCallCreateProposal: true,
-			createProposalRes:    errors.New(noti.INTERNALL_ERR_MSG),
+			createProposalRes:    errors.New(noti.INTERNAL_ERR_MSG),
 			isCallAiValidate:     true,
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:          errors.New(noti.INTERNAL_ERR_MSG),
 		},
 	}
 
@@ -2023,7 +2023,7 @@ func TestCreateSpecialNeedWithdrawProposalV2(t *testing.T) {
 	var sampleBlobId string = "blobID"
 	var tcsInfo = []struct {
 		req                  request.CreateSpecialNeedWithdrawProposalRequest
-		camapginRes          models.SuiObjectResponse
+		campaignRes          models.SuiObjectResponse
 		isGetCampaign        bool
 		isGetPoolsWithChild  bool
 		isCallCreateProposal bool
@@ -2038,7 +2038,7 @@ func TestCreateSpecialNeedWithdrawProposalV2(t *testing.T) {
 				Amount:      100000,
 				ProofBlobID: &sampleBlobId,
 			},
-			camapginRes:          validCampaignRes,
+			campaignRes:          validCampaignRes,
 			isGetCampaign:        true,
 			isGetPoolsWithChild:  true,
 			isCallCreateProposal: true,
@@ -2052,7 +2052,7 @@ func TestCreateSpecialNeedWithdrawProposalV2(t *testing.T) {
 			req: request.CreateSpecialNeedWithdrawProposalRequest{
 				CampaignID: sampleAddress,
 			},
-			camapginRes: models.SuiObjectResponse{
+			campaignRes: models.SuiObjectResponse{
 				Data: &models.SuiObjectData{
 					Content: &models.SuiParsedData{
 						SuiMoveObject: models.SuiMoveObject{},
@@ -2067,7 +2067,7 @@ func TestCreateSpecialNeedWithdrawProposalV2(t *testing.T) {
 			req: request.CreateSpecialNeedWithdrawProposalRequest{
 				CampaignID: sampleAddress,
 			},
-			camapginRes:   validCampaignRes,
+			campaignRes:   validCampaignRes,
 			isGetCampaign: true,
 			expectedErr:   errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG),
 			ctx:           context.WithValue(context.Background(), "address", "1"),
@@ -2077,7 +2077,7 @@ func TestCreateSpecialNeedWithdrawProposalV2(t *testing.T) {
 				CampaignID: sampleAddress,
 				Amount:     150000,
 			},
-			camapginRes:   validCampaignRes,
+			campaignRes:   validCampaignRes,
 			isGetCampaign: true,
 			expectedErr:   errors.New(noti.CURRENT_BUDGET_NOT_ENOUGH_MESSAGE),
 			ctx:           ctx,
@@ -2088,13 +2088,13 @@ func TestCreateSpecialNeedWithdrawProposalV2(t *testing.T) {
 				Amount:      100000,
 				ProofBlobID: &sampleBlobId,
 			},
-			camapginRes:          validCampaignRes,
+			campaignRes:          validCampaignRes,
 			isGetCampaign:        true,
 			isGetPoolsWithChild:  true,
 			isCallCreateProposal: true,
-			createProposalRes:    errors.New(noti.INTERNALL_ERR_MSG),
+			createProposalRes:    errors.New(noti.INTERNAL_ERR_MSG),
 			isCallAiValidate:     true,
-			expectedErr:          errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:          errors.New(noti.INTERNAL_ERR_MSG),
 			ctx:                  ctx,
 		},
 	}
@@ -2107,7 +2107,7 @@ func TestCreateSpecialNeedWithdrawProposalV2(t *testing.T) {
 			aiClient.ExpectedCalls = nil
 
 			if tc.isGetCampaign {
-				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.camapginRes, nil).Once()
+				mockClient.On("SuiGetObject", mock.Anything, mock.Anything).Return(tc.campaignRes, nil).Once()
 			}
 
 			if tc.isGetPoolsWithChild {
@@ -2306,8 +2306,8 @@ func TestConfirmSpecialNeedProposal(t *testing.T) {
 			isGetProposal:       true,
 			isGetSpecialNeedDao: true,
 			isBuildTx:           true,
-			buildTxRes:          errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:         errors.New(noti.INTERNALL_ERR_MSG),
+			buildTxRes:          errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:         errors.New(noti.INTERNAL_ERR_MSG),
 			ctx:                 ctx,
 		},
 	}
@@ -2518,8 +2518,8 @@ func TestVoteSpecialNeedProposal(t *testing.T) {
 			nftsRes:       nftsRes,
 			isGetNfts:     true,
 			isBuildTx:     true,
-			buildTxRes:    errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:   errors.New(noti.INTERNALL_ERR_MSG),
+			buildTxRes:    errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:   errors.New(noti.INTERNAL_ERR_MSG),
 			ctx:           ctx,
 		},
 	}
@@ -2634,7 +2634,7 @@ func TestUpdateChildBooksNeed(t *testing.T) {
 		Value:   &zeroValue,
 	}
 
-	var standerizeDate = func(src string) string {
+	var standardizeDate = func(src string) string {
 		if len(src) == 2 {
 			return src
 		}
@@ -2650,8 +2650,8 @@ func TestUpdateChildBooksNeed(t *testing.T) {
 			Content: &models.SuiParsedData{
 				SuiMoveObject: models.SuiMoveObject{
 					Fields: map[string]interface{}{
-						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", previousDate.Day())), standerizeDate(fmt.Sprintf("%d", previousDate.Month()))),
-						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+						"start_date": fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", previousDate.Day())), standardizeDate(fmt.Sprintf("%d", previousDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", nextDate.Day())), standardizeDate(fmt.Sprintf("%d", nextDate.Month()))),
 					},
 				},
 			},
@@ -2664,8 +2664,8 @@ func TestUpdateChildBooksNeed(t *testing.T) {
 			Content: &models.SuiParsedData{
 				SuiMoveObject: models.SuiMoveObject{
 					Fields: map[string]interface{}{
-						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
-						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextWeekDate.Day())), standerizeDate(fmt.Sprintf("%d", nextWeekDate.Month()))),
+						"start_date": fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", nextDate.Day())), standardizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", nextWeekDate.Day())), standardizeDate(fmt.Sprintf("%d", nextWeekDate.Month()))),
 					},
 				},
 			},
@@ -2779,8 +2779,8 @@ func TestUpdateChildBooksNeed(t *testing.T) {
 			needRes:      notUpdatedNeedRes,
 			isGetNeed:    true,
 			isBuildTx:    true,
-			buildTxRes:   errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:  errors.New(noti.INTERNALL_ERR_MSG),
+			buildTxRes:   errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:  errors.New(noti.INTERNAL_ERR_MSG),
 			ctx:          ctx,
 		},
 		{ // Not updated need build tx success case
@@ -2846,8 +2846,8 @@ func TestUpdateChildBooksNeed(t *testing.T) {
 			editDatesRes:   validEditDatesRes,
 			isGetEditDates: true,
 			isBuildTx:      true,
-			buildTxRes:     errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:    errors.New(noti.INTERNALL_ERR_MSG),
+			buildTxRes:     errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:    errors.New(noti.INTERNAL_ERR_MSG),
 			ctx:            ctx,
 		},
 	}
@@ -2970,7 +2970,7 @@ func TestUpdateChildHealthInsuranceNeed(t *testing.T) {
 		Value:   &zeroValue,
 	}
 
-	var standerizeDate = func(src string) string {
+	var standardizeDate = func(src string) string {
 		if len(src) == 2 {
 			return src
 		}
@@ -2986,8 +2986,8 @@ func TestUpdateChildHealthInsuranceNeed(t *testing.T) {
 			Content: &models.SuiParsedData{
 				SuiMoveObject: models.SuiMoveObject{
 					Fields: map[string]interface{}{
-						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", previousDate.Day())), standerizeDate(fmt.Sprintf("%d", previousDate.Month()))),
-						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+						"start_date": fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", previousDate.Day())), standardizeDate(fmt.Sprintf("%d", previousDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", nextDate.Day())), standardizeDate(fmt.Sprintf("%d", nextDate.Month()))),
 					},
 				},
 			},
@@ -3000,8 +3000,8 @@ func TestUpdateChildHealthInsuranceNeed(t *testing.T) {
 			Content: &models.SuiParsedData{
 				SuiMoveObject: models.SuiMoveObject{
 					Fields: map[string]interface{}{
-						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
-						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextWeekDate.Day())), standerizeDate(fmt.Sprintf("%d", nextWeekDate.Month()))),
+						"start_date": fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", nextDate.Day())), standardizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", nextWeekDate.Day())), standardizeDate(fmt.Sprintf("%d", nextWeekDate.Month()))),
 					},
 				},
 			},
@@ -3115,8 +3115,8 @@ func TestUpdateChildHealthInsuranceNeed(t *testing.T) {
 			needRes:      notUpdatedNeedRes,
 			isGetNeed:    true,
 			isBuildTx:    true,
-			buildTxRes:   errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:  errors.New(noti.INTERNALL_ERR_MSG),
+			buildTxRes:   errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:  errors.New(noti.INTERNAL_ERR_MSG),
 			ctx:          ctx,
 		},
 		{ // Not updated need build tx success case
@@ -3182,8 +3182,8 @@ func TestUpdateChildHealthInsuranceNeed(t *testing.T) {
 			editDatesRes:   validEditDatesRes,
 			isGetEditDates: true,
 			isBuildTx:      true,
-			buildTxRes:     errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:    errors.New(noti.INTERNALL_ERR_MSG),
+			buildTxRes:     errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:    errors.New(noti.INTERNAL_ERR_MSG),
 			ctx:            ctx,
 		},
 	}
@@ -3306,7 +3306,7 @@ func TestUpdateChildMealNeed(t *testing.T) {
 		Value:   &zeroValue,
 	}
 
-	var standerizeDate = func(src string) string {
+	var standardizeDate = func(src string) string {
 		if len(src) == 2 {
 			return src
 		}
@@ -3322,8 +3322,8 @@ func TestUpdateChildMealNeed(t *testing.T) {
 			Content: &models.SuiParsedData{
 				SuiMoveObject: models.SuiMoveObject{
 					Fields: map[string]interface{}{
-						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", previousDate.Day())), standerizeDate(fmt.Sprintf("%d", previousDate.Month()))),
-						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+						"start_date": fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", previousDate.Day())), standardizeDate(fmt.Sprintf("%d", previousDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", nextDate.Day())), standardizeDate(fmt.Sprintf("%d", nextDate.Month()))),
 					},
 				},
 			},
@@ -3336,8 +3336,8 @@ func TestUpdateChildMealNeed(t *testing.T) {
 			Content: &models.SuiParsedData{
 				SuiMoveObject: models.SuiMoveObject{
 					Fields: map[string]interface{}{
-						"start_date": fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextDate.Day())), standerizeDate(fmt.Sprintf("%d", nextDate.Month()))),
-						"end_date":   fmt.Sprintf("%s/%s", standerizeDate(fmt.Sprintf("%d", nextWeekDate.Day())), standerizeDate(fmt.Sprintf("%d", nextWeekDate.Month()))),
+						"start_date": fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", nextDate.Day())), standardizeDate(fmt.Sprintf("%d", nextDate.Month()))),
+						"end_date":   fmt.Sprintf("%s/%s", standardizeDate(fmt.Sprintf("%d", nextWeekDate.Day())), standardizeDate(fmt.Sprintf("%d", nextWeekDate.Month()))),
 					},
 				},
 			},
@@ -3451,8 +3451,8 @@ func TestUpdateChildMealNeed(t *testing.T) {
 			needRes:      notUpdatedNeedRes,
 			isGetNeed:    true,
 			isBuildTx:    true,
-			buildTxRes:   errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:  errors.New(noti.INTERNALL_ERR_MSG),
+			buildTxRes:   errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:  errors.New(noti.INTERNAL_ERR_MSG),
 			ctx:          ctx,
 		},
 		{ // Not updated need build tx success case
@@ -3518,8 +3518,8 @@ func TestUpdateChildMealNeed(t *testing.T) {
 			editDatesRes:   validEditDatesRes,
 			isGetEditDates: true,
 			isBuildTx:      true,
-			buildTxRes:     errors.New(noti.INTERNALL_ERR_MSG),
-			expectedErr:    errors.New(noti.INTERNALL_ERR_MSG),
+			buildTxRes:     errors.New(noti.INTERNAL_ERR_MSG),
+			expectedErr:    errors.New(noti.INTERNAL_ERR_MSG),
 			ctx:            ctx,
 		},
 	}

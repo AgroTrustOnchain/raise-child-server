@@ -15,7 +15,7 @@ import (
 
 const default_mist int64 = 1_000_000_000
 
-func StandarizeToSuiMist(amount int) int64 {
+func StandardizeToSuiMist(amount int) int64 {
 	return int64(amount) * default_mist
 }
 
@@ -27,7 +27,7 @@ func getOwnedCoinsMatchedAmount(client sui.ISuiAPI, owner, coinType string, amou
 
 	if err != nil {
 		errLogger.Println(noti.RETRIEVE_OWNED_COINS_ERR_MSG + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	var res []models.CoinData
@@ -51,7 +51,7 @@ func splitCoin(client sui.ISuiAPI, sender, originalCoinId string, amount int64, 
 
 	if err != nil {
 		errLogger.Println(noti.SPLIT_COIN_ERR_MSG + err.Error())
-		return "", errors.New(noti.INTERNALL_ERR_MSG)
+		return "", errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return res.TxBytes, err

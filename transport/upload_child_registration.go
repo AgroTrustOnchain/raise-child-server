@@ -173,7 +173,7 @@ func VoteUploadChildRequest(ctx *gin.Context) {
 }
 
 // ConfirmUploadChildRequest godoc
-// @Summary      Confirm and store a child information to Sui Blockhain
+// @Summary      Confirm and store a child information to Sui Blockchain
 // @Description  Prepares and builds a transaction for registering new child information on-chain
 // @Tags         Child Upload Request
 // @Accept       json

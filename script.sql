@@ -214,7 +214,7 @@ CREATE TABLE pending_child_special_need_proposals(
 CREATE TABLE volunteer_tasks (
     id character varying(100) PRIMARY KEY,
     assigned_profile_id character varying(100),
-    assgined_volunteer character varying(100),
+    assigned_volunteer character varying(100),
     child_id character varying(100) NOT NULL,
     region character varying(30) NOT NULL,
     content TEXT NOT NULL,
@@ -253,7 +253,7 @@ CREATE TABLE tasks (
     child_task_id character varying(100),
     created_by character varying(100) NOT NULL,
     assigned_profile_id character varying(100),
-    assgined_staff character varying(100),
+    assigned_staff character varying(100),
     review_profile_status character varying(10) NOT NULL DEFAULT 'Pending',
     reviewed_by character varying(100),
     region character varying(30) NOT NULL,

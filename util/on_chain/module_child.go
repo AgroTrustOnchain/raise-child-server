@@ -109,7 +109,7 @@ type SupportChildMealNeedArgumentsV2 struct {
 	EndPeriod   string
 }
 
-type SupportChildSpeicalNeedArguments struct {
+type SupportChildSpecialNeedArguments struct {
 	CampaignID  string
 	LocalPool   string
 	ChildID     string
@@ -123,7 +123,7 @@ type SupportChildSpeicalNeedArguments struct {
 	Message     string
 }
 
-type SupportChildSpeicalNeedArgumentsV2 struct {
+type SupportChildSpecialNeedArgumentsV2 struct {
 	CampaignID  string
 	LocalPool   string
 	ChildID     string
@@ -250,8 +250,8 @@ type IModuleChild interface {
 	ToSupportChildHealthInsuranceNeedArgumentsV2(args SupportChildHealthInsuranceNeedArgumentsV2) []interface{}
 	ToSupportChildMealNeedArguments(args SupportChildMealNeedArguments) []interface{}
 	ToSupportChildMealNeedArgumentsV2(args SupportChildMealNeedArgumentsV2) []interface{}
-	ToSupportChildSpeicalNeedArguments(args SupportChildSpeicalNeedArguments) []interface{}
-	ToSupportChildSpeicalNeedArgumentsV2(args SupportChildSpeicalNeedArgumentsV2) []interface{}
+	ToSupportChildSpecialNeedArguments(args SupportChildSpecialNeedArguments) []interface{}
+	ToSupportChildSpecialNeedArgumentsV2(args SupportChildSpecialNeedArgumentsV2) []interface{}
 	ToConfirmProvideMealForChildArguments(args ConfirmProvideMealForChildArguments) []interface{}
 	ToConfirmProvideMealForChildArgumentsV2(args ConfirmProvideMealForChildArgumentsV2) []interface{}
 	ToCreateChildNormalNeedWithdrawProposalArguments(args CreateChildNormalNeedWithdrawProposalArguments) []interface{}
@@ -481,8 +481,8 @@ func (m *moduleChild) ToSupportChildMealNeedArgumentsV2(args SupportChildMealNee
 	}
 }
 
-// ToSupportChildSpeicalNeedArgumentsV2 implements IModuleChild.
-func (m *moduleChild) ToSupportChildSpeicalNeedArgumentsV2(args SupportChildSpeicalNeedArgumentsV2) []interface{} {
+// ToSupportChildSpecialNeedArgumentsV2 implements IModuleChild.
+func (m *moduleChild) ToSupportChildSpecialNeedArgumentsV2(args SupportChildSpecialNeedArgumentsV2) []interface{} {
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
@@ -656,7 +656,7 @@ func (m *moduleChild) GetFunctionWithdrawFromSpecialNeedCampaign() string {
 
 // GetFunctionCreateChildSpecialNeedWithdrawProposal implements IModuleChild.
 func (m *moduleChild) GetFunctionCreateChildSpecialNeedWithdrawProposal() string {
-	return sui.CREATE_CHILD_SPEICAL_NEED_WITHDRAW_PROPOSAL_FUNCTION
+	return sui.CREATE_CHILD_SPECIAL_NEED_WITHDRAW_PROPOSAL_FUNCTION
 }
 
 // GetFunctionConfirmProvideMealForChild implements IModuleChild.
@@ -691,8 +691,8 @@ func (m *moduleChild) ToCreateChildSpecialNeedWithdrawProposalArguments(args Cre
 	}
 }
 
-// ToSupportChildSpeicalNeedArguments implements IModuleChild.
-func (m *moduleChild) ToSupportChildSpeicalNeedArguments(args SupportChildSpeicalNeedArguments) []interface{} {
+// ToSupportChildSpecialNeedArguments implements IModuleChild.
+func (m *moduleChild) ToSupportChildSpecialNeedArguments(args SupportChildSpecialNeedArguments) []interface{} {
 	return []interface{}{
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),

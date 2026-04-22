@@ -54,11 +54,11 @@ func GenerateBankProfileService() (business.IBankProfileService, error) {
 
 // CreateBankProfile implements business.IBankProfileService.
 func (b *bankProfileService) CreateBankProfile(req request.CreateBankProfileRequest, ctx context.Context) (*entities.BankProfile, error) {
-	var genereicErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 
 	var sender string = ctx.Value("address").(string)
 	if !util.IsValidSuiAddressStrict(sender) {
-		return nil, genereicErr
+		return nil, genericErr
 	}
 
 	var module = on_chain.InitializeModuleStaff()
@@ -197,11 +197,11 @@ func (b *bankProfileService) GetBankProfileByOwner(id string, ctx context.Contex
 
 // UpdateBankProfile implements business.IBankProfileService.
 func (b *bankProfileService) UpdateBankProfile(id string, req request.UpdateBankProfileRequest, ctx context.Context) (*entities.BankProfile, error) {
-	var genereicErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 
 	var sender string = ctx.Value("address").(string)
 	if !!util.IsValidSuiAddressStrict(sender) {
-		return nil, genereicErr
+		return nil, genericErr
 	}
 
 	bp, err := b.bankProfileRepo.GetBankProfileById(id, ctx)

@@ -162,7 +162,7 @@ func (t *taskProofService) ApproveTaskProof(id string, ctx context.Context) (res
 				ProvideDate: proof.RawSubmitDate,
 				Actor:       proof.ActorAddress,
 			})
-			// Other cases in future if have
+			// Other cases in future if adding some
 		}
 	} else {
 		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
@@ -363,7 +363,7 @@ func (t *taskProofService) SubmitTaskProof(id string, req request.SubmitTaskProo
 
 	var curTime time.Time = time.Now()
 	var rawSubmitDate string = util.TimeToRawDate(curTime)
-	isSubmitted, err := t.taskProofRepo.IsTaskProofSumittedWithDetail(id, task.Description, sender, rawSubmitDate, ctx)
+	isSubmitted, err := t.taskProofRepo.IsTaskProofSubmittedWithDetail(id, task.Description, sender, rawSubmitDate, ctx)
 	if err != nil {
 		return err
 	}

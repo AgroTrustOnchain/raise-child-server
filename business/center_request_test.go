@@ -22,11 +22,11 @@ import (
 )
 
 func TestGetCenterRequests(t *testing.T) {
-	var centerReqrepo = repository.InitializeCenterRequestMockRepo()
+	var centerReqRepo = repository.InitializeCenterRequestMockRepo()
 	var profileRepo = repository.InitializeProfileMockRepo()
 	var mockClient = pkg.InitializeSuiMockApi()
 	var service = initializeCenterRequestService(
-		centerReqrepo,
+		centerReqRepo,
 		profileRepo,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
@@ -41,7 +41,7 @@ func TestGetCenterRequests(t *testing.T) {
 		expectedErr       error
 	}{
 		{
-			expectedErr: errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr: errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{
 			isDefaultPageSize: true,
@@ -56,10 +56,10 @@ func TestGetCenterRequests(t *testing.T) {
 	for i, tc := range tcsInfo {
 		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
 			mockClient.ExpectedCalls = nil
-			centerReqrepo.ExpectedCalls = nil
+			centerReqRepo.ExpectedCalls = nil
 
 			if tc.expectedErr != nil {
-				centerReqrepo.On("GetRegistrationRequests", mock.Anything, mock.Anything).Return(nil, 0, tc.expectedErr)
+				centerReqRepo.On("GetRegistrationRequests", mock.Anything, mock.Anything).Return(nil, 0, tc.expectedErr)
 				_, err := service.GetRequests(tc.req, ctx)
 				assert.Equal(t, tc.expectedErr, err)
 			} else {
@@ -70,7 +70,7 @@ func TestGetCenterRequests(t *testing.T) {
 					reqsNum = tc.req.PageSize
 				}
 
-				centerReqrepo.On("GetRegistrationRequests", mock.Anything, mock.Anything).Return(getSampleCenterRequests(reqsNum), 1, nil)
+				centerReqRepo.On("GetRegistrationRequests", mock.Anything, mock.Anything).Return(getSampleCenterRequests(reqsNum), 1, nil)
 				res, _ := service.GetRequests(tc.req, ctx)
 				assert.Equal(t, reqsNum, res.Amount)
 			}
@@ -79,11 +79,11 @@ func TestGetCenterRequests(t *testing.T) {
 }
 
 func TestGetWalletCenterRequests(t *testing.T) {
-	var centerReqrepo = repository.InitializeCenterRequestMockRepo()
+	var centerReqRepo = repository.InitializeCenterRequestMockRepo()
 	var profileRepo = repository.InitializeProfileMockRepo()
 	var mockClient = pkg.InitializeSuiMockApi()
 	var service = initializeCenterRequestService(
-		centerReqrepo,
+		centerReqRepo,
 		profileRepo,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
@@ -111,14 +111,14 @@ func TestGetWalletCenterRequests(t *testing.T) {
 
 	for i, tc := range tcsInfo {
 		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
-			centerReqrepo.ExpectedCalls = nil
+			centerReqRepo.ExpectedCalls = nil
 
 			var expectedRes []entities.CenterRequest
 			if tc.isHaveReqs {
 				expectedRes = getSampleCenterRequests(1)
 			}
 
-			centerReqrepo.On("GetWalletRegistrationRequests", mock.Anything, mock.Anything).Return(expectedRes, tc.expectedErr)
+			centerReqRepo.On("GetWalletRegistrationRequests", mock.Anything, mock.Anything).Return(expectedRes, tc.expectedErr)
 			res, err := service.GetWalletRequests(tc.id, ctx)
 			assert.Equal(t, expectedRes, res)
 			assert.Equal(t, tc.expectedErr, err)
@@ -127,11 +127,11 @@ func TestGetWalletCenterRequests(t *testing.T) {
 }
 
 func TestGetCenterRequest(t *testing.T) {
-	var centerReqrepo = repository.InitializeCenterRequestMockRepo()
+	var centerReqRepo = repository.InitializeCenterRequestMockRepo()
 	var profileRepo = repository.InitializeProfileMockRepo()
 	var mockClient = pkg.InitializeSuiMockApi()
 	var service = initializeCenterRequestService(
-		centerReqrepo,
+		centerReqRepo,
 		profileRepo,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
@@ -151,20 +151,20 @@ func TestGetCenterRequest(t *testing.T) {
 			isExist: false,
 		},
 		{
-			expectedErr: errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr: errors.New(noti.INTERNAL_ERR_MSG),
 		},
 	}
 
 	for i, tc := range tcsInfo {
 		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
-			centerReqrepo.ExpectedCalls = nil
+			centerReqRepo.ExpectedCalls = nil
 
 			var expectedRes *entities.CenterRequest
 			if tc.isExist {
 				expectedRes = &entities.CenterRequest{}
 			}
 
-			centerReqrepo.On("GetRequest", mock.Anything, mock.Anything).Return(expectedRes, tc.expectedErr)
+			centerReqRepo.On("GetRequest", mock.Anything, mock.Anything).Return(expectedRes, tc.expectedErr)
 			res, err := service.GetRequest("", ctx)
 			assert.Equal(t, expectedRes, res)
 			assert.Equal(t, tc.expectedErr, err)
@@ -172,32 +172,32 @@ func TestGetCenterRequest(t *testing.T) {
 	}
 }
 
-// func TestCreateCenterRequest(t *testing.T) {
-// 	var centerReqrepo = repository.InitializeCenterRequestMockRepo()
-// 	var profileRepo = repository.InitializeProfileMockRepo()
-// 	var mockClient = pkg.InitializeSuiMockApi()
-// 	var service = initializeCenterRequestService(
-// 		centerReqrepo,
-// 		profileRepo,
-// 		map[string]sui.ISuiAPI{
-// 			constant.SuiTestnet: mockClient,
-// 		},
-// 		util.GetLogConfig(shared.ERROR_LEVEL),
-// 	)
-
-// 	var tcsInfo = []struct {
-// 		isExist     bool
-// 		expectedErr error
-// 		context     context.Context
-// 	}{}
-// }
+//func TestCreateCenterRequest(t *testing.T) {
+//	var centerReqRepo = repository.InitializeCenterRequestMockRepo()
+//	var profileRepo = repository.InitializeProfileMockRepo()
+//	var mockClient = pkg.InitializeSuiMockApi()
+//	var service = initializeCenterRequestService(
+//		centerReqRepo,
+//		profileRepo,
+//		map[string]sui.ISuiAPI{
+//			constant.SuiTestnet: mockClient,
+//		},
+//		util.GetLogConfig(shared.ERROR_LEVEL),
+//	)
+//
+//	var tcsInfo = []struct {
+//		isExist     bool
+//		expectedErr error
+//		context     context.Context
+//	}{}
+//}
 
 func TestCreateCenterRequest(t *testing.T) {
-	var centerReqrepo = repository.InitializeCenterRequestMockRepo()
+	var centerReqRepo = repository.InitializeCenterRequestMockRepo()
 	var profileRepo = repository.InitializeProfileMockRepo()
 	var mockClient = pkg.InitializeSuiMockApi()
 	var service = initializeCenterRequestService(
-		centerReqrepo,
+		centerReqRepo,
 		profileRepo,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
@@ -416,14 +416,14 @@ func TestCreateCenterRequest(t *testing.T) {
 			isHaveToFetchManage: true,
 			isHaveToFetchStaffs: true,
 			staffsJson:          sampleStaffsJson,
-			expectedErr:         errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:         errors.New(noti.INTERNAL_ERR_MSG),
 		},
 	}
 
 	for i, tc := range tcsInfo {
 		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
 			mockClient.ExpectedCalls = nil
-			centerReqrepo.ExpectedCalls = nil
+			centerReqRepo.ExpectedCalls = nil
 
 			if tc.ownedNftsJson.Data != nil {
 				mockClient.On("SuiXGetOwnedObjects", mock.Anything, mock.Anything).Return(tc.ownedNftsJson, nil)
@@ -437,7 +437,7 @@ func TestCreateCenterRequest(t *testing.T) {
 				mockClient.On("SuiMultiGetObjects", mock.Anything, mock.Anything).Return(tc.staffsJson, nil)
 			}
 
-			centerReqrepo.On("CreateRegistrationRequest", mock.Anything, mock.Anything).Return(tc.expectedErr)
+			centerReqRepo.On("CreateRegistrationRequest", mock.Anything, mock.Anything).Return(tc.expectedErr)
 
 			res, err := service.CreateRequest(tc.req, ctx)
 			assert.Equal(t, tc.expectedErr, err)
@@ -449,11 +449,11 @@ func TestCreateCenterRequest(t *testing.T) {
 }
 
 func TestVoteCenterRequest(t *testing.T) {
-	var centerReqrepo = repository.InitializeCenterRequestMockRepo()
+	var centerReqRepo = repository.InitializeCenterRequestMockRepo()
 	var profileRepo = repository.InitializeProfileMockRepo()
 	var mockClient = pkg.InitializeSuiMockApi()
 	var service = initializeCenterRequestService(
-		centerReqrepo,
+		centerReqRepo,
 		profileRepo,
 		map[string]sui.ISuiAPI{
 			constant.SuiTestnet: mockClient,
@@ -567,7 +567,7 @@ func TestVoteCenterRequest(t *testing.T) {
 				IsVoteYes: true,
 			},
 			ownedNftsJson: ownedStaffNftsJson,
-			expectedErr:   errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:   errors.New(noti.INTERNAL_ERR_MSG),
 			context:       ctx,
 		},
 	}
@@ -575,14 +575,14 @@ func TestVoteCenterRequest(t *testing.T) {
 	for i, tc := range tcsInfo {
 		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
 			mockClient.ExpectedCalls = nil
-			centerReqrepo.ExpectedCalls = nil
+			centerReqRepo.ExpectedCalls = nil
 
-			centerReqrepo.On("GetRequest", mock.Anything, mock.Anything).Return(tc.centerReq, tc.expectedErr)
+			centerReqRepo.On("GetRequest", mock.Anything, mock.Anything).Return(tc.centerReq, tc.expectedErr)
 			if tc.ownedNftsJson.Data != nil {
 				mockClient.On("SuiXGetOwnedObjects", mock.Anything, mock.Anything).Return(tc.ownedNftsJson, nil)
 			}
 
-			centerReqrepo.On("UpdateRegistrationRequest", mock.Anything, mock.Anything).Return(tc.expectedErr)
+			centerReqRepo.On("UpdateRegistrationRequest", mock.Anything, mock.Anything).Return(tc.expectedErr)
 
 			assert.Equal(t, tc.expectedErr, service.VoteRequest("", tc.voteReq, tc.context))
 		})

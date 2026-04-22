@@ -39,7 +39,7 @@ func (t *taskRepo) CreateTask(task entities.Task, ctx context.Context) error {
 		task.StartPeriod, task.EndPeriod, task.CreatedAt, task.UpdatedAt); err != nil {
 
 		t.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNALL_ERR_MSG)
+		return errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return nil
@@ -61,7 +61,7 @@ func (t *taskRepo) GetTask(id string, ctx context.Context) (*entities.Task, erro
 		}
 
 		t.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -70,49 +70,49 @@ func (t *taskRepo) GetTask(id string, ctx context.Context) (*entities.Task, erro
 // GetTasks implements repository.ITaskRepository.
 func (t *taskRepo) GetTasks(req request.GetTasksRequest, ctx context.Context) ([]entities.Task, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_REPOSITORY) + "GetTasks - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviosCondition bool = false
+	var isHavePreviousCondition bool = false
 	if req.Keyword != "" {
 		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%s')", req.Keyword)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Region != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%s')", req.Region)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Status != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%s')", req.Status)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.AssignedStaff != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("assgined_staff = '%s'", req.AssignedStaff)
-		isHavePreviosCondition = true
+		queryCondition += fmt.Sprintf("assigned_staff = '%s'", req.AssignedStaff)
+		isHavePreviousCondition = true
 	}
 
 	if req.ReviewedBy != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("reviewed_by = '%s'", req.ReviewedBy)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	var order string = "DESC"
@@ -155,16 +155,16 @@ func (t *taskRepo) GetTasks(req request.GetTasksRequest, ctx context.Context) ([
 	var totalRecords int
 	t.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(task_table, queryCondition)).Scan(&totalRecords)
 
-	return res, caculateTotalPages(totalRecords, req.PageSize), nil
+	return res, calculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // UpdateTask implements repository.ITaskRepository.
 func (t *taskRepo) UpdateTask(task entities.Task, ctx context.Context) error {
 	var query string = "UPDATE " + task_table + " SET " +
-		"assigned_profile_id = $1, assgined_staff = $2, review_profile_status = $3, reviewed_by = $4, description = $5 WHERE id = $6"
+		"assigned_profile_id = $1, assigned_staff = $2, review_profile_status = $3, reviewed_by = $4, description = $5 WHERE id = $6"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_REPOSITORY) + "UpdateTask - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	res, err := t.db.ExecContext(ctx, query, task.AssignedProfileID, task.AssignedStaff, task.ReviewProfileStatus, task.ReviewedBy, task.Description, task.ID)
 	if err != nil {

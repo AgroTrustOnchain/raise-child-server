@@ -289,7 +289,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 		}
 	}
 
-	var firstNasme string = strings.TrimSpace(req.FirstName)
+	var firstName string = strings.TrimSpace(req.FirstName)
 	var lastName string = strings.TrimSpace(req.LastName)
 	var homeAddr string = strings.TrimSpace(req.HomeAddress)
 
@@ -305,7 +305,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 			IdentityCode:                    identityCode,
 			ChildBirthCertificateBytesImage: birthCertBytes,
 			Region:                          req.Region,
-			FirstName:                       firstNasme,
+			FirstName:                       firstName,
 			LastName:                        lastName,
 			Gender:                          gender,
 			DateOfBirth:                     dateOfBirth,
@@ -344,7 +344,7 @@ func (u *uploadChildRequestService) CreateUploadChildRequest(req request.UploadC
 		AvatarBlobId:           req.AvatarBlobId,
 		HomeBlobID:             req.HomeBlobID,
 		Region:                 region,
-		FirstName:              firstNasme,
+		FirstName:              firstName,
 		LastName:               lastName,
 		Gender:                 gender,
 		DateOfBirth:            dateOfBirth,

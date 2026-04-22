@@ -41,7 +41,7 @@ type regionService struct {
 
 var _regions []string
 
-func initalizeRegionService(
+func initializeRegionService(
 	regionRepo i_repository.ISupportedRegionSuggestionRepository,
 	clients map[string]sui.ISuiAPI,
 	regions []string,
@@ -103,7 +103,7 @@ func GenerateRegionService() (business.IRegionService, error) {
 		}
 	}
 
-	return initalizeRegionService(repository.InitializeSupportedRegionSuggestionRepository(cnn, errLogger), _networkAliases, _regions, errLogger), nil
+	return initializeRegionService(repository.InitializeSupportedRegionSuggestionRepository(cnn, errLogger), _networkAliases, _regions, errLogger), nil
 }
 
 // GetEstablishedRegions implements business.IRegionService.
@@ -304,7 +304,7 @@ func (r *regionService) CreateSupportedRegionSuggestion(req request.CreateSuppor
 	}
 
 	if isRequested {
-		return nil, errors.New(noti.SUPPORRT_REGION_REQUEST_MESSAGE)
+		return nil, errors.New(noti.SUPPORT_REGION_REQUEST_MESSAGE)
 	}
 
 	// var client = r.clients[constant.SuiTestnet]

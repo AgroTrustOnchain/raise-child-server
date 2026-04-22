@@ -119,7 +119,7 @@ func (c *childService) GetChild(id string, ctx context.Context) (response.ChildR
 	}
 
 	var res response.ChildResponse
-	var redisKey string = c.getGetChildRediskey(id)
+	var redisKey string = c.getGetChildRedisKey(id)
 	if c.redisCache.Get(redisKey, &res, ctx) {
 		return res, nil
 	}
@@ -160,7 +160,7 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 	}
 
 	var res response.PaginationDataResponse
-	var redisKey string = c.getGetChildrenRediskey(req)
+	var redisKey string = c.getGetChildrenRedisKey(req)
 	if c.redisCache.Get(redisKey, &res, ctx) {
 		return res, nil
 	}
@@ -474,7 +474,7 @@ func (c *childService) CreateBooksNeedWithdrawProposal(req request.CreateNormalN
 			NeedID:      req.NeedID,
 			ChildID:     need.ChildID,
 			LocalPool:   localPoolId,
-			Description: fmt.Sprintf("Withdraw Books Need Semester %s - %s for child %s %s", need.Semster, need.Year, child.LastName, child.FirstName),
+			Description: fmt.Sprintf("Withdraw Books Need Semester %s - %s for child %s %s", need.Semester, need.Year, child.LastName, child.FirstName),
 			ClosedAt:    util.ToMilliseconds(util.GetRequestDuration()),
 		}),
 	}, ctx)
@@ -1010,7 +1010,7 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 	var paymentId string = util.GenerateId()
 	var orderCode int = util.GenerateNumber()
 	var callbackUrl string = os.Getenv(payment.PAYMENT_CALLBACK_URL) + paymentId
-	var paymentDescription string = entities.HEALTH_INSRUANCE_PAYMENT_DESCRIPTION.GenerateSupportPaymentDescription()
+	var paymentDescription string = entities.HEALTH_INSURANCE_PAYMENT_DESCRIPTION.GenerateSupportPaymentDescription()
 	amount, _ := strconv.ParseInt(need.Value, 10, 64)
 	data, err := payos.CreatePaymentLink(payos.CheckoutRequestType{
 		OrderCode:   int64(orderCode),
@@ -1022,7 +1022,7 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()
@@ -1599,7 +1599,7 @@ func (c *childService) CreateSpecialNeedProposalV2(req request.CreateSpecialNeed
 		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
 		if proofBytes != nil {
 			aiEvaluation = c.aiProvider.ValidateChildSpecialNeedProposal(ai.ValidateChildSpecialNeedProposal{
-				CamapaignTarget: req.Target,
+				CampaignTarget: req.Target,
 				Description:     description,
 				ProofBytesImage: proofBytes,
 			}, ctx)
@@ -1880,7 +1880,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	// leaderNoti, err := c.leaderNotiRepo.GetNotiByMealNeed(id, ctx)
@@ -1923,7 +1923,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 	// 	}
 
 	// 	var withdrawDate string
-	// 	if need.Semster == "1" {
+	// 	if need.Semester == "1" {
 	// 		withdrawDate = withdrawDates.FirstSemesterDate
 	// 	} else {
 	// 		withdrawDate = withdrawDates.SecondSemesterDate
@@ -1954,7 +1954,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 	// 		Region:                  child.Region,
 	// 		AssignedLeaders:         leaders,
 	// 		ExpectedWithdrawPeriods: []string{withdrawDate + "/" + need.Year},
-	// 		Content:                 fmt.Sprintf("Withdraw books need semester %s for child %s", need.Semster, util.FormatAddress(child.ID.ID)),
+	// 		Content:                 fmt.Sprintf("Withdraw books need semester %s for child %s", need.Semester, util.FormatAddress(child.ID.ID)),
 	// 		CreatedAt: curTime,
 	// 		UpdatedAt: curTime,
 	// 	}, ctx); err != nil {
@@ -1973,7 +1973,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 		return response.PaymentUrlResponse{}, err
 	}
 
-	var description string = fmt.Sprintf("Support Books Need Semester %s - %s", need.Semster, need.Year)
+	var description string = fmt.Sprintf("Support Books Need Semester %s - %s", need.Semester, need.Year)
 	var expiredAt time.Time
 	if data.ExpiredAt != nil {
 		expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
@@ -2003,7 +2003,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 }
 
 // SupportMealNeed implements business.IChildService.
-func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadRequest, ctx context.Context) (response.PaymentUrlResponse, error) {
+func (c *childService) SupportMealNeed(id string, req request.SupportMealNeedRequest, ctx context.Context) (response.PaymentUrlResponse, error) {
 	profile, err := c.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
 	if err != nil {
 		return response.PaymentUrlResponse{}, err
@@ -2076,7 +2076,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
 		c.errLogger.Println("Fail at create payos")
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	// var expectedWithdrawDate time.Time = nextEndPeriod.AddDate(0, 0, -1)
@@ -2176,7 +2176,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadReq
 	// 	ID:                 util.GenerateId(),
 	// 	ChildID:            need.ChildID,
 	// 	Region:             child.Region,
-	// 	AssginedVolunteers: volunteerAddresses,
+	// 	AssignedVolunteers: volunteerAddresses,
 	// 	Content:            fmt.Sprintf("Provide meal for child %s from %s to %s", util.FormatAddress(child.ID.ID), rawExpectedStart, rawExpectedEnd),
 	// 	StartPeriod:        nextStartPeriod,
 	// 	EndPeriod:          nextEndPeriod,
@@ -2282,7 +2282,7 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 	})
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()
@@ -2726,7 +2726,7 @@ func (c *childService) UpdateMealNeed(req request.UpdateChildNeedRequest, ctx co
 	}, err
 }
 
-func (c *childService) getGetChildrenRediskey(req request.GetChildrenRequest) string {
+func (c *childService) getGetChildrenRedisKey(req request.GetChildrenRequest) string {
 	var keyword string = "empty"
 	if req.Keyword != "" {
 		keyword = req.Keyword
@@ -2751,6 +2751,6 @@ func (c *childService) getGetChildrenRediskey(req request.GetChildrenRequest) st
 		keyword, region, yob, req.SortOrder, gender, req.PageSize, req.Page)
 }
 
-func (c *childService) getGetChildRediskey(id string) string {
+func (c *childService) getGetChildRedisKey(id string) string {
 	return fmt.Sprintf("child:%s", id)
 }

@@ -149,7 +149,7 @@ func (a *authService) GetSalt(id string, ctx context.Context) (response.GetSaltR
 // Login implements business.IAuthService.
 func (a *authService) Login(req request.LoginRequest, ctx context.Context) (response.LoginResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 	var curTimeUnix int64 = time.Now().Unix()
 	var info securityInfo = getSecurityInfo(req.Address)
 

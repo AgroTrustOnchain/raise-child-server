@@ -15,7 +15,7 @@ type IChildService interface {
 	AddNumberMetadata(id string, req request.AddChildNumberMetadataRequest, ctx context.Context) (response.BuildTransactionResponse, error)
 	SupportBooksNeed(id string, ctx context.Context) (response.PaymentUrlResponse, error)
 	SupportHealthInsuranceNeed(id string, ctx context.Context) (response.PaymentUrlResponse, error)
-	SupportMealNeed(id string, req request.SupportMealNeadRequest, ctx context.Context) (response.PaymentUrlResponse, error)
+	SupportMealNeed(id string, req request.SupportMealNeedRequest, ctx context.Context) (response.PaymentUrlResponse, error)
 	SupportSpecialNeed(id string, req request.SupportSpecialNeedRequest, ctx context.Context) (response.PaymentUrlResponse, error)
 	ConfirmProvideMealForChild(id string, req request.ConfirmProvideMealForChildRequest, ctx context.Context) (response.BuildTransactionResponse, error)
 	CreateBooksNeedWithdrawProposal(req request.CreateNormalNeedWithdrawProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error)

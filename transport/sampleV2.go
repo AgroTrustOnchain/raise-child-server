@@ -56,7 +56,7 @@ func MintCap(ctx *gin.Context) {
 		return
 	}
 
-	_, errRess := client.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
+	_, errRes := client.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: txnData,
 		PriKey:      signer.PriKey,
 		RequestType: "WaitForLocalExecution",
@@ -65,10 +65,10 @@ func MintCap(ctx *gin.Context) {
 		},
 	})
 
-	if errRess != nil {
-		log.Println("Error sign and execute tx: " + errRess.Error())
+	if errRes != nil {
+		log.Println("Error sign and execute tx: " + errRes.Error())
 		util.ProcessResponse(response.APIResponse{
-			ErrMsg:   errRess,
+			ErrMsg:   errRes,
 			Context:  ctx,
 			PostType: actiontype.NON_POST,
 		})
@@ -128,7 +128,7 @@ func MintCaps(ctx *gin.Context) {
 		return
 	}
 
-	_, errRess := client.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
+	_, errRes := client.SignAndExecuteTransactionBlock(ctx, models.SignAndExecuteTransactionBlockRequest{
 		TxnMetaData: models.TxnMetaData{
 			Gas:          res.Gas,
 			InputObjects: res.InputObjects,
@@ -141,10 +141,10 @@ func MintCaps(ctx *gin.Context) {
 		},
 	})
 
-	if errRess != nil {
-		log.Println("Error sign and execute tx: " + errRess.Error())
+	if errRes != nil {
+		log.Println("Error sign and execute tx: " + errRes.Error())
 		util.ProcessResponse(response.APIResponse{
-			ErrMsg:   errRess,
+			ErrMsg:   errRes,
 			Context:  ctx,
 			PostType: actiontype.NON_POST,
 		})

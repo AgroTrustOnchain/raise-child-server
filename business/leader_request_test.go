@@ -272,9 +272,9 @@ func TestGetRequests(t *testing.T) {
 		mockPages int
 		mockErr   error
 	}{
-		{req: request.GetNormalStaffRegistrationRequests{GetAdminRegistrationRequets: request.GetAdminRegistrationRequets{Page: 2}}, mockData: []entities.LocalLeaderRegistrationRequest{}, mockPages: 5, mockErr: nil},
-		{req: request.GetNormalStaffRegistrationRequests{GetAdminRegistrationRequets: request.GetAdminRegistrationRequets{Page: 0}}, mockData: []entities.LocalLeaderRegistrationRequest{}, mockPages: 0, mockErr: nil},
-		{req: request.GetNormalStaffRegistrationRequests{GetAdminRegistrationRequets: request.GetAdminRegistrationRequets{Page: 1}}, mockData: []entities.LocalLeaderRegistrationRequest{}, mockPages: 0, mockErr: errors.New("db error")},
+		{req: request.GetNormalStaffRegistrationRequests{GetAdminRegistrationRequest: request.GetAdminRegistrationRequest{Page: 2}}, mockData: []entities.LocalLeaderRegistrationRequest{}, mockPages: 5, mockErr: nil},
+		{req: request.GetNormalStaffRegistrationRequests{GetAdminRegistrationRequest: request.GetAdminRegistrationRequest{Page: 0}}, mockData: []entities.LocalLeaderRegistrationRequest{}, mockPages: 0, mockErr: nil},
+		{req: request.GetNormalStaffRegistrationRequests{GetAdminRegistrationRequest: request.GetAdminRegistrationRequest{Page: 1}}, mockData: []entities.LocalLeaderRegistrationRequest{}, mockPages: 0, mockErr: errors.New("db error")},
 	}
 
 	for i, tc := range tcs {

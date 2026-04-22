@@ -12,7 +12,7 @@ type BooksNeed struct {
 	ChildID           string   `json:"child"`
 	Year              string   `json:"year"`
 	YearChanges       []string `json:"year_changes"`
-	Semster           string   `json:"semester"`
+	Semester           string   `json:"semester"`
 	Value             string   `json:"value"`
 	SupportedYears    []string `json:"supported_years"`
 	Donors            []string `json:"donors"`
@@ -138,13 +138,13 @@ func (m MealNeed) ToMealNeedResponse() response.MealNeedResponse {
 	}
 }
 
-func (b BooksNeed) ToBooksNeedReponse() response.BooksNeedResponse {
+func (b BooksNeed) ToBooksNeedResponse() response.BooksNeedResponse {
 	if b.ID.ID == "" {
 		return response.BooksNeedResponse{}
 	}
 
 	year, _ := strconv.Atoi(b.Year)
-	semseter, _ := strconv.Atoi(b.Semster)
+	semester, _ := strconv.Atoi(b.Semester)
 	value, _ := strconv.ParseInt(b.Value, 10, 64)
 
 	// Length year changes always at least equal to length supported years
@@ -163,7 +163,7 @@ func (b BooksNeed) ToBooksNeedReponse() response.BooksNeedResponse {
 		ID:                b.ID.ID,
 		Year:              year,
 		YearChanges:       yearChanges,
-		Semster:           semseter,
+		Semester:           semester,
 		Value:             value,
 		SupportedYears:    supportedYears,
 		Donors:            b.Donors,
@@ -173,7 +173,7 @@ func (b BooksNeed) ToBooksNeedReponse() response.BooksNeedResponse {
 	}
 }
 
-func (h HealthInsuranceNeed) ToHealthInsuranceNeedReponse() response.HealthInsuranceNeedResponse {
+func (h HealthInsuranceNeed) ToHealthInsuranceNeedResponse() response.HealthInsuranceNeedResponse {
 	if h.ID.ID == "" {
 		return response.HealthInsuranceNeedResponse{}
 	}

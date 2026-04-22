@@ -73,13 +73,13 @@ type ValidateWithdrawProposal struct {
 }
 
 type ValidateChildSpecialNeedProposal struct {
-	CamapaignTarget int64  `json:"campaign_target"`
+	CampaignTarget int64  `json:"campaign_target"`
 	Description     string `json:"campaign_description"`
 	ProofBytesImage []byte `json:"proof_bytes_image"`
 }
 
 type ValidatePoolCampaign struct {
-	CamapaignTarget int64  `json:"campaign_target"`
+	CampaignTarget int64  `json:"campaign_target"`
 	Description     string `json:"campaign_description"`
 	ProofBytesImage []byte `json:"proof_bytes_image"`
 }

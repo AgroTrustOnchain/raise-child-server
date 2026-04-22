@@ -43,7 +43,7 @@ func (p *pendingChildSpecialNeedProposalRepo) CreatePendingChildSpecialNeedPropo
 	); err != nil {
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNALL_ERR_MSG)
+		return errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return nil
@@ -66,7 +66,7 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 		}
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -75,67 +75,67 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 // GetPendingChildSpecialNeedProposals implements repository.IPendingChildSpecialNeedProposalRepository.
 func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposals(req request.GetPendingChildSpecialNeedProposalsRequest, ctx context.Context) ([]entities.PendingChildSpecialNeedProposal, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PENDING_CHILD_SPECIAL_NEED_PROPOSAL_REPOSITORY) + "GetPendingChildSpecialNeedProposals - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviosCondition bool = false
+	var isHavePreviousCondition bool = false
 	if req.Keyword != "" {
 		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%s')", req.Keyword)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Region != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%s')", req.Region)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Status != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(review_status) = LOWER('%s')", req.Status)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Creator != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("actor_address = '%s'", req.Creator)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Reviewer != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("reviewed_bdy = '%s'", req.Creator)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.MinAmount != nil {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("target >= %d", *req.MinAmount)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.MaxAmount != nil {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("target <= %d", *req.MaxAmount)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.SortCriteria == "" {
@@ -146,7 +146,7 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 		req.SortOrder = "DESC"
 	}
 
-	if isHavePreviosCondition {
+	if isHavePreviousCondition {
 		queryCondition += " "
 	}
 
@@ -184,7 +184,7 @@ func (p *pendingChildSpecialNeedProposalRepo) GetPendingChildSpecialNeedProposal
 	var totalRecords int
 	p.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(pending_child_special_need_proposal_table, queryCondition)).Scan(&totalRecords)
 
-	return res, caculateTotalPages(totalRecords, req.PageSize), nil
+	return res, calculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // UpdatePendingChildSpecialNeedProposal implements repository.IPendingChildSpecialNeedProposalRepository.
@@ -194,7 +194,7 @@ func (p *pendingChildSpecialNeedProposalRepo) UpdatePendingChildSpecialNeedPropo
 		"review_status = $5, reviewed_by = $6 WHERE id = $7"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PENDING_CHILD_SPECIAL_NEED_PROPOSAL_REPOSITORY) + "UpdatePendingChildSpecialNeedProposal - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	res, err := p.db.ExecContext(ctx, query, proposal.ChildID, proposal.Target, proposal.Description,
 		proposal.ProofBlobID, proposal.ReviewStatus, proposal.ReviewedBy, proposal.ID)

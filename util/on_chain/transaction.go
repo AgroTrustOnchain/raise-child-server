@@ -81,14 +81,14 @@ func BuildTransaction(req BuildTransactionRequest, ctx context.Context) (string,
 
 	if err != nil {
 		req.ErrLogger.Println(noti.BUILDING_TX_ERR_MSG + err.Error())
-		return "", errors.New(noti.INTERNALL_ERR_MSG)
+		return "", errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return res.TxBytes, nil
 }
 
 func BuildMultiBackgroundTransactions(req BuildMultiBackgroundTransactionsRequest, ctx context.Context) error {
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 	signer, err := signer.NewSignerWithSecretKey(os.Getenv(env.PUBLISHER_PRIVATE_KEY))
 	if err != nil {
 		req.ErrLogger.Println(err.Error())
@@ -172,14 +172,14 @@ func BuildMultiTransactions(req BuildMultiTransactionsRequest, ctx context.Conte
 
 	if err != nil {
 		req.ErrLogger.Println(noti.BATCHING_TX_ERR_MSG + err.Error())
-		return "", errors.New(noti.INTERNALL_ERR_MSG)
+		return "", errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return res.TxBytes, nil
 }
 
 func BuildDonateTransaction(req DonateTransactionRequest, ctx context.Context) (string, error) {
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	coins, err := getOwnedCoinsMatchedAmount(req.Client, req.Sender, req.CoinType, req.Amount, req.ErrLogger, ctx)
 	if err != nil {
@@ -237,7 +237,7 @@ func ExecuteTransaction(req ExecuteTransactionRequest, ctx context.Context) (mod
 
 	if err != nil {
 		req.ErrLogger.Println(noti.EXECUTING_TX_ERR_MSG + err.Error())
-		err = errors.New(noti.INTERNALL_ERR_MSG)
+		err = errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return res, err

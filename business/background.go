@@ -149,7 +149,7 @@ func (b *backgroundService) ProcessBackgroundRegistrationRequests(ctx context.Co
 			// 	Recipient: req.Sender,
 			// }))
 
-			// Thêm phần tử vào cuối slice
+			// add element to the end of the slice
 			modules = append(modules, module.GetModule())
 
 			switch req.Role {

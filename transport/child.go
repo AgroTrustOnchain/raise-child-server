@@ -253,14 +253,14 @@ func SupportHealthInsuranceNeed(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Meal Need ID"
-// @Param        request  body      request.SupportMealNeadRequest   true  "Support Child Meal Need Detail"
+// @Param        request  body      request.SupportMealNeedRequest   true  "Support Child Meal Need Detail"
 // @Success      200      {object}  response.PaymentUrlResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /children/meal-need/{id}/support [post]
 func SupportMealNeed(ctx *gin.Context) {
-	var request request.SupportMealNeadRequest
+	var request request.SupportMealNeedRequest
 	if ctx.ShouldBindJSON(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return

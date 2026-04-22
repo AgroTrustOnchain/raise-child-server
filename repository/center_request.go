@@ -51,7 +51,7 @@ func (c *centerRequestRepo) CreateRegistrationRequest(req entities.CenterRequest
 	// 	req.CreatedBy, req.CreatedAt, req.UpdatedAt, req.ClosedAt); err != nil {
 
 	// 	c.errLogger.Println(errLogMsg + err.Error())
-	// 	return errors.New(noti.INTERNALL_ERR_MSG)
+	// 	return errors.New(noti.INTERNAL_ERR_MSG)
 	// }
 
 	if _, err := c.db.ExecContext(ctx, query, req.ID, req.ProfileID, req.Region, req.Address, req.PhoneNumber, req.ImageBlobID,
@@ -60,7 +60,7 @@ func (c *centerRequestRepo) CreateRegistrationRequest(req entities.CenterRequest
 		req.CreatedBy, req.CreatedAt, req.UpdatedAt, req.ClosedAt); err != nil {
 
 		c.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNALL_ERR_MSG)
+		return errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return nil
@@ -69,44 +69,44 @@ func (c *centerRequestRepo) CreateRegistrationRequest(req entities.CenterRequest
 // GetRegistrationRequests implements repository.ICenterRequestRepository.
 func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequests, ctx context.Context) ([]entities.CenterRequest, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.CENTER_REQUEST_REPOSITORY) + "GetRegistrationRequests - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviosCondition bool = false
+	var isHavePreviousCondition bool = false
 	if req.Region != "" {
 		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%%%%%s%%%%')", req.Region)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Status != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%s')", req.Status)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Keyword != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("(LOWER(address) LIKE LOWER('%s') OR phone_number LIKE '%s')", req.Keyword, req.Keyword)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.IsAvailableToConfirm != nil {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("is_available_to_confirm = %v", *req.IsAvailableToConfirm)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.IsClosed != nil {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
@@ -118,7 +118,7 @@ func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequest
 		queryCondition += fmt.Sprintf("closed_at %s NOW()", operation)
 	}
 
-	if isHavePreviosCondition {
+	if isHavePreviousCondition {
 		queryCondition += " "
 	}
 
@@ -174,7 +174,7 @@ func (c *centerRequestRepo) GetRegistrationRequests(req request.GetCenterRequest
 	var totalRecords int
 	c.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(center_request_table, queryCondition)).Scan(&totalRecords)
 
-	return res, caculateTotalPages(totalRecords, req.PageSize), nil
+	return res, calculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // GetRequest implements repository.ICenterRequestRepository.
@@ -194,7 +194,7 @@ func (c *centerRequestRepo) GetRequest(id string, ctx context.Context) (*entitie
 		}
 
 		c.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -204,7 +204,7 @@ func (c *centerRequestRepo) GetRequest(id string, ctx context.Context) (*entitie
 func (c *centerRequestRepo) GetWalletRegistrationRequests(id string, ctx context.Context) ([]entities.CenterRequest, error) {
 	var query string = "SELECT * FROM " + center_request_table + " WHERE created_by = $1 ORDER BY created_at DESC"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.CENTER_REQUEST_REPOSITORY) + "GetWalletRegistrationRequests - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	rows, err := c.db.QueryContext(ctx, query, id)
 	if err != nil {
@@ -235,7 +235,7 @@ func (c *centerRequestRepo) GetWalletRegistrationRequests(id string, ctx context
 func (c *centerRequestRepo) IsRegionRequested(region string, ctx context.Context) (bool, error) {
 	var query string = "SELECT id FROM " + center_request_table + " WHERE LOWER(region) = LOWER($1) AND (status = 'Pending' OR status = 'Approved') LIMIT 1"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.CENTER_REQUEST_REPOSITORY) + "IsRegionRequested - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	var id string
 	if err := c.db.QueryRowContext(ctx, query, region).Scan(&id); err != nil {
@@ -254,7 +254,7 @@ func (c *centerRequestRepo) UpdateRegistrationRequest(req entities.CenterRequest
 		"status = $7, is_confirm_register = $8, is_available_to_confirm = $9, updated_at = $10 WHERE id = $11"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.CENTER_REQUEST_REPOSITORY) + "UpdateRegistrationRequest - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	res, err := c.db.ExecContext(ctx, query, req.Address, req.PhoneNumber, req.ImageBlobID,
 		pq.Array(req.Approvers), pq.Array(req.Refusers), pq.Array(req.RefuseReasons),
@@ -281,7 +281,7 @@ func (c *centerRequestRepo) UpdateRegistrationRequest(req entities.CenterRequest
 func (c *centerRequestRepo) GetPendingRequests(ctx context.Context) ([]entities.BackgroundRecord, []entities.BackgroundRecord, error) {
 	var query string = "SELECT id, approvers, refusers, created_by, status FROM " + center_request_table + " WHERE is_available_to_confirm = false AND closed_at <= NOW() AND (status = 'Pending' OR status = 'Approved')"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.CENTER_REQUEST_REPOSITORY) + "GetPendingRequests - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	rows, err := c.db.QueryContext(ctx, query)
 	if err != nil {
@@ -326,7 +326,7 @@ func (c *centerRequestRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord
 
 	if _, err := c.db.ExecContext(ctx, query, time.Now()); err != nil {
 		c.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.CENTER_REQUEST_REPOSITORY) + "SetApprovedStatuses - " + err.Error())
-		return errors.New(noti.INTERNALL_ERR_MSG)
+		return errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return nil
@@ -348,7 +348,7 @@ func (c *centerRequestRepo) SetRefusedStatuses(reqs []entities.BackgroundRecord,
 
 	if _, err := c.db.ExecContext(ctx, query, time.Now()); err != nil {
 		c.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.CENTER_REQUEST_REPOSITORY) + "SetRefusedStatuses - " + err.Error())
-		return errors.New(noti.INTERNALL_ERR_MSG)
+		return errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return nil

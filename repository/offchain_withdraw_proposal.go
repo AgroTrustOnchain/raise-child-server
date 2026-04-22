@@ -39,7 +39,7 @@ func (o *offChainWithdrawProposalRepo) CreateOffChainWithdrawProposal(donation e
 	if _, err := o.db.ExecContext(ctx, query, donation.ID, donation.Purpose, donation.ProposalID, donation.Target, donation.LocalPoolID, donation.CreatedAt); err != nil {
 
 		o.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNALL_ERR_MSG)
+		return errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return nil
@@ -59,7 +59,7 @@ func (o *offChainWithdrawProposalRepo) GetOffChainWithdrawProposal(id string, ct
 		}
 
 		o.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -79,7 +79,7 @@ func (o *offChainWithdrawProposalRepo) GetOffChainWithdrawProposalByProposal(id 
 		}
 
 		o.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -89,7 +89,7 @@ func (o *offChainWithdrawProposalRepo) GetOffChainWithdrawProposalByProposal(id 
 func (o *offChainWithdrawProposalRepo) SetOnChainProposalIdAfterExecuteTx(id string, proposalId string, ctx context.Context) error {
 	var query string = "UPDATE " + offchain_withdraw_proposal_table + " SET proposal_id = $1 WHERE id = $2"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.OFFCHAIN_WITHDRAW_PROPOSAL_REPOSITORY) + "SetOnChainProposalIdAfterExecuteTx - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	res, err := o.db.ExecContext(ctx, query, proposalId, id)
 	if err != nil {

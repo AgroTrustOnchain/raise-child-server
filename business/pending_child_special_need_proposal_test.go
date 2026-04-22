@@ -111,7 +111,7 @@ func TestApprovePendingChildSpecialNeedProposal(t *testing.T) {
 			mockProposal:    &entities.PendingChildSpecialNeedProposal{Region: "reg1", ReviewStatus: request_pending_status},
 			mockManage:      models.SuiObjectResponse{Data: &models.SuiObjectData{Content: &models.SuiParsedData{SuiMoveObject: models.SuiMoveObject{Fields: map[string]interface{}{"admin_ids": []interface{}{sampleAddress}}}}}},
 			mockMainPoolErr: errors.New("onchain error"),
-			expectedErr:     errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr:     errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // UTCID07: Transaction Build Error
 			id:              "p1",
@@ -119,7 +119,7 @@ func TestApprovePendingChildSpecialNeedProposal(t *testing.T) {
 			mockManage:      models.SuiObjectResponse{Data: &models.SuiObjectData{Content: &models.SuiParsedData{SuiMoveObject: models.SuiMoveObject{Fields: map[string]interface{}{"admin_ids": []interface{}{sampleAddress}}}}}},
 			mockMainPool:    models.SuiObjectResponse{Data: &models.SuiObjectData{Content: &models.SuiParsedData{SuiMoveObject: models.SuiMoveObject{Fields: map[string]interface{}{"local_pools": []interface{}{"lp1"}}}}}},
 			mockLocalPools:  []*models.SuiObjectResponse{{Data: &models.SuiObjectData{ObjectId: "lp1", Content: &models.SuiParsedData{SuiMoveObject: models.SuiMoveObject{Fields: map[string]interface{}{"region": "reg1"}}}}}},
-			mockTxErr:       errors.New("tx error"), expectedErr: errors.New(noti.INTERNALL_ERR_MSG),
+			mockTxErr:       errors.New("tx error"), expectedErr: errors.New(noti.INTERNAL_ERR_MSG),
 		},
 	}
 

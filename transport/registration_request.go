@@ -171,7 +171,7 @@ func VoteRegistrationRequest(ctx *gin.Context) {
 }
 
 // ConfirmRegistrationRequest godoc
-// @Summary      Confirm and register a staff role uploaded to Sui Blockhain
+// @Summary      Confirm and register a staff role uploaded to Sui Blockchain
 // @Description  Prepares and builds a transaction for registering new staff information on-chain
 // @Tags         registration
 // @Accept       json

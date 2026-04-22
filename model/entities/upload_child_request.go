@@ -23,7 +23,7 @@ type UploadChildRequest struct {
 	AIEvaluation           string                `json:"ai_evaluation"`
 	Status                 string                `json:"status"`            // e.g. "Pending", "Approved", "Refused"
 	ReviewStatus           string                `json:"review_status"`     // e.g. "Pending", "Approved", "Refused"
-	IsConfirmUpload        bool                  `json:"is_confirm_upload"` // Default as false, when status aprroved, user clicks to update to true, call smart contract to register role
+	IsConfirmUpload        bool                  `json:"is_confirm_upload"` // Default as false, when status approved, user clicks to update to true, call smart contract to register role
 	CreatedBy              string                `json:"created_by"`
 	ReviewedBy             *string               `json:"reviewed_by"`
 	CreatedAt              time.Time             `json:"created_at"`

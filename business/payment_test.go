@@ -69,7 +69,7 @@ func TestDonate(t *testing.T) {
 		{ // UTCID01: Normal PayOS Init (API triggers error naturally)
 			req:         request.DonateRequest{PoolId: sampleAddress, Amount: 1000},
 			mockProfile: &entities.Profile{ID: "pro1", IdentityCode: &identityStr},
-			expectedErr: errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr: errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // UTCID02: Invalid Pool Address
 			req:         request.DonateRequest{PoolId: "invalid", Amount: 1000},
@@ -83,7 +83,7 @@ func TestDonate(t *testing.T) {
 			req:         request.DonateRequest{PoolId: sampleAddress, Amount: 1000},
 			mockProfile: nil, expectedErr: errors.New(noti.GENERIC_ERROR_WARN_MSG),
 		},
-		{ // UTCID05: Identity Map Exluded Profiles
+		{ // UTCID05: Identity Map Excluded Profiles
 			req:         request.DonateRequest{PoolId: sampleAddress, Amount: 1000},
 			mockProfile: &entities.Profile{ID: "pro1", IdentityCode: nil},
 			expectedErr: errors.New(noti.NOT_UPLOADED_PROFILE_MESSAGE),
@@ -125,7 +125,7 @@ func TestCallback(t *testing.T) {
 		{ // UTCID01: Redirect Resolving API Err
 			id:          "p1",
 			mockPayment: &entities.Payment{ID: "p1", TransactionId: "123", ExpiredAt: time.Now().Add(10 * time.Minute)},
-			expectedErr: errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr: errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // UTCID02: Payment Fault
 			id: "p1", mockPaymentErr: errors.New("db error"), expectedErr: errors.New("db error"),
@@ -174,7 +174,7 @@ func TestCallbackWithAuth(t *testing.T) {
 		{ // UTCID01: Actor Resolving Normal
 			id:          "p1",
 			mockPayment: &entities.Payment{ID: "p1", Actor: sampleAddress, TransactionId: "123", ExpiredAt: time.Now().Add(10 * time.Minute)},
-			expectedErr: errors.New(noti.INTERNALL_ERR_MSG),
+			expectedErr: errors.New(noti.INTERNAL_ERR_MSG),
 		},
 		{ // UTCID02: Unauthenticated Cross Request
 			id:          "p1",

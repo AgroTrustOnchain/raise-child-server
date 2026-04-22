@@ -61,7 +61,7 @@ func InitializeModuleGift() IModuleGift {
 
 // GetFunctionConfirmReceiveCenterGift implements IModuleGift.
 func (m *moduleGift) GetFunctionConfirmReceiveCenterGift() string {
-	return sui.CONFIRM_RECIEVE_CENTER_GIFT_FUNCTION
+	return sui.CONFIRM_RECEIVE_CENTER_GIFT_FUNCTION
 }
 
 // GetFunctionCreateGiftForCenter implements IModuleGift.
@@ -76,7 +76,7 @@ func (m *moduleGift) GetFunctionCancelGift() string {
 
 // GetFunctionConfirmReceiveChildGift implements IModuleGift.
 func (m *moduleGift) GetFunctionConfirmReceiveChildGift() string {
-	return sui.CONFIRM_RECIEVE_CHILD_GIFT_FUNCTION
+	return sui.CONFIRM_RECEIVE_CHILD_GIFT_FUNCTION
 }
 
 // GetFunctionCreateGiftForChild implements IModuleGift.

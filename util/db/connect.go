@@ -25,7 +25,7 @@ func ConnectDB(logger *log.Logger, server ISQLServer) (*sql.DB, error) {
 
 	if err != nil {
 		logger.Println(noti.DB_CONNECTION_ERR_MSG + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	cnn.SetMaxOpenConns(10)

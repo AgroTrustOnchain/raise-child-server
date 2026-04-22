@@ -1037,10 +1037,10 @@ var (
 		"description": "happy new year",
 	}
 	sampleGiftJson3 = map[string]interface{}{
-		"description": "merry xmas",
+		"description": "merry X-mas",
 	}
 	sampleGiftJson4 = map[string]interface{}{
-		"description": "happpy easter day",
+		"description": "happy easter day",
 	}
 	sampleGiftJson5 = map[string]interface{}{
 		"description": "present",

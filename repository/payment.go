@@ -45,7 +45,7 @@ func (p *paymentRepo) CreatePayment(payment entities.Payment, ctx context.Contex
 		payment.Message, payment.ExpiredAt, payment.CreatedAt, payment.UpdatedAt); err != nil {
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNALL_ERR_MSG)
+		return errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return nil
@@ -67,7 +67,7 @@ func (p *paymentRepo) GetPaymentById(id string, ctx context.Context) (*entities.
 		}
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -76,71 +76,71 @@ func (p *paymentRepo) GetPaymentById(id string, ctx context.Context) (*entities.
 // GetPayments implements repository.IPaymentRepository.
 func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Context) ([]entities.Payment, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "GetPayments - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviosCondition bool = false
+	var isHavePreviousCondition bool = false
 	if req.Status != "" {
 		queryCondition += fmt.Sprintf("status = '%s'", req.Status)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Keyword != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(message) LIKE LOWER('%s')", req.Keyword)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Method != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("method = '%s'", req.Method)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Actor != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("actor = '%s'", req.Actor)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.MinAmount != nil {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("amount >= %d", *req.MinAmount)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.MaxAmount != nil {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("amount <= %d", *req.MaxAmount)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.IsDonatePayment != nil {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("is_donate_tx = %v", req.IsDonatePayment)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.IsPaymentExpired != nil {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
@@ -162,7 +162,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 		sortOrder = "DESC"
 	}
 
-	if isHavePreviosCondition {
+	if isHavePreviousCondition {
 		queryCondition += " "
 	}
 
@@ -200,7 +200,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 	var totalRecords int
 	p.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(payment_table, queryCondition)).Scan(&totalRecords)
 
-	return res, caculateTotalPages(totalRecords, req.PageSize), nil
+	return res, calculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // UpdatePayment implements repository.IPaymentRepository.
@@ -211,7 +211,7 @@ func (p *paymentRepo) UpdatePayment(payment entities.Payment, ctx context.Contex
 	res, err := p.db.ExecContext(ctx, query, payment.Status, payment.Method, payment.CancelReason, payment.UpdatedAt,
 		payment.ProfileID, payment.ReviewedBy, payment.ReviewStatus, payment.IsTransferred, payment.TransferredAt, payment.ID)
 
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	if err != nil {
 		p.errLogger.Println(errLogMsg + err.Error())
@@ -235,7 +235,7 @@ func (p *paymentRepo) UpdatePayment(payment entities.Payment, ctx context.Contex
 func (p *paymentRepo) IsWithdrawalPaymentInProcess(id string, ctx context.Context) (bool, error) {
 	var query string = "SELECT status, expired_at FROM " + payment_table + " WHERE proposal_id = $1 AND is_transferred = FALSE AND (status = 'Pending' OR status = 'Success')"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "IsWithdrawalPaymentInProcess - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	rows, err := p.db.QueryContext(ctx, query)
 	if err != nil {

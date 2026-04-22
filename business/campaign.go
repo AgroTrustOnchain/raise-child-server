@@ -238,11 +238,11 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 		return response.PaginationDataResponse{}, err
 	}
 
-	var camapaigns []entities.OnChainCampaign
+	var campaigns []entities.OnChainCampaign
 	var errRes error
 	if req.PoolName != "" {
 		if req.PoolName == "Main Pool" {
-			camapaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
+			campaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
 				Client:    client,
 				ObjectIds: pool.Campaigns,
 				ErrLogger: c.errLogger,
@@ -276,7 +276,7 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 				return response.PaginationDataResponse{}, genericErr
 			}
 
-			camapaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
+			campaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
 				Client:    client,
 				ObjectIds: foundLocalPool.Campaigns,
 				ErrLogger: c.errLogger,
@@ -286,7 +286,7 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 			}
 		}
 	} else {
-		camapaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
+		campaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
 			Client:    client,
 			ObjectIds: pool.AllCampaigns,
 			ErrLogger: c.errLogger,
@@ -296,15 +296,15 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 		}
 	}
 
-	if camapaigns == nil || len(camapaigns) == 0 {
+	if campaigns == nil || len(campaigns) == 0 {
 		return response.PaginationDataResponse{
 			Page: req.Page,
 		}, nil
 	}
 
 	var filteredCampaigns []entities.OnChainCampaign
-	for i := len(camapaigns) - 1; i >= 0; i-- {
-		var campaign entities.OnChainCampaign = camapaigns[i]
+	for i := len(campaigns) - 1; i >= 0; i-- {
+		var campaign entities.OnChainCampaign = campaigns[i]
 		if req.Creator != "" {
 			if campaign.Creator != req.Creator { // Not matched
 				continue
@@ -424,7 +424,7 @@ func (c *campaignService) SupportCampaign(id string, req request.SupportCampaign
 	})
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()

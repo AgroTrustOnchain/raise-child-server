@@ -119,7 +119,7 @@ func CreatePendingWithdrawProposal(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        id     path      string               true  "Oending Withdraw Proposal ID"
+// @Param        id     path      string               true  "Pending Withdraw Proposal ID"
 // @Success      200    {object}  response.BuildTransactionResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
@@ -149,7 +149,7 @@ func ApprovePendingWithdrawProposal(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        id     path      string               true  "Oending Withdraw Proposal ID"
+// @Param        id     path      string               true  "Pending Withdraw Proposal ID"
 // @Success      200    {object}  response.BuildTransactionResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."

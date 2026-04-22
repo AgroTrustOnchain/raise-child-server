@@ -116,7 +116,7 @@ func (p *profileService) UploadProfile(id string, req request.UploadProfileReque
 	}
 
 	if isInfoExist {
-		return response.PersonalProfileResponse{}, errors.New(noti.GENERIC_PERSONAL_INFO_REGISTERED_WANR_MSG)
+		return response.PersonalProfileResponse{}, errors.New(noti.GENERIC_PERSONAL_INFO_REGISTERED_WARN_MSG)
 	}
 
 	var firstName string = strings.TrimSpace(req.FirstName)

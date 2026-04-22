@@ -40,7 +40,7 @@ func (t *taskProofRepo) CreateTaskProof(proof entities.TaskProof, ctx context.Co
 		proof.ImageBlobID, proof.AIEvaluation, proof.RawSubmitDate, proof.CreatedAt, proof.UpdatedAt); err != nil {
 
 		t.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNALL_ERR_MSG)
+		return errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return nil
@@ -62,7 +62,7 @@ func (t *taskProofRepo) GetTaskProof(id string, ctx context.Context) (*entities.
 		}
 
 		t.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+		return nil, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -71,40 +71,40 @@ func (t *taskProofRepo) GetTaskProof(id string, ctx context.Context) (*entities.
 // GetTaskProofs implements repository.ITaskProofRepository.
 func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx context.Context) ([]entities.TaskProof, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_PROOF_REPOSITORY) + "GetTaskProofs - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviosCondition bool = false
+	var isHavePreviousCondition bool = false
 	if req.Keyword != "" {
 		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%s'))", req.Keyword)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.Status != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%s')", req.Status)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.ActorAddress != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("actor_address = '%s'", req.ActorAddress)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	if req.ReviewedBy != "" {
-		if isHavePreviosCondition {
+		if isHavePreviousCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("reviewed_by = '%s'", req.ReviewedBy)
-		isHavePreviosCondition = true
+		isHavePreviousCondition = true
 	}
 
 	var order string = "DESC"
@@ -146,11 +146,11 @@ func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx cont
 	var totalRecords int
 	t.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(task_proof_table, queryCondition)).Scan(&totalRecords)
 
-	return res, caculateTotalPages(totalRecords, req.PageSize), nil
+	return res, calculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // IsTaskProofSumittedWithDetail implements repository.ITaskProofRepository.
-func (t *taskProofRepo) IsTaskProofSumittedWithDetail(taskId string, description string, actorAddress string, rawSubmitDate string, ctx context.Context) (bool, error) {
+func (t *taskProofRepo) IsTaskProofSubmittedWithDetail(taskId string, description string, actorAddress string, rawSubmitDate string, ctx context.Context) (bool, error) {
 	var query string = "SELECT id FROM " + task_proof_table + " WHERE task_id = $1 AND description = $2 AND actor_address = $3 AND raw_submit_date = $4 AND (review_status = 'Pending' OR review_status = 'Approved') LIMIT 1"
 
 	var id string
@@ -160,7 +160,7 @@ func (t *taskProofRepo) IsTaskProofSumittedWithDetail(taskId string, description
 		}
 
 		t.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_PROOF_REPOSITORY) + "IsTaskProofSumittedWithDetail - " + err.Error())
-		return false, errors.New(noti.INTERNALL_ERR_MSG)
+		return false, errors.New(noti.INTERNAL_ERR_MSG)
 	}
 
 	return id != "", nil
@@ -172,7 +172,7 @@ func (t *taskProofRepo) UpdateTaskProof(proof entities.TaskProof, ctx context.Co
 		"reviewed_by = $1, review_status = $2 WHERE id = $3"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_PROOF_REPOSITORY) + "UpdateTaskProof - "
-	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
 
 	res, err := t.db.ExecContext(ctx, query, proof.ReviewedBy, proof.ReviewStatus, proof.ID)
 	if err != nil {

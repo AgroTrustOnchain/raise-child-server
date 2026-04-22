@@ -225,11 +225,11 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 
 	var client = a.clients[constant.SuiTestnet]
 	var sender string = ctx.Value("address").(string)
-	var manangeModule = on_chain.InitializeModuleManage()
+	var manageModule = on_chain.InitializeModuleManage()
 	nfts, err := on_chain.GetOnChainOwnedObjects[entities.AdminNft](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
 		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manangeModule.GetModule(), manangeModule.GetAdminNftStruct()),
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manageModule.GetModule(), manageModule.GetAdminNftStruct()),
 		ErrLogger:    a.errLogger,
 	}, ctx)
 	if err != nil {
@@ -239,7 +239,7 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 	editProfileCaps, err := on_chain.GetOnChainOwnedObjects[entities.Cap](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
 		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manangeModule.GetModule(), manangeModule.GetUpdateAdminInfoCapStruct()),
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manageModule.GetModule(), manageModule.GetUpdateAdminInfoCapStruct()),
 		ErrLogger:    a.errLogger,
 	}, ctx)
 	if err != nil {

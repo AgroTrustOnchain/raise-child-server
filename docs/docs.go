@@ -766,7 +766,7 @@ const docTemplate = `{
                 "tags": [
                     "center-reqs"
                 ],
-                "summary": "Confirm and upload center information to Sui Blockhain",
+                "summary": "Confirm and upload center information to Sui Blockchain",
                 "parameters": [
                     {
                         "type": "string",
@@ -1295,7 +1295,7 @@ const docTemplate = `{
                 "tags": [
                     "Child Upload Request"
                 ],
-                "summary": "Confirm and store a child information to Sui Blockhain",
+                "summary": "Confirm and store a child information to Sui Blockchain",
                 "parameters": [
                     {
                         "type": "string",
@@ -2174,7 +2174,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.SupportMealNeadRequest"
+                            "$ref": "#/definitions/request.SupportMealNeedRequest"
                         }
                     }
                 ],
@@ -4417,7 +4417,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Oending Withdraw Proposal ID",
+                        "description": "Pending Withdraw Proposal ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -4472,7 +4472,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Oending Withdraw Proposal ID",
+                        "description": "Pending Withdraw Proposal ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -5660,7 +5660,7 @@ const docTemplate = `{
                 "tags": [
                     "registration"
                 ],
-                "summary": "Confirm and register a staff role uploaded to Sui Blockhain",
+                "summary": "Confirm and register a staff role uploaded to Sui Blockchain",
                 "parameters": [
                     {
                         "type": "string",
@@ -5990,7 +5990,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Sucsess",
+                        "description": "Success",
                         "schema": {
                             "$ref": "#/definitions/response.MessageAPIResponse"
                         }
@@ -6144,7 +6144,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Sucsess",
+                        "description": "Success",
                         "schema": {
                             "$ref": "#/definitions/response.MessageAPIResponse"
                         }
@@ -6186,7 +6186,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "name": "assgined_staff",
+                        "name": "assigned_staff",
                         "in": "query"
                     },
                     {
@@ -7071,7 +7071,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "is_confirm_register": {
-                    "description": "Default as false, when status aprroved, user clicks to update to true, call smart contract to register role",
+                    "description": "Default as false, when status approved, user clicks to update to true, call smart contract to register role",
                     "type": "boolean"
                 },
                 "phone_number": {
@@ -7283,7 +7283,7 @@ const docTemplate = `{
         "entities.PendingWithdrawProposal": {
             "type": "object",
             "properties": {
-                "aievaluation": {
+                "aiEvaluation": {
                     "type": "string"
                 },
                 "createdAt": {
@@ -7376,7 +7376,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "is_confirm_register": {
-                    "description": "Default as false, when status aprroved, user clicks to update to true, call smart contract to register role",
+                    "description": "Default as false, when status approved, user clicks to update to true, call smart contract to register role",
                     "type": "boolean"
                 },
                 "last_name": {
@@ -7507,7 +7507,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "is_confirm_upload": {
-                    "description": "Default as false, when status aprroved, user clicks to update to true, call smart contract to register role",
+                    "description": "Default as false, when status approved, user clicks to update to true, call smart contract to register role",
                     "type": "boolean"
                 },
                 "last_name": {
@@ -8017,7 +8017,7 @@ const docTemplate = `{
                 }
             }
         },
-        "request.SupportMealNeadRequest": {
+        "request.SupportMealNeedRequest": {
             "type": "object",
             "required": [
                 "months"
@@ -9089,7 +9089,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "locahost:8080",
+	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{"http"},
 	Title:            "AgroTrust Server API",

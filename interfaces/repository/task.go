@@ -18,5 +18,5 @@ type ITaskProofRepository interface {
 	GetTaskProof(id string, ctx context.Context) (*entities.TaskProof, error)
 	CreateTaskProof(proof entities.TaskProof, ctx context.Context) error
 	UpdateTaskProof(proof entities.TaskProof, ctx context.Context) error
-	IsTaskProofSumittedWithDetail(taskId, description, actorAddress, rawSubmitDate string, ctx context.Context) (bool, error)
+	IsTaskProofSubmittedWithDetail(taskId, description, actorAddress, rawSubmitDate string, ctx context.Context) (bool, error)
 }

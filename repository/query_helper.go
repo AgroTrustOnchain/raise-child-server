@@ -14,8 +14,8 @@ type generateRetrieveQueryRequest struct {
 	isGetCount  bool
 }
 
-// Caculate total pages
-func caculateTotalPages(records, limitAmount int) int {
+// Calculate total pages
+func calculateTotalPages(records, limitAmount int) int {
 	return int(math.Ceil(float64(records) / float64(limitAmount)))
 }
 

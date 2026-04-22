@@ -23,7 +23,7 @@ func Execute() {
 	// Load env
 	loadEnv(errLogger)
 
-	// Initialize context for backgroun goroutines management
+	// Initialize context for background goroutines management
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
 
@@ -75,7 +75,7 @@ func Execute() {
 		}
 	}()
 
-	// Listen for gracefull shutdown
+	// Listen for graceful shutdown
 	var quit = make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -85,7 +85,7 @@ func Execute() {
 	// Flag signal for all goroutines
 	cancel()
 
-	// Shutdwon gin server
+	// Shutdown gin server
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 

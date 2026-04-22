@@ -27,7 +27,7 @@ func setupApiRoutes(server *gin.Engine) {
 	// Child API endpoints
 	api_route.InitializeChildRoutes(server)
 
-	// Registraion Request API endpoints
+	// Registration Request API endpoints
 	api_route.InitializeRegistrationRequestRoute(server)
 
 	// Profile API endpoints
@@ -90,7 +90,7 @@ func setupApiRoutes(server *gin.Engine) {
 	// Pool Campaign API endpoints
 	api_route.InitializeCampaignRoutes(server)
 
-	// Center API enpoints
+	// Center API endpoints
 	api_route.InitializeCenterRoute(server)
 
 	// Default route to Swagger documentation

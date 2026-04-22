@@ -8,7 +8,7 @@ type Task struct {
 	ChildTaskDetailID   *string   `json:"child_task_detail_id"`
 	CreatedBy           string    `json:"created_by"`
 	AssignedProfileID   *string   `json:"assigned_profile_id"`
-	AssignedStaff       *string   `json:"assgined_staff"`
+	AssignedStaff       *string   `json:"assigned_staff"`
 	ReviewProfileStatus string    `json:"review_profile_status"`
 	ReviewedBy          *string   `json:"reviewed_by"`
 	Region              string    `json:"region"`

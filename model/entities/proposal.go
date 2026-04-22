@@ -22,7 +22,7 @@ type WithdrawProposal struct {
 	RefuseReasons       []string `json:"refuse_reasons"`
 	IsExecuted          bool     `json:"is_executed"`
 	IsFromLocalPool     bool     `json:"is_from_local_pool"`
-	AprrovedPeriods     []string `json:"approved_periods"`
+	ApprovedPeriods     []string `json:"approved_periods"`
 	RefusedPeriods      []string `json:"refused_periods"`
 	TransactionRecordID *string  `json:"transaction_record_id"`
 	CreatedAt           string   `json:"created_at"`
@@ -42,7 +42,7 @@ type SpecialNeedProposal struct {
 	ApproveWeight   string   `json:"approve_weight"`
 	RefuseWeight    string   `json:"refuse_weight"`
 	RefuseReasons   []string `json:"refuse_reasons"`
-	AprrovedPeriods []string `json:"approved_periods"`
+	ApprovedPeriods []string `json:"approved_periods"`
 	RefusedPeriods  []string `json:"refused_periods"`
 	IsConfirm       bool     `json:"is_confirm"`
 	CreatedAt       string   `json:"created_at"`
@@ -88,18 +88,18 @@ func (w WithdrawProposal) ToWithdrawProposalResponse() response.WithdrawProposal
 	}
 
 	var loopLength int
-	if len(w.AprrovedPeriods) >= len(w.RefusedPeriods) {
-		loopLength = len(w.AprrovedPeriods)
+	if len(w.ApprovedPeriods) >= len(w.RefusedPeriods) {
+		loopLength = len(w.ApprovedPeriods)
 	} else {
 		loopLength = len(w.RefusedPeriods)
 	}
 
-	var aprrovedPeriods []time.Time
+	var approvedPeriods []time.Time
 	var refusedPeriods []time.Time
 	for i := 0; i < loopLength; i++ {
-		if i < len(w.AprrovedPeriods) {
-			period, _ := strconv.ParseInt(w.AprrovedPeriods[i], 10, 64)
-			aprrovedPeriods = append(aprrovedPeriods, util.MilliSecToTime(period))
+		if i < len(w.ApprovedPeriods) {
+			period, _ := strconv.ParseInt(w.ApprovedPeriods[i], 10, 64)
+			approvedPeriods = append(approvedPeriods, util.MilliSecToTime(period))
 		}
 
 		if i < len(w.RefusedPeriods) {
@@ -128,7 +128,7 @@ func (w WithdrawProposal) ToWithdrawProposalResponse() response.WithdrawProposal
 		RefuseReasons:   w.RefuseReasons,
 		IsExecuted:      w.IsExecuted,
 		IsFromLocalPool: w.IsFromLocalPool,
-		AprrovedPeriods: aprrovedPeriods,
+		ApprovedPeriods: approvedPeriods,
 		RefusedPeriods:  refusedPeriods,
 		CreatedAt:       util.MilliSecToTime(createdAt),
 		UpdatedAt:       util.MilliSecToTime(updatedAt),
@@ -172,18 +172,18 @@ func (s SpecialNeedProposal) ToSpecialNeedProposalResponse() response.SpecialNee
 	}
 
 	var loopLength int
-	if len(s.AprrovedPeriods) >= len(s.RefusedPeriods) {
-		loopLength = len(s.AprrovedPeriods)
+	if len(s.ApprovedPeriods) >= len(s.RefusedPeriods) {
+		loopLength = len(s.ApprovedPeriods)
 	} else {
 		loopLength = len(s.RefusedPeriods)
 	}
 
-	var aprrovedPeriods []time.Time
+	var approvedPeriods []time.Time
 	var refusedPeriods []time.Time
 	for i := 0; i < loopLength; i++ {
-		if i < len(s.AprrovedPeriods) {
-			period, _ := strconv.ParseInt(s.AprrovedPeriods[i], 10, 64)
-			aprrovedPeriods = append(aprrovedPeriods, util.MilliSecToTime(period))
+		if i < len(s.ApprovedPeriods) {
+			period, _ := strconv.ParseInt(s.ApprovedPeriods[i], 10, 64)
+			approvedPeriods = append(approvedPeriods, util.MilliSecToTime(period))
 		}
 
 		if i < len(s.RefusedPeriods) {
@@ -210,7 +210,7 @@ func (s SpecialNeedProposal) ToSpecialNeedProposalResponse() response.SpecialNee
 		ApproveWeight:   approveWeight,
 		RefuseWeight:    refuseWeight,
 		RefuseReasons:   s.RefuseReasons,
-		AprrovedPeriods: aprrovedPeriods,
+		ApprovedPeriods: approvedPeriods,
 		RefusedPeriods:  refusedPeriods,
 		IsConfirm:       s.IsConfirm,
 		CreatedAt:       util.MilliSecToTime(createdAt),

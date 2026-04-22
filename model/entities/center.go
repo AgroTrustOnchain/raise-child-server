@@ -19,7 +19,7 @@ type CenterRequest struct {
 	RefuseReasons        []string  `json:"refuse_reasons"`
 	Status               string    `json:"status"` // e.g. "Pending", "Approved", "Refused"
 	IsAvailableToConfirm bool      `jsosn:"is_available_to_confirm"`
-	IsConfirmRegister    bool      `json:"is_confirm_register"` // Default as false, when status aprroved, user clicks to update to true, call smart contract to register role
+	IsConfirmRegister    bool      `json:"is_confirm_register"` // Default as false, when status approved, user clicks to update to true, call smart contract to register role
 	CreatedBy            string    `json:"created_by"`
 	CreatedAt            time.Time `json:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
