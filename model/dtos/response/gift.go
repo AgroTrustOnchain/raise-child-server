@@ -19,5 +19,5 @@ type GiftResponse struct {
 	UploadedAt           time.Time `json:"uploaded_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
 	DeliveredAt          time.Time `json:"delivered_at"`
-	ConfirmReceivedBy    string    `json:"confirm_recieved_by"`
+	ConfirmRecievedBy    string    `json:"confirm_recieved_by"`
 }

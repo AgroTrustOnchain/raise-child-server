@@ -8,4 +8,5 @@ import (
 
 type ICenterService interface {
 	GetCenters(req request.GetCentersRequest, ctx context.Context) (response.PaginationDataResponse, error)
+	GetCenterDetailByLeaderRegion(ctx context.Context) (response.CenterCardMinimumResponse, error)
 }

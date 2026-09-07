@@ -4,36 +4,47 @@ import (
 	"raise-child/model/dtos/response"
 	"raise-child/util"
 	"strconv"
-	"time"
 )
 
 type BooksNeed struct {
-	ID                ID       `json:"id"`
-	ChildID           string   `json:"child"`
-	Year              string   `json:"year"`
-	YearChanges       []string `json:"year_changes"`
-	Semester           string   `json:"semester"`
-	Value             string   `json:"value"`
-	SupportedYears    []string `json:"supported_years"`
-	Donors            []string `json:"donors"`
-	Donations         []string `json:"donations"`
-	WithdrawProposals []string `json:"withdraw_proposals"`
-	WithdrawsForNeed  []string `json:"withdraws_for_need"`
-	IsUpdated         bool     `json:"is_updated"`
+	ID                      ID       `json:"id"`
+	ChildID                 string   `json:"child"`
+	Year                    string   `json:"year"`
+	YearChanges             []string `json:"year_changes"`
+	ValueChanges            []string `json:"value_changes"`
+	Semster                 string   `json:"semester"`
+	Value                   string   `json:"value"`
+	SupportedYears          []string `json:"supported_years"`
+	Donors                  []string `json:"donors"`
+	DonorTotalContributions []string `json:"donor_total_contributions"`
+	ProvideDates            []string `json:"provide_dates"`
+	ProvidePeriods          []string `json:"provide_periods"`
+	ProvideStaffs           []string `json:"provide_staffs"`
+	ProvideImageBlobIDs     []string `json:"provide_image_blob_ids"`
+	Donations               []string `json:"donations"`
+	WithdrawProposals       []string `json:"withdraw_proposals"`
+	WithdrawsForNeed        []string `json:"withdraws_for_need"`
+	IsUpdated               bool     `json:"is_updated"`
 }
 
 type HealthInsuranceNeed struct {
-	ID                ID       `json:"id"`
-	ChildID           string   `json:"child"`
-	Year              string   `json:"year"`
-	YearChanges       []string `json:"year_changes"`
-	Value             string   `json:"value"`
-	SupportedYears    []string `json:"supported_years"`
-	Donors            []string `json:"donors"`
-	Donations         []string `json:"donations"`
-	WithdrawProposals []string `json:"withdraw_proposals"`
-	WithdrawsForNeed  []string `json:"withdraws_for_need"`
-	IsUpdated         bool     `json:"is_updated"`
+	ID                      ID       `json:"id"`
+	ChildID                 string   `json:"child"`
+	Year                    string   `json:"year"`
+	YearChanges             []string `json:"year_changes"`
+	ValueChanges            []string `json:"value_changes"`
+	Value                   string   `json:"value"`
+	SupportedYears          []string `json:"supported_years"`
+	Donors                  []string `json:"donors"`
+	DonorTotalContributions []string `json:"donor_total_contributions"`
+	ProvideDates            []string `json:"provide_dates"`
+	ProvidePeriods          []string `json:"provide_periods"`
+	ProvideStaffs           []string `json:"provide_staffs"`
+	ProvideImageBlobIDs     []string `json:"provide_image_blob_ids"`
+	Donations               []string `json:"donations"`
+	WithdrawProposals       []string `json:"withdraw_proposals"`
+	WithdrawsForNeed        []string `json:"withdraws_for_need"`
+	IsUpdated               bool     `json:"is_updated"`
 }
 
 type MealSupportDuration struct {
@@ -63,21 +74,25 @@ type WrapDurationFields struct {
 }
 
 type MealNeed struct {
-	ID                   ID                    `json:"id"`
-	ChildID              string                `json:"child"`
-	Year                 string                `json:"year"`
-	Value                string                `json:"value"`
-	Donors               []string              `json:"donors"`
-	Donations            []string              `json:"donations"`
-	Durations            []MealSupportDuration `json:"durations"`
-	TotalSupportedMonths string                `json:"total_supported_months"`
-	SupportedYears       WrapVecMap            `json:"supported_years"`
-	ProvideMealDates     []string              `json:"provide_meal_dates"`
-	ProvideMealPeriods   []string              `json:"provide_meal_periods"`
-	ProvideMealStaffs    []string              `json:"provide_meal_staffs"`
-	WithdrawProposals    []string              `json:"withdraw_proposals"`
-	WithdrawsForNeed     []string              `json:"withdraws_for_need"`
-	IsUpdated            bool                  `json:"is_updated"`
+	ID                      ID                    `json:"id"`
+	ChildID                 string                `json:"child"`
+	Year                    string                `json:"year"`
+	Value                   string                `json:"value"`
+	YearChanges             []string              `json:"year_changes"`
+	ValueChanges            []string              `json:"value_changes"`
+	Donors                  []string              `json:"donors"`
+	DonorTotalContributions []string              `json:"donor_total_contributions"`
+	Donations               []string              `json:"donations"`
+	Durations               []MealSupportDuration `json:"durations"`
+	TotalSupportedMonths    string                `json:"total_supported_months"`
+	SupportedYears          WrapVecMap            `json:"supported_years"`
+	ProvideDates            []string              `json:"provide_dates"`
+	ProvidePeriods          []string              `json:"provide_periods"`
+	ProvideStaffs           []string              `json:"provide_staffs"`
+	ProvideImageBlobIDs     []string              `json:"provide_image_blob_ids"`
+	WithdrawProposals       []string              `json:"withdraw_proposals"`
+	WithdrawsForNeed        []string              `json:"withdraws_for_need"`
+	IsUpdated               bool                  `json:"is_updated"`
 }
 
 type OffChainMealSupportDuration struct {
@@ -115,11 +130,11 @@ func (m MealNeed) ToMealNeedResponse() response.MealNeedResponse {
 		}
 	}
 
-	var provideMealPeriods []time.Time
-	for _, rawPeriod := range m.ProvideMealPeriods {
-		period, _ := strconv.ParseInt(rawPeriod, 10, 64)
-		provideMealPeriods = append(provideMealPeriods, util.MilliSecToTime(period))
-	}
+	// var provideMealPeriods []time.Time
+	// for _, rawPeriod := range m.ProvidePeriods {
+	// 	period, _ := strconv.ParseInt(rawPeriod, 10, 64)
+	// 	provideMealPeriods = append(provideMealPeriods, util.MilliSecToTime(period))
+	// }
 
 	return response.MealNeedResponse{
 		ID:                   m.ID.ID,
@@ -130,21 +145,22 @@ func (m MealNeed) ToMealNeedResponse() response.MealNeedResponse {
 		Durations:            durations,
 		TotalSupportedMonths: totalMonths,
 		SupportedYears:       supportedYears,
-		ProvideMealDates:     m.ProvideMealDates,
-		ProvideMealPeriods:   provideMealPeriods,
-		ProvideMealStaffs:    m.ProvideMealStaffs,
+		ProvideDates:         m.ProvideDates,
+		ProvidePeriods:       m.ProvidePeriods,
+		ProvideStaffs:        m.ProvideStaffs,
+		ProvideImageBlobIDs:  m.ProvideImageBlobIDs,
 		WithdrawProposals:    m.WithdrawProposals,
 		WithdrawsForNeed:     m.WithdrawsForNeed,
 	}
 }
 
-func (b BooksNeed) ToBooksNeedResponse() response.BooksNeedResponse {
+func (b BooksNeed) ToBooksNeedReponse() response.BooksNeedResponse {
 	if b.ID.ID == "" {
 		return response.BooksNeedResponse{}
 	}
 
 	year, _ := strconv.Atoi(b.Year)
-	semester, _ := strconv.Atoi(b.Semester)
+	semseter, _ := strconv.Atoi(b.Semster)
 	value, _ := strconv.ParseInt(b.Value, 10, 64)
 
 	// Length year changes always at least equal to length supported years
@@ -160,20 +176,24 @@ func (b BooksNeed) ToBooksNeedResponse() response.BooksNeedResponse {
 	}
 
 	return response.BooksNeedResponse{
-		ID:                b.ID.ID,
-		Year:              year,
-		YearChanges:       yearChanges,
-		Semester:           semester,
-		Value:             value,
-		SupportedYears:    supportedYears,
-		Donors:            b.Donors,
-		Donations:         b.Donations,
-		WithdrawProposals: b.WithdrawProposals,
-		WithdrawsForNeed:  b.WithdrawsForNeed,
+		ID:                  b.ID.ID,
+		Year:                year,
+		YearChanges:         yearChanges,
+		Semster:             semseter,
+		Value:               value,
+		SupportedYears:      supportedYears,
+		Donors:              b.Donors,
+		ProvideDates:        b.ProvideDates,
+		ProvidePeriods:      b.ProvidePeriods,
+		ProvideStaffs:       b.ProvideStaffs,
+		ProvideImageBlobIDs: b.ProvideImageBlobIDs,
+		Donations:           b.Donations,
+		WithdrawProposals:   b.WithdrawProposals,
+		WithdrawsForNeed:    b.WithdrawsForNeed,
 	}
 }
 
-func (h HealthInsuranceNeed) ToHealthInsuranceNeedResponse() response.HealthInsuranceNeedResponse {
+func (h HealthInsuranceNeed) ToHealthInsuranceNeedReponse() response.HealthInsuranceNeedResponse {
 	if h.ID.ID == "" {
 		return response.HealthInsuranceNeedResponse{}
 	}
@@ -194,14 +214,18 @@ func (h HealthInsuranceNeed) ToHealthInsuranceNeedResponse() response.HealthInsu
 	}
 
 	return response.HealthInsuranceNeedResponse{
-		ID:                h.ID.ID,
-		Year:              year,
-		YearChanges:       yearChanges,
-		Value:             value,
-		SupportedYears:    supportedYears,
-		Donors:            h.Donors,
-		Donations:         h.Donations,
-		WithdrawProposals: h.WithdrawProposals,
-		WithdrawsForNeed:  h.WithdrawsForNeed,
+		ID:                  h.ID.ID,
+		Year:                year,
+		YearChanges:         yearChanges,
+		Value:               value,
+		SupportedYears:      supportedYears,
+		Donors:              h.Donors,
+		ProvideDates:        h.ProvideDates,
+		ProvidePeriods:      h.ProvidePeriods,
+		ProvideStaffs:       h.ProvideStaffs,
+		ProvideImageBlobIDs: h.ProvideImageBlobIDs,
+		Donations:           h.Donations,
+		WithdrawProposals:   h.WithdrawProposals,
+		WithdrawsForNeed:    h.WithdrawsForNeed,
 	}
 }

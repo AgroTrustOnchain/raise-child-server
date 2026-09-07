@@ -49,7 +49,7 @@ func (v *volunteerRequestRepo) CreateRegistrationRequest(req entities.VolunteerR
 		req.CreatedBy, req.CreatedAt, req.UpdatedAt, req.ClosedAt); err != nil {
 
 		v.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -58,44 +58,44 @@ func (v *volunteerRequestRepo) CreateRegistrationRequest(req entities.VolunteerR
 // GetRegistrationRequests implements repository.IvolunteerRequestRepository.
 func (v *volunteerRequestRepo) GetRegistrationRequests(req request.GetNormalStaffRegistrationRequests, ctx context.Context) ([]entities.VolunteerRegistrationRequest, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.ADMIN_REQUEST_REPOSITORY) + "GetRegistrationRequests - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviousCondition bool = false
+	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
 		queryCondition += fmt.Sprintf("(LOWER(identity_code) LIKE LOWER('%%%%%s%%%%') OR LOWER(first_name) LIKE LOWER('%%%%%s%%%%') OR LOWER(last_name) LIKE LOWER('%%%%%s%%%%') OR date_of_birth LIKE '%%%%%s%%%%' OR phone_number LIKE '%%%%%s%%%%' OR LOWER(email) LIKE LOWER('%%%%%s%%%%'))", req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.Region != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(region) = LOWER('%%%%%s%%%%')", req.Region)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.Gender != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(gender) = LOWER('%%%%%s%%%%')", req.Gender)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.Status != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%%%%%s%%%%')", req.Status)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.IsClosed != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
@@ -108,14 +108,14 @@ func (v *volunteerRequestRepo) GetRegistrationRequests(req request.GetNormalStaf
 	}
 
 	if req.IsConfirm != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("is_confirm_register = %v", *req.IsConfirm)
 	}
 
-	if isHavePreviousCondition {
+	if isHavePreviosCondition {
 		queryCondition += " "
 	}
 
@@ -160,7 +160,7 @@ func (v *volunteerRequestRepo) GetRegistrationRequests(req request.GetNormalStaf
 	var totalRecords int
 	v.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(volunteer_request_table, queryCondition)).Scan(&totalRecords)
 
-	return res, calculateTotalPages(totalRecords, volunteer_request_limit_record), nil
+	return res, caculateTotalPages(totalRecords, volunteer_request_limit_record), nil
 }
 
 // GetRequest implements repository.IvolunteerRequestRepository.
@@ -181,7 +181,7 @@ func (v *volunteerRequestRepo) GetRequest(id string, ctx context.Context) (*enti
 		}
 
 		v.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -191,7 +191,7 @@ func (v *volunteerRequestRepo) GetRequest(id string, ctx context.Context) (*enti
 func (v *volunteerRequestRepo) GetWalletRegistrationRequests(id string, ctx context.Context) ([]entities.VolunteerRegistrationRequest, error) {
 	var query string = "SELECT * FROM " + volunteer_request_table + " WHERE created_by = $1 ORDER BY created_at DESC"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.VOLUNTEER_REQUEST_REPOSITORY) + "GetWalletRegistrationRequests - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	rows, err := v.db.QueryContext(ctx, query, id)
 	if err != nil {
@@ -226,7 +226,7 @@ func (v *volunteerRequestRepo) UpdateRegistrationRequest(req entities.VolunteerR
 		"is_available_to_confirm = $6, updated_at = $7, avatar_blob_id = $8, region = $9, WHERE id = $10"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.VOLUNTEER_REQUEST_REPOSITORY) + "UpdateRegistrationRequest - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	res, err := v.db.ExecContext(ctx, query, req.Approvers, req.Refusers, req.RefuseReasons, req.Status, req.IsConfirmRegister,
 		req.IsAvailableToConfirm, req.UpdatedAt, req.AvatarBlobID, req.Region, req.ID)
@@ -242,7 +242,7 @@ func (v *volunteerRequestRepo) UpdateRegistrationRequest(req entities.VolunteerR
 	}
 
 	if rowsAffected == 0 {
-		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, volunteer_request_table))
+		return fmt.Errorf(noti.UNDEFINED_OBJECT_WARN_MSG, volunteer_request_table)
 	}
 
 	return nil

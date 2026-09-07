@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"raise-child/constants/env"
@@ -24,7 +23,9 @@ import (
 	"time"
 
 	"github.com/block-vision/sui-go-sdk/constant"
+	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 type leaderRequestService struct {
@@ -43,7 +44,6 @@ func InitializeLocalLeaderRequestService(db *sql.DB, errLogger *log.Logger) busi
 	}
 }
 
-// GenerateLocalLeaderRequestService generates the local leader request service.
 func GenerateLocalLeaderRequestService() (business.ILocalLeaderRequestService, error) {
 	var errLogger = util.GetLogConfig(shared.ERROR_LEVEL)
 
@@ -57,112 +57,24 @@ func GenerateLocalLeaderRequestService() (business.ILocalLeaderRequestService, e
 
 // ConfirmRequest implements business.ILocalLeaderRequestService.
 func (l *leaderRequestService) ConfirmRequest(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-
-	var sender string = ctx.Value("address").(string)
-	if !util.IsValidSuiAddressStrict(sender) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
-
-	req, err := l.leaderRequestRepo.GetRequest(id, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
-
-	if req == nil {
-		return response.BuildTransactionResponse{}, genericErr
-	}
-
-	if req.CreatedBy != sender {
-		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	}
-
-	// Pending process
-	if req.ClosedAt.After(time.Now()) {
-		return response.BuildTransactionResponse{}, errors.New(noti.STILL_PENDING_REQUEST_MESSAGE)
-	} else { // Request closed
-		var rate float32 = float32(len(req.Approvers)) / float32(len(req.Approvers)+len(req.Refusers))
-		var isDenied bool = false
-
-		if rate >= approve_rate_limit {
-			req.Status = request_approved_status
-			req.IsConfirmRegister = true
-		} else {
-			req.Status = request_refused_status
-			isDenied = true
-		}
-
-		req.UpdatedAt = time.Now()
-		if err := l.leaderRequestRepo.UpdateRegistrationRequest(*req, ctx); err != nil {
-			return response.BuildTransactionResponse{}, err
-		}
-
-		if isDenied {
-			return response.BuildTransactionResponse{}, nil
-		}
-	}
-
-	// Wait for background server to mint cap object to register
-	if !req.IsAvailableToConfirm {
-		return response.BuildTransactionResponse{}, nil
-	}
-
-	var client = l.clients[constant.SuiTestnet]
-	var mangeModule = on_chain.InitializeModuleManage()
-	caps, err := on_chain.GetOnChainOwnedObjects[entities.Cap](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), mangeModule.GetModule(), mangeModule.GetRegisterLeaderCapStruct()),
-		ErrLogger:    l.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
-
-	var staffModule = on_chain.InitializeModuleStaff()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    client,
-		Sender:    sender,
-		Module:    staffModule.GetModule(),
-		Function:  staffModule.GetFunctionRegisterLeader(),
-		ErrLogger: l.errLogger,
-		Arguments: staffModule.ToRegisterLeaderArguments(on_chain.RegisterLeaderArguments{
-			CenterAddress:     req.CenterAddress,
-			CenterPhoneNumber: req.CenterPhoneNumber,
-			CenterImageBlobID: req.CenterImageBlobID,
-			RegisterVolunteerArguments: on_chain.RegisterVolunteerArguments{
-				Region: req.Region,
-				RegisterAdminArguments: on_chain.RegisterAdminArguments{
-					CapID:              caps[0].ID.ID,
-					IdentityCode:       req.IdentityCode,
-					IdentityCardBlobID: req.IdentityCardBlobID,
-					AvatarBlobID:       req.AvatarBlobID,
-					FirstName:          req.FirstName,
-					LastName:           req.LastName,
-					Gender:             req.Gender,
-					DateOfBirth:        req.DateOfBirth,
-					PhoneNumber:        req.PhoneNumber,
-					Email:              req.Email,
-				},
-			},
-		}),
-	}, ctx)
-
-	return response.BuildTransactionResponse{
-		TxBytes: txBytes,
-	}, err
+	panic("unimplemented")
 }
 
 // CreateRequest implements business.ILocalLeaderRequestService.
 func (l *leaderRequestService) CreateRequest(req request.CreateRegistrationRequest, ctx context.Context) (*entities.LocalLeaderRegistrationRequest, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+
 	var sender string = ctx.Value("address").(string)
+	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
+		return nil, genericErr
+	}
+
 	reqs, err := l.leaderRequestRepo.GetWalletRegistrationRequests(sender, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if reqs != nil && len(reqs) > 0 {
+	if len(reqs) > 0 {
 		for _, req := range reqs {
 			if req.Status == request_pending_status || req.Status == request_approved_status {
 				return nil, genericErr
@@ -232,7 +144,7 @@ func (l *leaderRequestService) GetRequests(req request.GetNormalStaffRegistratio
 
 // GetWalletRequests implements business.ILocalLeaderRequestService.
 func (l *leaderRequestService) GetWalletRequests(id string, ctx context.Context) ([]entities.LocalLeaderRegistrationRequest, error) {
-	if !util.IsValidSuiAddressStrict(id) {
+	if !utils.IsValidSuiAddress(models.SuiAddress(id)) {
 		return nil, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -241,12 +153,18 @@ func (l *leaderRequestService) GetWalletRequests(id string, ctx context.Context)
 
 // VoteRequest implements business.ILocalLeaderRequestService.
 func (l *leaderRequestService) VoteRequest(id string, req request.VoteRequest, ctx context.Context) error {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+
+	var voter string = ctx.Value("address").(string)
+	if !utils.IsValidSuiAddress(models.SuiAddress(voter)) {
+		return genericErr
+	}
+
 	request, err := l.leaderRequestRepo.GetRequest(id, ctx)
 	if err != nil {
 		return err
 	}
 
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if request == nil {
 		return genericErr
 	}
@@ -255,7 +173,6 @@ func (l *leaderRequestService) VoteRequest(id string, req request.VoteRequest, c
 		return errors.New(noti.REQUEST_CLOSED_MESSAGE)
 	}
 
-	var voter string = ctx.Value("address").(string)
 	if voter == request.CreatedBy {
 		return errors.New(noti.OWNER_VOTE_WARN_MSG)
 	}

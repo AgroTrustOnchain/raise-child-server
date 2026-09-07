@@ -13,7 +13,7 @@ type volunteerNotiMockRepo struct {
 	mock.Mock
 }
 
-func InitializeVolunteerNotiMockRepo() repository.IVolunteerNotiRepository {
+func InializeVolunteerNotiMockRepo() repository.IVolunteerNotiRepository {
 	return &volunteerNotiMockRepo{}
 }
 

@@ -12,7 +12,7 @@ var _networkAliases map[string]sui.ISuiAPI
 
 func init() {
 	if _testnetClient == nil {
-		_testnetClient = sui.NewSuiClient(constant.BvTestnetEndpoint) // Optimized SUI testnet gRPC url from Block Vision (Third Party)
+		_testnetClient = sui.NewSuiClient(network.TESTNET_NETWORK) // Optimized SUI testnet gRPC url from Block Vision (Third Party)
 	}
 
 	if _devnetClient == nil {

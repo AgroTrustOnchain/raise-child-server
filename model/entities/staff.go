@@ -3,12 +3,13 @@ package entities
 import (
 	"raise-child/model/dtos/response"
 	"raise-child/util"
+	"strconv"
 )
 
 type Staff struct {
 	ID           ID     `json:"id"`
 	User         string `json:"user"`
-	Role         string `json:"string"`
+	Role         string `json:"role"`
 	IdentityCode string `json:"identity_code"`
 	AvatarBlobID string `json:"avatar_blob_id"`
 	Region       string `json:"region"`
@@ -18,13 +19,15 @@ type Staff struct {
 	DateOfBirth  string `json:"date_of_birth"`
 	PhoneNumber  string `json:"phone_number"`
 	Email        string `json:"email"`
-	UploadedAt   int64  `json:"uploaded_at"`
+	UploadedAt   string `json:"uploaded_at"`
 }
 
 func (s Staff) ToStaffResponse() response.StaffResponse {
 	if s.ID.ID == "" {
 		return response.StaffResponse{}
 	}
+
+	uploadedAt, _ := strconv.ParseInt(s.UploadedAt, 10, 64)
 
 	return response.StaffResponse{
 		ID:           s.ID.ID,
@@ -39,6 +42,6 @@ func (s Staff) ToStaffResponse() response.StaffResponse {
 		DateOfBirth:  s.DateOfBirth,
 		PhoneNumber:  s.PhoneNumber,
 		Email:        s.Email,
-		UploadedAt:   util.MilliSecToTime(s.UploadedAt),
+		UploadedAt:   util.MilliSecToTime(uploadedAt),
 	}
 }

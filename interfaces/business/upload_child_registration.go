@@ -7,12 +7,13 @@ import (
 	"raise-child/model/entities"
 )
 
+// VoteUploadChildRequest(id string, req request.VoteRequest, ctx context.Context) error
+// ConfirmUploadChildRequest(id string, ctx context.Context) (response.BuildTransactionResponse, error)
+
 type IUploadChildRequestService interface {
 	GetUploadChildRequests(req request.GetUploadChildRequests, ctx context.Context) (response.PaginationDataResponse, error)
 	GetWalletUploadChildRequests(id string, page int, ctx context.Context) (response.PaginationDataResponse, error)
-	GetUploadChildRequest(id string, ctx context.Context) (*entities.UploadChildRequest, error)
+	GetUploadChildRequest(id string, ctx context.Context) (response.UploadChildRequestResponse, error)
 	CreateUploadChildRequest(req request.UploadChildRequest, ctx context.Context) (*entities.UploadChildRequest, error)
-	VoteUploadChildRequest(id string, req request.VoteRequest, ctx context.Context) error
-	ConfirmUploadChildRequest(id string, ctx context.Context) (response.BuildTransactionResponse, error)
 	ReviewUploadChildRequest(id string, req request.VoteRequest, ctx context.Context) error
 }

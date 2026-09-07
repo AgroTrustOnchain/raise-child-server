@@ -7,10 +7,12 @@ import (
 	"raise-child/model/entities"
 )
 
+//	ApprovePendingCampaign(id string, ctx context.Context) (response.BuildTransactionResponse, error)
+
 type IPendingCampaignService interface {
 	GetPendingCampaigns(req request.GetPendingCampaignsRequest, ctx context.Context) (response.PaginationDataResponse, error)
 	GetPendingCampaign(id string, ctx context.Context) (*entities.PendingCampaign, error)
 	CreatePendingCampaign(req request.CreatePendingCampaignRequest, ctx context.Context) (*entities.PendingCampaign, error)
-	ApprovePendingCampaign(id string, ctx context.Context) (response.BuildTransactionResponse, error)
+	ApprovePendingCampaign(id string, ctx context.Context) error
 	RefusePendingCampaign(id string, ctx context.Context) error
 }

@@ -83,3 +83,32 @@ func GetWalletPersonalProfile(ctx *gin.Context) {
 		PostType: action_type.NON_POST,
 	})
 }
+
+// GetProfile godoc
+// @Summary      Get a profile
+// @Description  Get a profile
+// @Tags         profile
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                      true  "Profile ID"
+// @Success      200      {object}  entities.Profile
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /profiles/{id} [get]
+func GetProfile(ctx *gin.Context) {
+	service, err := business.GenerateProfileService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.GetProfile(ctx.Param("id"), ctx)
+
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}

@@ -12,7 +12,7 @@ import (
 	"raise-child/model/entities"
 )
 
-type childTaskDetailRepo struct {
+type childtaskDetailRepo struct {
 	db        *sql.DB
 	errLogger *log.Logger
 }
@@ -20,14 +20,14 @@ type childTaskDetailRepo struct {
 const child_task_detail_table string = "child_task_details"
 
 func InitializeChildTaskDetailRepository(db *sql.DB, errLogger *log.Logger) repository.IChildTaskDetailRepository {
-	return &childTaskDetailRepo{
+	return &childtaskDetailRepo{
 		db:        db,
 		errLogger: errLogger,
 	}
 }
 
 // CreateChildTaskDetail implements repository.IChildTaskDetailRepository.
-func (c *childTaskDetailRepo) CreateChildTaskDetail(detail entities.ChildTaskDetail, ctx context.Context) error {
+func (c *childtaskDetailRepo) CreateChildTaskDetail(detail entities.ChildTaskDetail, ctx context.Context) error {
 	var query string = "INSERT INTO " + child_task_detail_table +
 		" (id, child_id, purpose, target)  values ($1, $2, $3, $4)"
 
@@ -36,14 +36,14 @@ func (c *childTaskDetailRepo) CreateChildTaskDetail(detail entities.ChildTaskDet
 	if _, err := c.db.ExecContext(ctx, query, detail.ID, detail.ChildID, detail.Purpose, detail.Target); err != nil {
 
 		c.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
 }
 
 // GetChildTaskDetail implements repository.IChildTaskDetailRepository.
-func (c *childTaskDetailRepo) GetChildTaskDetail(id string, ctx context.Context) (*entities.ChildTaskDetail, error) {
+func (c *childtaskDetailRepo) GetChildTaskDetail(id string, ctx context.Context) (*entities.ChildTaskDetail, error) {
 	var query string = "SELECT id, child_id, purpose, target FROM " + child_task_detail_table + " WHERE id = $1"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.CHILD_TASK_DETAIL_REPOSITORY) + "GetChildTaskDetail - "
 
@@ -56,7 +56,7 @@ func (c *childTaskDetailRepo) GetChildTaskDetail(id string, ctx context.Context)
 		}
 
 		c.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil

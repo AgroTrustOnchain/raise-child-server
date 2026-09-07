@@ -43,7 +43,7 @@ type INotificationWorker interface {
 	Stop()
 }
 
-func InitializeNotificationWorker(
+func InitalizeNotificationWorker(
 	volunteerNotiRepo repository.IVolunteerNotiRepository,
 	leaderNotiRepo repository.ILeaderNotiRepository,
 	errLogger *log.Logger,

@@ -51,7 +51,7 @@ func (v *localLeaderRequestRepo) CreateRegistrationRequest(req entities.LocalLea
 		req.CreatedBy, req.CreatedAt, req.UpdatedAt, req.ClosedAt); err != nil {
 
 		v.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -60,35 +60,35 @@ func (v *localLeaderRequestRepo) CreateRegistrationRequest(req entities.LocalLea
 // GetRegistrationRequests implements repository.IlocalLeaderRequestRepository.
 func (v *localLeaderRequestRepo) GetRegistrationRequests(req request.GetNormalStaffRegistrationRequests, ctx context.Context) ([]entities.LocalLeaderRegistrationRequest, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.ADMIN_REQUEST_REPOSITORY) + "GetRegistrationRequests - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviousCondition bool = false
+	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
-		queryCondition += fmt.Sprintf("(LOWER(identity_code) LIKE LOWER('%%%%%s%%%%') OR LOWER(first_name) LIKE LOWER('%%%%%s%%%%') OR LOWER(last_name) LIKE LOWER('%%%%%s%%%%') OR date_of_birth LIKE '%%%%%s%%%%' OR phone_number LIKE '%%%%%s%%%%' OR LOWER(email) LIKE LOWER('%%%%%s%%%%') OR LOWER(region) LIKE LOWER('%%%%%s%%%%') OR LOWER(center_address) LIKE LOWER('%%%%%s%%%%') OR center_phone_number LIKE '%%%%%s%%%%')", req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword)
-		isHavePreviousCondition = true
+		queryCondition += fmt.Sprintf("(LOWER(identity_code) LIKE LOWER('%s') OR LOWER(first_name) LIKE LOWER('%s') OR LOWER(last_name) LIKE LOWER('%s') OR date_of_birth LIKE '%s' OR phone_number LIKE '%s' OR LOWER(email) LIKE LOWER('%s') OR LOWER(region) LIKE LOWER('%s') OR LOWER(center_address) LIKE LOWER('%s') OR center_phone_number LIKE '%s')", req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword, req.Keyword)
+		isHavePreviosCondition = true
 	}
 
 	if req.Gender != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(gender) = LOWER('%%%%%s%%%%')", req.Gender)
-		isHavePreviousCondition = true
+		queryCondition += fmt.Sprintf("LOWER(gender) = LOWER('%s')", req.Gender)
+		isHavePreviosCondition = true
 	}
 
 	if req.Status != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%%%%%s%%%%')", req.Status)
-		isHavePreviousCondition = true
+		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%s')", req.Status)
+		isHavePreviosCondition = true
 	}
 
 	if req.IsClosed != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
@@ -101,14 +101,14 @@ func (v *localLeaderRequestRepo) GetRegistrationRequests(req request.GetNormalSt
 	}
 
 	if req.IsConfirm != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("is_confirm_register = %v", *req.IsConfirm)
 	}
 
-	if isHavePreviousCondition {
+	if isHavePreviosCondition {
 		queryCondition += " "
 	}
 
@@ -154,7 +154,7 @@ func (v *localLeaderRequestRepo) GetRegistrationRequests(req request.GetNormalSt
 	var totalRecords int
 	v.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(local_leader_request_table, queryCondition)).Scan(&totalRecords)
 
-	return res, calculateTotalPages(totalRecords, local_leader_request_limit_record), nil
+	return res, caculateTotalPages(totalRecords, local_leader_request_limit_record), nil
 }
 
 // GetRequest implements repository.IlocalLeaderRequestRepository.
@@ -176,7 +176,7 @@ func (v *localLeaderRequestRepo) GetRequest(id string, ctx context.Context) (*en
 		}
 
 		v.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -186,7 +186,7 @@ func (v *localLeaderRequestRepo) GetRequest(id string, ctx context.Context) (*en
 func (v *localLeaderRequestRepo) GetWalletRegistrationRequests(id string, ctx context.Context) ([]entities.LocalLeaderRegistrationRequest, error) {
 	var query string = "SELECT * FROM " + local_leader_request_table + " WHERE created_by = $1 ORDER BY created_at DESC"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_REQUEST_REPOSITORY) + "GetWalletRegistrationRequests - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	rows, err := v.db.QueryContext(ctx, query, id)
 	if err != nil {
@@ -223,7 +223,7 @@ func (v *localLeaderRequestRepo) UpdateRegistrationRequest(req entities.LocalLea
 		"center_address = $10, center_phone_number = $11, center_image_blob_id = $12 WHERE id = $13"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_REQUEST_REPOSITORY) + "UpdateRegistrationRequest - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	res, err := v.db.ExecContext(ctx, query, req.Approvers, req.Refusers, req.RefuseReasons, req.Status, req.IsConfirmRegister,
 		req.IsAvailableToConfirm, req.UpdatedAt, req.AvatarBlobID, req.Region,
@@ -240,7 +240,7 @@ func (v *localLeaderRequestRepo) UpdateRegistrationRequest(req entities.LocalLea
 	}
 
 	if rowsAffected == 0 {
-		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, local_leader_request_table))
+		return fmt.Errorf(noti.UNDEFINED_OBJECT_WARN_MSG, local_leader_request_table)
 	}
 
 	return nil

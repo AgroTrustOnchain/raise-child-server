@@ -7,7 +7,7 @@ type StaffNftResponse struct {
 	Owner              string    `json:"owner"`
 	Role               string    `json:"role"`
 	IdentityCode       string    `json:"identity_code"`
-	IdentityCardBlobID string    `json:"identity_card_blob_id"`
+	IdentityCardImgUrl string    `json:"identity_card_img_url"`
 	AvatarBlobID       string    `json:"avatar_blob_id"`
 	Region             string    `json:"region"`
 	FirstName          string    `json:"first_name"`

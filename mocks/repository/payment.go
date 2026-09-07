@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"raise-child/interfaces/repository"
 	"raise-child/model/dtos/request"
 	"raise-child/model/entities"
 
@@ -12,7 +13,12 @@ type paymentMockRepo struct {
 	mock.Mock
 }
 
-func InitializePaymentMockRepo() *paymentMockRepo {
+// GetPayment implements repository.IPaymentRepository.
+func (p *paymentMockRepo) GetPayment(id string, ctx context.Context) (*entities.Payment, error) {
+	panic("unimplemented")
+}
+
+func InializePaymentMockRepo() repository.IPaymentRepository {
 	return &paymentMockRepo{}
 }
 

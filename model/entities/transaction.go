@@ -24,7 +24,7 @@ type Transaction struct {
 	Amount       string `json:"amount"`
 	Message      string `json:"message"`
 	CoinType     string `json:"coin_type"` // e.g., "Sui", "USDC"
-	CreatedAt    int64  `json:"created_at"`
+	CreatedAt    string `json:"created_at"`
 }
 
 func (t Transaction) ToTransactionResponse() response.TransactionResponse {
@@ -33,14 +33,16 @@ func (t Transaction) ToTransactionResponse() response.TransactionResponse {
 	}
 
 	amount, _ := strconv.ParseInt(t.Amount, 10, 64)
+	createdAt, _ := strconv.ParseInt(t.CreatedAt, 10, 64)
 
 	return response.TransactionResponse{
 		ID:           t.ID.ID,
 		ActorAddress: t.ActorAddress,
 		ActionType:   t.ActionType,
+		PoolName:     t.PoolName,
 		Amount:       amount,
 		Message:      t.Message,
 		CoinType:     t.CoinType,
-		CreatedAt:    util.MilliSecToTime(t.CreatedAt),
+		CreatedAt:    util.MilliSecToTime(createdAt),
 	}
 }

@@ -5,197 +5,200 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"raise-child/model/dtos/response"
+	"raise-child/util/ai/prompts"
 	"strings"
-
-	"github.com/google/generative-ai-go/genai"
+	"time"
 )
 
+type ValidateTaskProof struct {
+	TaskDescription string
+	ProofImageURL   string
+	CreatedAt       time.Time
+}
+
+type ValidateTaskProofResponse struct {
+	AIEvaluation string `json:"ai_evaluation"`
+	AIReason     string `json:"ai_reason"`
+}
+
 type aiClient struct {
-	geminiProvider *geminiProvider
-	errLogger      *log.Logger
+	groqProvider *GroqClient
+	errLogger    *log.Logger
 }
 
 var _aiClient *aiClient
 
-type ImageValidateCase string
-
-const ()
-
 type IAiClientProvider interface {
-	ValidateUploadChildRequest(req ValidateUploadChildRequest, ctx context.Context) string
-	ValidateCreateCenterRequest(req ValidateCreateCenterRequest, ctx context.Context) string
-	ValidateRegistrationRequest(req ValidateRegistrationRequest, ctx context.Context) string
-	ValidateTaskProof(req ValidateTaskProof, ctx context.Context) string
-	ValidateProvideMealForChildTaskProof(req ValidateProvideMealForChildTaskProof, ctx context.Context) string
-	ValidateWithdrawProposal(req ValidateWithdrawProposal, ctx context.Context) string
-	ValidateChildSpecialNeedProposal(req ValidateChildSpecialNeedProposal, ctx context.Context) string
-	ValidatePoolCampaign(req ValidatePoolCampaign, ctx context.Context) string
+	ExtractChildInfo(birthCertURL, firstGuardianIDCardURL, secondGuardianIDCardURL *string, ctx context.Context) (*response.ExtractChildUploadInfoResponse, error)
+	ValidateTaskProof(proof ValidateTaskProof, ctx context.Context) (*ValidateTaskProofResponse, error)
+	AskWithDescribedImages(ctx context.Context, apiKey, prompt string, labeledImages []LabeledImage) (string, error)
 }
 
-func InitializeAiProvider(ctx context.Context, errLogger *log.Logger) IAiClientProvider {
+func InitializeAiProvider(errLogger *log.Logger) IAiClientProvider {
 	if _aiClient == nil {
 		_aiClient = &aiClient{
-			geminiProvider: initializeGeminiClient(ctx, errLogger),
-			errLogger:      errLogger,
+			groqProvider: &GroqClient{},
+			errLogger:    errLogger,
 		}
 	}
-
 	return _aiClient
 }
 
-// ValidateUploadChildRequest implements IAiClientProvider.
-func (a *aiClient) ValidateUploadChildRequest(req ValidateUploadChildRequest, ctx context.Context) string {
-	if !a.geminiProvider.limiter.Allow() {
-		return ""
-	}
-
-	jsonData, _ := json.MarshalIndent(req, "", "  ")
-	var prompt = []genai.Part{
-		genai.Text(fmt.Sprintf("Case: %s", upload_child_validate_case)),
-		genai.Text(string(jsonData)),
-	}
-
-	prompt = append(prompt, genai.Text("Label: Child Avatar"), genai.ImageData("jpeg", req.AvatarBytesImage))
-	prompt = append(prompt, genai.Text("Label: Child Birth Certificate"), genai.ImageData("jpeg", req.ChildBirthCertificateBytesImage))
-	prompt = append(prompt, genai.Text("Label: Child First Guardian Identity Card"), genai.ImageData("jpeg", []byte(req.FirstGuardian.IdentityCardBytesImage)))
-	if req.SecondGuardian != nil {
-		prompt = append(prompt, genai.Text("Label: Child Second Guardian Identity Card"), genai.ImageData("jpeg", []byte(req.SecondGuardian.IdentityCardBytesImage)))
-	}
-
-	return a.processPrompt(prompt, ctx)
+func GetAiProvider() IAiClientProvider {
+	return _aiClient
 }
 
-// ValidateCreateCenterRequest implements IAiClientProvider.
-func (a *aiClient) ValidateCreateCenterRequest(req ValidateCreateCenterRequest, ctx context.Context) string {
-	if !a.geminiProvider.limiter.Allow() {
-		return ""
-	}
-
-	jsonData, _ := json.MarshalIndent(req, "", "  ")
-	var prompt = []genai.Part{
-		genai.Text(fmt.Sprintf("Case: %s", create_center_request_validate_case)),
-		genai.Text(string(jsonData)),
-	}
-
-	prompt = append(prompt, genai.Text("Label: Center Image"), genai.ImageData("jpeg", req.CenterBytesImage))
-
-	return a.processPrompt(prompt, ctx)
-}
-
-// ValidateProvideMealForChildTaskProof implements IAiClientProvider.
-func (a *aiClient) ValidateProvideMealForChildTaskProof(req ValidateProvideMealForChildTaskProof, ctx context.Context) string {
-	if !a.geminiProvider.limiter.Allow() {
-		return ""
-	}
-
-	jsonData, _ := json.MarshalIndent(req, "", "  ")
-	var prompt = []genai.Part{
-		genai.Text(fmt.Sprintf("Case: %s", registration_request_validate_case)),
-		genai.Text(string(jsonData)),
-	}
-
-	prompt = append(prompt, genai.Text("Label: Proof of Task Image"), genai.ImageData("jpeg", req.ProofBytesImage))
-	prompt = append(prompt, genai.Text("Label: Child Avatar Who Provided Lunch"), genai.ImageData("jpeg", req.ChildAvatarBytesImage))
-
-	return a.processPrompt(prompt, ctx)
-}
-
-// ValidateRegistrationRequest implements IAiClientProvider.
-func (a *aiClient) ValidateRegistrationRequest(req ValidateRegistrationRequest, ctx context.Context) string {
-	if !a.geminiProvider.limiter.Allow() {
-		return ""
-	}
-
-	jsonData, _ := json.MarshalIndent(req, "", "  ")
-	var prompt = []genai.Part{
-		genai.Text(fmt.Sprintf("Case: %s", registration_request_validate_case)),
-		genai.Text(string(jsonData)),
-	}
-
-	prompt = append(prompt, genai.Text("Label: Identity Card Image"), genai.ImageData("jpeg", req.IdentityCardBytesImage))
-	prompt = append(prompt, genai.Text("Label: Avatar Image"), genai.ImageData("jpeg", req.AvatarBytesImage))
-
-	return a.processPrompt(prompt, ctx)
+// AskWithDescribedImages delegates to groqProvider.
+func (a *aiClient) AskWithDescribedImages(ctx context.Context, apiKey, prompt string, labeledImages []LabeledImage) (string, error) {
+	return a.groqProvider.AskWithDescribedImages(ctx, apiKey, prompt, labeledImages)
 }
 
 // ValidateTaskProof implements IAiClientProvider.
-func (a *aiClient) ValidateTaskProof(req ValidateTaskProof, ctx context.Context) string {
-	if !a.geminiProvider.limiter.Allow() {
-		return ""
+func (a *aiClient) ValidateTaskProof(proof ValidateTaskProof, ctx context.Context) (*ValidateTaskProofResponse, error) {
+	// Abort early if context already canceled / timed out
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 
-	jsonData, _ := json.MarshalIndent(req, "", "  ")
-	var prompt = []genai.Part{
-		genai.Text(fmt.Sprintf("Case: %s", registration_request_validate_case)),
-		genai.Text(string(jsonData)),
+	AIUnavailableResponse := &ValidateTaskProofResponse{
+		AIEvaluation: "uncertain",
+		AIReason:     "AI validation temporarily unavailable, please wait for human review",
 	}
 
-	prompt = append(prompt, genai.Text("Label: Proof of Task Image"), genai.ImageData("jpeg", req.ProofBytesImage))
-
-	return a.processPrompt(prompt, ctx)
-}
-
-// ValidateWithdrawProposal implements IAiClientProvider.
-func (a *aiClient) ValidateWithdrawProposal(req ValidateWithdrawProposal, ctx context.Context) string {
-	if !a.geminiProvider.limiter.Allow() {
-		return ""
-	}
-
-	jsonData, _ := json.MarshalIndent(req, "", "  ")
-	var prompt = []genai.Part{
-		genai.Text(fmt.Sprintf("Case: %s - %s", withdraw_proposal_validate_case, req.Purpose)),
-		genai.Text(string(jsonData)),
-	}
-
-	prompt = append(prompt, genai.Text("Label: Withdraw Proof Image"), genai.ImageData("jpeg", req.ProofBytesImage))
-
-	return a.processPrompt(prompt, ctx)
-}
-
-// ValidateChildSpecialNeedProposal implements IAiClientProvider.
-func (a *aiClient) ValidateChildSpecialNeedProposal(req ValidateChildSpecialNeedProposal, ctx context.Context) string {
-	if !a.geminiProvider.limiter.Allow() {
-		return ""
-	}
-
-	jsonData, _ := json.MarshalIndent(req, "", "  ")
-	var prompt = []genai.Part{
-		genai.Text(fmt.Sprintf("Case: %s", child_special_need_proposal_validate_case)),
-		genai.Text(string(jsonData)),
-	}
-
-	prompt = append(prompt, genai.Text("Label: Campaign Relevant Proof Image"), genai.ImageData("jpeg", req.ProofBytesImage))
-
-	return a.processPrompt(prompt, ctx)
-}
-
-// ValidatePoolCampaign implements IAiClientProvider.
-func (a *aiClient) ValidatePoolCampaign(req ValidatePoolCampaign, ctx context.Context) string {
-	if !a.geminiProvider.limiter.Allow() {
-		return ""
-	}
-
-	jsonData, _ := json.MarshalIndent(req, "", "  ")
-	var prompt = []genai.Part{
-		genai.Text(fmt.Sprintf("Case: %s", pool_campaign_validate_case)),
-		genai.Text(string(jsonData)),
-	}
-
-	prompt = append(prompt, genai.Text("Label: Pool Campaign Relevant Proof Image"), genai.ImageData("jpeg", req.ProofBytesImage))
-
-	return a.processPrompt(prompt, ctx)
-}
-
-func (a *aiClient) processPrompt(prompt []genai.Part, ctx context.Context) string {
-	res, err := a.geminiProvider.model.GenerateContent(ctx, prompt...)
+	raw, err := a.groqProvider.AskWithImages(
+		ctx,
+		os.Getenv("GROQ_API_KEY"),
+		fmt.Sprintf(prompts.TaskValidatePrompt, proof.TaskDescription),
+		[]string{proof.ProofImageURL},
+	)
 	if err != nil {
-		a.errLogger.Println(err.Error())
-		return ""
-	}
-	if len(res.Candidates) > 0 && len(res.Candidates[0].Content.Parts) > 0 {
-		var raw string = fmt.Sprintf("%v", res.Candidates[0].Content.Parts[0])
-		return strings.ToLower(strings.Trim(raw, " \n\r\t.\"'"))
+		a.errLogger.Printf("validate task proof: %s", err)
+		return AIUnavailableResponse, nil
 	}
 
-	return "uncertain"
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	var result ValidateTaskProofResponse
+
+	// Try direct unmarshal first
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+		// Attempt to extract a JSON object from noisy model output
+		jsonCandidate := extractJSONObject(raw)
+		if jsonCandidate == "" {
+			a.errLogger.Printf("parse AI response direct failed and no JSON found: %v", err)
+			return AIUnavailableResponse, nil
+		}
+
+		if err2 := json.Unmarshal([]byte(jsonCandidate), &result); err2 != nil {
+			a.errLogger.Printf("parse AI response from candidate failed: %v; candidate: %s", err2, jsonCandidate)
+			return AIUnavailableResponse, nil
+		}
+	}
+
+	// Normalize and validate evaluation value
+	eval := strings.ToLower(strings.TrimSpace(result.AIEvaluation))
+	switch eval {
+	case "valid", "invalid", "uncertain":
+		result.AIEvaluation = eval
+	default:
+		// Unknown evaluation -> mark uncertain and preserve reason
+		result.AIEvaluation = "uncertain"
+		if result.AIReason == "" {
+			result.AIReason = "AI returned unexpected evaluation"
+		}
+	}
+
+	// Ensure a reason exists
+	if strings.TrimSpace(result.AIReason) == "" {
+		result.AIReason = "AI did not provide a reason"
+	}
+
+	return &result, nil
+}
+
+// extractJSONObject tries to find the first balanced JSON object in s.
+func extractJSONObject(s string) string {
+	start := strings.Index(s, "{")
+	if start == -1 {
+		return ""
+	}
+
+	depth := 0
+	for i := start; i < len(s); i++ {
+		switch s[i] {
+		case '{':
+			depth++
+		case '}':
+			depth--
+			if depth == 0 {
+				return s[start : i+1]
+			}
+		}
+	}
+
+	return ""
+}
+
+// ExtractChildInfo implements IAiClientProvider.
+func (a *aiClient) ExtractChildInfo(birthCertURL *string, firstGuardianIDCardURL *string, secondGuardianIDCardURL *string, ctx context.Context) (*response.ExtractChildUploadInfoResponse, error) {
+	// Build labeled images list - track what each image is
+	var labeledImages []LabeledImage
+
+	if birthCertURL != nil && *birthCertURL != "" {
+		labeledImages = append(labeledImages, LabeledImage{
+			URL:   *birthCertURL,
+			Label: "This is the child's birth certificate (Giấy khai sinh):",
+		})
+	}
+	if firstGuardianIDCardURL != nil && *firstGuardianIDCardURL != "" {
+		labeledImages = append(labeledImages, LabeledImage{
+			URL:   *firstGuardianIDCardURL,
+			Label: "This is the first guardian's Vietnamese identity document (Căn cước công dân or CMND):",
+		})
+	}
+	if secondGuardianIDCardURL != nil && *secondGuardianIDCardURL != "" {
+		labeledImages = append(labeledImages, LabeledImage{
+			URL:   *secondGuardianIDCardURL,
+			Label: "This is the second guardian's Vietnamese identity document (Căn cước công dân or CMND):",
+		})
+	}
+
+	// Validate at least one image is provided
+	if len(labeledImages) == 0 {
+		return nil, fmt.Errorf("extract child info: at least one image URL is required")
+	}
+
+	raw, err := a.groqProvider.AskWithDescribedImages(
+		ctx,
+		os.Getenv("GROQ_API_KEY"),
+		prompts.ChildUploadInfoExtractionPrompt,
+		labeledImages,
+	)
+	if err != nil {
+		a.errLogger.Printf("extract child info: %s", err)
+		return nil, fmt.Errorf("extract child info: %w", err)
+	}
+
+	var result response.ExtractChildUploadInfoResponse
+
+	// Try direct unmarshal first
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+		// Attempt to extract a JSON object from noisy model output (e.g., markdown-wrapped JSON)
+		jsonCandidate := extractJSONObject(raw)
+		if jsonCandidate == "" {
+			a.errLogger.Printf("parse AI response direct failed and no JSON found: %v", err)
+			return nil, fmt.Errorf("parse AI response: %w", err)
+		}
+
+		if err2 := json.Unmarshal([]byte(jsonCandidate), &result); err2 != nil {
+			a.errLogger.Printf("parse AI response from candidate failed: %v; candidate: %s", err2, jsonCandidate)
+			return nil, fmt.Errorf("parse AI response: %w", err2)
+		}
+	}
+
+	return &result, nil
 }

@@ -58,7 +58,7 @@ func (c *childNeedService) GetChildBooksNeed(id string, ctx context.Context) (re
 		return response.BooksNeedResponse{}, genericErr
 	}
 
-	return res.ToBooksNeedResponse(), nil
+	return res.ToBooksNeedReponse(), nil
 }
 
 // GetChildHealthInsuranceNeed implements business.IChildNeedService.
@@ -81,7 +81,7 @@ func (c *childNeedService) GetChildHealthInsuranceNeed(id string, ctx context.Co
 		return response.HealthInsuranceNeedResponse{}, genericErr
 	}
 
-	return res.ToHealthInsuranceNeedResponse(), nil
+	return res.ToHealthInsuranceNeedReponse(), nil
 }
 
 // GetChildMealNeed implements business.IChildNeedService.

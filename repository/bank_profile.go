@@ -40,7 +40,7 @@ func (b *bankProfileRepo) CreateBankProfile(bp entities.BankProfile, ctx context
 		bp.CreatedAt, bp.UpdatedAt); err != nil {
 
 		b.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -62,7 +62,7 @@ func (b *bankProfileRepo) GetBankProfileById(id string, ctx context.Context) (*e
 		}
 
 		b.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -84,7 +84,7 @@ func (b *bankProfileRepo) GetBankProfileByOwner(owner string, ctx context.Contex
 		}
 
 		b.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -97,7 +97,7 @@ func (b *bankProfileRepo) UpdateBankProfile(bp entities.BankProfile, ctx context
 
 	res, err := b.db.ExecContext(ctx, query, bp.BankOrg, bp.BankCode, bp.OwnerName, bp.PayosClientID, bp.PayosApiKey, bp.PayosCheckSumKey, bp.UpdatedAt, bp.ID)
 
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	if err != nil {
 		b.errLogger.Println(errLogMsg + err.Error())
@@ -111,7 +111,7 @@ func (b *bankProfileRepo) UpdateBankProfile(bp entities.BankProfile, ctx context
 	}
 
 	if rowsAffected == 0 {
-		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, bank_profile_table))
+		return fmt.Errorf(noti.UNDEFINED_OBJECT_WARN_MSG, bank_profile_table)
 	}
 
 	return nil
@@ -121,7 +121,7 @@ func (b *bankProfileRepo) UpdateBankProfile(bp entities.BankProfile, ctx context
 func (b *bankProfileRepo) IsBankWithSubExist(profile_id string, ctx context.Context) (bool, error) {
 	var query string = "SELECT id FROM " + bank_profile_table + " WHERE profile_id = $1 LIMIT 1"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.BANK_PROFILE_REPOSITORY) + "IsBankWithSubExist - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var id string
 	if err := b.db.QueryRowContext(ctx, query, profile_id).Scan(&id); err != nil {

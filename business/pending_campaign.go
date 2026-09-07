@@ -69,47 +69,131 @@ func GeneratePendingCampaignService() (business.IPendingCampaignService, error) 
 	return initializePendingCampaignService(
 		repository.InitializePendingCampaignRepo(cnn, errLogger),
 		repository.InitializeBankProfileRepository(cnn, errLogger),
-		ai.InitializeAiProvider(nil, errLogger),
+		ai.InitializeAiProvider(errLogger),
 		walrus_pkg.InitializeWalrusProvider(errLogger),
 		_networkAliases,
 		errLogger,
 	), nil
 }
 
+// // ApprovePendingCampaign implements business.IPendingCampaignService.
+// func (p *pendingCampaignService) ApprovePendingCampaign(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
+// 	campaign, err := p.pendingCampaignRepo.GetPendingCampaign(id, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	if campaign == nil {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+// 	}
+
+// 	if campaign.ReviewedBy != nil || campaign.ReviewStatus != request_pending_status {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.REQUEST_REVIEWED_MESSAGE)
+// 	}
+
+// 	var client = p.clients[constant.SuiTestnet]
+// 	var reviewer string = ctx.Value("address").(string)
+// 	var manageObj entities.Manage
+// 	if !p.redisCache.Get(manageObj.GetRedisKey(), &manageObj, ctx) {
+// 		res, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+// 			Client:    client,
+// 			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+// 			ErrLogger: p.errLogger,
+// 		}, ctx)
+// 		if err != nil {
+// 			return response.BuildTransactionResponse{}, err
+// 		}
+
+// 		if res != nil {
+// 			p.redisCache.Set(manageObj.GetRedisKey(), res, time.Minute, ctx)
+// 			manageObj = *res
+// 		}
+// 	}
+
+// 	if !slices.Contains(manageObj.AdminIds, reviewer) {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+// 	}
+
+// 	var campaignModule = on_chain.InitializeModuleCampaign()
+// 	var function string
+// 	var args []interface{}
+
+// 	if campaign.PoolID != os.Getenv(env.POOL_ID) || campaign.PoolName != "Main Pool" {
+// 		function = campaignModule.GetFunctionCreateCampaignForRegionPool()
+// 		args = campaignModule.ToCreateCampaignForRegionPoolArguments(on_chain.CreateCampaignForRegionPoolArguments{
+// 			LocalPoolID: campaign.PoolID,
+// 			CreateCampaignForMainPoolArguments: on_chain.CreateCampaignForMainPoolArguments{
+// 				Creator:     campaign.ActorAddress,
+// 				Target:      campaign.Target,
+// 				Description: campaign.Description,
+// 				ProofBlobID: campaign.ProofBlobID,
+// 			},
+// 		})
+// 	} else {
+// 		function = campaignModule.GetFunctionCreateCampaignForMainPool()
+// 		args = campaignModule.ToCreateCampaignForMainPoolArguments(on_chain.CreateCampaignForMainPoolArguments{
+// 			Creator:     campaign.ActorAddress,
+// 			Target:      campaign.Target,
+// 			Description: campaign.Description,
+// 			ProofBlobID: campaign.ProofBlobID,
+// 		})
+// 	}
+// 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+// 		Client:    client,
+// 		Sender:    reviewer,
+// 		Module:    campaignModule.GetModule(),
+// 		Function:  function,
+// 		ErrLogger: p.errLogger,
+// 		Arguments: args,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	campaign.ReviewedBy = &reviewer
+// 	campaign.ReviewStatus = request_approved_status
+
+// 	return response.BuildTransactionResponse{
+// 		TxBytes: txBytes,
+// 	}, p.pendingCampaignRepo.UpdatePendingCampaign(*campaign, ctx)
+// }
+
 // ApprovePendingCampaign implements business.IPendingCampaignService.
-func (p *pendingCampaignService) ApprovePendingCampaign(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
+func (p *pendingCampaignService) ApprovePendingCampaign(id string, ctx context.Context) error {
 	campaign, err := p.pendingCampaignRepo.GetPendingCampaign(id, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
 	}
 
 	if campaign == nil {
-		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+		return errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
 	if campaign.ReviewedBy != nil || campaign.ReviewStatus != request_pending_status {
-		return response.BuildTransactionResponse{}, errors.New(noti.REQUEST_REVIEWED_MESSAGE)
+		return errors.New(noti.REQUEST_REVIEWED_MESSAGE)
 	}
 
 	var client = p.clients[constant.SuiTestnet]
-	var reviewer string = ctx.Value("address").(string)
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
-		ErrLogger: p.errLogger,
+		Client:   client,
+		ObjectId: os.Getenv(env.MANAGE_OBJECT_ID),
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
 	}
 
+	if manageObj == nil {
+		return errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	var reviewer string = ctx.Value("address").(string)
 	if !slices.Contains(manageObj.AdminIds, reviewer) {
-		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+		return errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
 
 	var campaignModule = on_chain.InitializeModuleCampaign()
 	var function string
 	var args []interface{}
-
 	if campaign.PoolID != os.Getenv(env.POOL_ID) || campaign.PoolName != "Main Pool" {
 		function = campaignModule.GetFunctionCreateCampaignForRegionPool()
 		args = campaignModule.ToCreateCampaignForRegionPoolArguments(on_chain.CreateCampaignForRegionPoolArguments{
@@ -119,6 +203,7 @@ func (p *pendingCampaignService) ApprovePendingCampaign(id string, ctx context.C
 				Target:      campaign.Target,
 				Description: campaign.Description,
 				ProofBlobID: campaign.ProofBlobID,
+				Sender:      campaign.ActorAddress,
 			},
 		})
 	} else {
@@ -128,33 +213,32 @@ func (p *pendingCampaignService) ApprovePendingCampaign(id string, ctx context.C
 			Target:      campaign.Target,
 			Description: campaign.Description,
 			ProofBlobID: campaign.ProofBlobID,
+			Sender:      campaign.ActorAddress,
 		})
 	}
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+
+	campaign.ReviewedBy = &reviewer
+	campaign.ReviewStatus = request_approved_status
+	if err := p.pendingCampaignRepo.UpdatePendingCampaign(*campaign, ctx); err != nil {
+		return err
+	}
+
+	_, errRes := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
 		Client:    client,
-		Sender:    reviewer,
 		Module:    campaignModule.GetModule(),
 		Function:  function,
 		ErrLogger: p.errLogger,
 		Arguments: args,
 	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
 
-	campaign.ReviewedBy = &reviewer
-	campaign.ReviewStatus = request_approved_status
-
-	return response.BuildTransactionResponse{
-		TxBytes: txBytes,
-	}, p.pendingCampaignRepo.UpdatePendingCampaign(*campaign, ctx)
+	return errRes
 }
 
 // CreatePendingCampaign implements business.IPendingCampaignService.
 func (p *pendingCampaignService) CreatePendingCampaign(req request.CreatePendingCampaignRequest, ctx context.Context) (*entities.PendingCampaign, error) {
 	var client = p.clients[constant.SuiTestnet]
 	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-		Client:    client,
+		Client:    p.clients[constant.SuiTestnet],
 		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
 		ErrLogger: p.errLogger,
 	}, ctx)
@@ -167,10 +251,6 @@ func (p *pendingCampaignService) CreatePendingCampaign(req request.CreatePending
 	var sender string = ctx.Value("address").(string)
 	var poolId string
 	if req.PoolName != "Main Pool" {
-		if !isRegionExist(req.PoolName) {
-			return nil, genericErr
-		}
-
 		pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
 			Client:    client,
 			ObjectId:  os.Getenv(env.POOL_ID),
@@ -226,20 +306,6 @@ func (p *pendingCampaignService) CreatePendingCampaign(req request.CreatePending
 		return nil, errors.New(noti.LEADER_NOT_UPLOAD_BANK_PROFILE_MESSAGE)
 	}
 
-	var description string = strings.TrimSpace(req.Description)
-	var aiEvaluation string
-	if req.ProofBlobID != nil {
-		proofBytes, _ := p.walrusProvider.FetchBytesImage(*req.ProofBlobID)
-		if proofBytes != nil {
-			aiEvaluation = p.aiProvider.ValidatePoolCampaign(ai.ValidatePoolCampaign{
-				CampaignTarget: req.Target,
-				Description:     description,
-				ProofBytesImage: proofBytes,
-			}, ctx)
-		}
-	}
-
-	// todo: AI validation
 	var curTime time.Time = time.Now()
 	var campaign = entities.PendingCampaign{
 		ID:             util.GenerateId(),
@@ -250,7 +316,6 @@ func (p *pendingCampaignService) CreatePendingCampaign(req request.CreatePending
 		Target:         req.Target,
 		Description:    strings.TrimSpace(req.Description),
 		ProofBlobID:    req.ProofBlobID,
-		AIEvaluation:   aiEvaluation,
 		CreatedAt:      curTime,
 		UpdatedAt:      curTime,
 	}
@@ -266,6 +331,7 @@ func (p *pendingCampaignService) GetPendingCampaign(id string, ctx context.Conte
 // GetPendingCampaigns implements business.IPendingCampaignService.
 func (p *pendingCampaignService) GetPendingCampaigns(req request.GetPendingCampaignsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+
 	if req.Creator != "" {
 		if !util.IsValidSuiAddressStrict(req.Creator) {
 			return response.PaginationDataResponse{}, genericErr
@@ -326,10 +392,10 @@ func (p *pendingCampaignService) GetPendingCampaigns(req request.GetPendingCampa
 	}
 
 	var res response.PaginationDataResponse
-	var redisKey string = p.getGetPendingCampaignsRedisKey(req)
-	if p.redisCache.Get(redisKey, &res, ctx) {
-		return res, nil
-	}
+	// var redisKey string = p.getGetPendingCampaignsRedisKey(req)
+	// if p.redisCache.Get(redisKey, &res, ctx) {
+	// 	return res, nil
+	// }
 
 	data, pages, err := p.pendingCampaignRepo.GetPendingCampaigns(req, ctx)
 	if err != nil {
@@ -337,7 +403,7 @@ func (p *pendingCampaignService) GetPendingCampaigns(req request.GetPendingCampa
 	}
 
 	var amount int
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		amount = 0
 	} else {
 		amount = len(data)
@@ -350,7 +416,7 @@ func (p *pendingCampaignService) GetPendingCampaigns(req request.GetPendingCampa
 		TotalPages: pages,
 	}
 
-	p.redisCache.Set(redisKey, res, time.Minute*2, ctx)
+	// p.redisCache.Set(redisKey, res, time.Minute*2, ctx)
 
 	return res, nil
 }

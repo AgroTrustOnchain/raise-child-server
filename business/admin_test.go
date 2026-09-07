@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"fmt"
 	"raise-child/constants/shared"
 	"raise-child/mocks/pkg"
 	"raise-child/mocks/repository"
@@ -18,8 +17,18 @@ import (
 )
 
 func TestGetAdmins(t *testing.T) {
-	var repo = repository.InitializeProfileMockRepo()
-	var mockClient = pkg.InitializeSuiMockApi()
+	var repo = repository.InializeProfileMockRepo()
+	var mockClient = pkg.InializeSuiMockApi()
+	mockClient.On("SuiGetObject", mock.Anything, mock.Anything).
+		Return(models.SuiObjectResponse{
+			Data: &models.SuiObjectData{
+				Content: &models.SuiParsedData{
+					SuiMoveObject: models.SuiMoveObject{
+						Fields: sampleJsonManageObj,
+					},
+				},
+			},
+		}, nil)
 
 	var service = initializeAdminService(
 		repo,
@@ -77,32 +86,19 @@ func TestGetAdmins(t *testing.T) {
 			keyword:     keyword,
 		},
 	}
-	for i, tc := range tcsInfo {
-		t.Run(fmt.Sprintf("Case-%d", i), func(t *testing.T) {
-			mockClient.ExpectedCalls = nil
 
-			mockClient.On("SuiGetObject", mock.Anything, mock.Anything).
-				Return(models.SuiObjectResponse{
-					Data: &models.SuiObjectData{
-						Content: &models.SuiParsedData{
-							SuiMoveObject: models.SuiMoveObject{
-								Fields: sampleJsonManageObj,
-							},
-						},
-					},
-				}, nil)
-			mockClient.On("SuiMultiGetObjects", mock.Anything, mock.Anything).Return(tc.suiJsonData, nil)
-			res, err := service.GetAdmins(request.GetAdminsRequest{
-				Keyword: tc.keyword,
-				Page:    tc.page,
-			}, ctx)
+	for _, tc := range tcsInfo {
+		mockClient.On("SuiMultiGetObjects", mock.Anything, mock.Anything).Return(tc.suiJsonData, nil)
+		res, err := service.GetAdmins(request.GetAdminsRequest{
+			Keyword: tc.keyword,
+			Page:    tc.page,
+		}, ctx)
 
-			assert.NoError(t, err)
-			if tc.isEmpty {
-				assert.Empty(t, res.Data)
-			} else {
-				assert.Equal(t, len(tc.suiJsonData), res.Amount)
-			}
-		})
+		assert.NoError(t, err)
+		if tc.isEmpty {
+			assert.Empty(t, res.Data)
+		} else {
+			assert.Equal(t, len(tc.suiJsonData), res.Amount)
+		}
 	}
 }

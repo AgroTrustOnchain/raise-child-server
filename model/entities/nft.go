@@ -59,27 +59,26 @@ func (s StaffNft) ToStaffNftResponse() response.StaffNftResponse {
 
 	uploadedAt, _ := strconv.ParseInt(s.UploadedAt, 10, 64)
 	return response.StaffNftResponse{
-		ID:                 s.ID.ID,
-		Owner:              s.Owner,
-		Role:               s.Role,
-		IdentityCode:       s.IdentityCode,
-		IdentityCardBlobID: s.IdentityCardBlobID,
-		AvatarBlobID:       s.AvatarBlobID,
-		Region:             s.Region,
-		FirstName:          s.FirstName,
-		LastName:           s.LastName,
-		Gender:             s.Gender,
-		DateOfBirth:        util.RawDateToTime(s.DateOfBirth),
-		PhoneNumber:        s.PhoneNumber,
-		Email:              s.Email,
-		UploadedAt:         util.MilliSecToTime(uploadedAt),
-		Name:               s.Name,
-		Url:                s.Url,
+		ID:           s.ID.ID,
+		Owner:        s.Owner,
+		Role:         s.Role,
+		IdentityCode: s.IdentityCode,
+		AvatarBlobID: s.AvatarBlobID,
+		Region:       s.Region,
+		FirstName:    s.FirstName,
+		LastName:     s.LastName,
+		Gender:       s.Gender,
+		DateOfBirth:  util.RawDateToTime(s.DateOfBirth),
+		PhoneNumber:  s.PhoneNumber,
+		Email:        s.Email,
+		UploadedAt:   util.MilliSecToTime(uploadedAt),
+		Name:         s.Name,
+		Url:          s.Url,
 	}
 }
 
-func (a AdminNft) ToAdminNftResponse() response.AdminNftResponse {
-	if a.ID.ID == "" {
+func (a *AdminNft) ToAdminNftResponse() response.AdminNftResponse {
+	if a == nil {
 		return response.AdminNftResponse{}
 	}
 

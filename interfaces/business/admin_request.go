@@ -8,7 +8,7 @@ import (
 )
 
 type IAdminRequestService interface {
-	GetRequests(req request.GetAdminRegistrationRequest, ctx context.Context) (response.PaginationDataResponse, error)
+	GetRequests(req request.GetAdminRegistrationRequets, ctx context.Context) (response.PaginationDataResponse, error)
 	GetWalletRequests(id string, ctx context.Context) ([]entities.AdminRegistrationRequest, error)
 	GetRequest(id string, ctx context.Context) (*entities.AdminRegistrationRequest, error)
 	CreateRequest(req request.AdminRegistrationRequest, ctx context.Context) (*entities.AdminRegistrationRequest, error)

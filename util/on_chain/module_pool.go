@@ -1,6 +1,7 @@
 package onchain
 
 import (
+	"fmt"
 	"os"
 	"raise-child/constants/env"
 	"raise-child/constants/on-chain/sui"
@@ -15,6 +16,7 @@ type DonateToPoolArguments struct {
 	PhoneNumber string
 	Email       string
 	Message     string
+	Sender      string
 }
 
 type DonateToPoolArgumentsV2 struct {
@@ -44,8 +46,10 @@ type CreateWithdrawProposalArguments struct {
 	LocalPoolId     string
 	WithdrawAmount  int64
 	Description     string
+	ProofBlobID     *string
 	IsFromLocalPool bool
 	ClosedAt        int64
+	Creator         string
 }
 
 type CreateWithdrawProposalV2Arguments struct {
@@ -56,21 +60,22 @@ type CreateWithdrawProposalV2Arguments struct {
 	IsFromLocalPool bool
 	ClosedAt        int64
 	Creator         string
+	Sender          string
 }
 
 type VoteWithdrawProposalArguments struct {
-	ProposalId   string
-	DonorId      string
-	IsApprove    bool
-	RefuseReason string
+	LocalPoolID string
+	ProposalID  string
+	Sender      string
 }
 
 type WithdrawFromPoolArguments struct {
 	LocalPoolId        string
 	WithdrawProposalId string
+	Sender             string
 }
 
-type EditWithdrawDaoRateArguments struct {
+type EditWithdrawDaoRateArguements struct {
 	MinRate   int64
 	MinVoters int
 }
@@ -85,7 +90,7 @@ type IModulePool interface {
 	ToCreateWithdrawProposalV2Arguments(args CreateWithdrawProposalV2Arguments) []interface{}
 	ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguments) []interface{}
 	ToWithdrawFromPoolArguments(args WithdrawFromPoolArguments) []interface{}
-	ToEditWithdrawDaoRateArguments(args EditWithdrawDaoRateArguments) []interface{}
+	ToEditWithdrawDaoRateArguements(args EditWithdrawDaoRateArguements) []interface{}
 	GetWithdrawProposalEventEmittedStruct() string
 	GetFunctionDonateToPool() string
 	GetFunctionDonateToPoolV2() string
@@ -151,7 +156,7 @@ func (m *modulePool) ToDonateToLocalPoolArgumentsV2(args DonateToLocalPoolArgume
 		os.Getenv(env.POOL_ID),
 		args.LocalPoolId,
 		args.DonorID,
-		uint64(args.Amount),
+		fmt.Sprintf("%d", args.Amount),
 		args.FirstName,
 		args.LastName,
 		args.Gender,
@@ -159,7 +164,7 @@ func (m *modulePool) ToDonateToLocalPoolArgumentsV2(args DonateToLocalPoolArgume
 		args.Email,
 		args.Message,
 		args.Creator,
-		uint64(args.CreatedAt),
+		fmt.Sprintf("%d", args.CreatedAt),
 	}
 }
 
@@ -169,7 +174,7 @@ func (m *modulePool) ToDonateToPoolArgumentsV2(args DonateToPoolArgumentsV2) []i
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
 		args.DonorID,
-		uint64(args.Amount),
+		fmt.Sprintf("%d", args.Amount),
 		args.FirstName,
 		args.LastName,
 		args.Gender,
@@ -177,12 +182,12 @@ func (m *modulePool) ToDonateToPoolArgumentsV2(args DonateToPoolArgumentsV2) []i
 		args.Email,
 		args.Message,
 		args.Creator,
-		uint64(args.CreatedAt),
+		fmt.Sprintf("%d", args.CreatedAt),
 	}
 }
 
-// ToEditWithdrawDaoRateArguments implements IModulePool.
-func (m *modulePool) ToEditWithdrawDaoRateArguments(args EditWithdrawDaoRateArguments) []interface{} {
+// ToEditWithdrawDaoRateArguements implements IModulePool.
+func (m *modulePool) ToEditWithdrawDaoRateArguements(args EditWithdrawDaoRateArguements) []interface{} {
 	return []interface{}{
 		os.Getenv(env.ADMIN_CAP_ID_1),
 		os.Getenv(env.POOL_WITHDRAW_DAO_OBJECT_ID),
@@ -194,25 +199,35 @@ func (m *modulePool) ToEditWithdrawDaoRateArguments(args EditWithdrawDaoRateArgu
 // ToWithdrawFromPoolArguments implements IModulePool.
 func (m *modulePool) ToWithdrawFromPoolArguments(args WithdrawFromPoolArguments) []interface{} {
 	return []interface{}{
+		os.Getenv(env.ADMIN_CAP_ID_1),
+		os.Getenv(env.ALLOWED_FUNDED_WITHDRAW_RATE_OBJECT_ID),
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
 		args.LocalPoolId,
 		args.WithdrawProposalId,
-		os.Getenv(env.POOL_WITHDRAW_DAO_OBJECT_ID),
+		args.Sender,
 		sui.CLOCK_OBJECT_ID,
 	}
 }
 
 // ToCreateWithdrawProposalArguments implements IModulePool.
 func (m *modulePool) ToCreateWithdrawProposalArguments(args CreateWithdrawProposalArguments) []interface{} {
+	var proofBlobId string = ""
+	if args.ProofBlobID != nil {
+		proofBlobId = *args.ProofBlobID
+	}
+
 	return []interface{}{
+		os.Getenv(env.ADMIN_CAP_ID_1),
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
 		args.LocalPoolId,
-		uint64(args.WithdrawAmount),
+		fmt.Sprintf("%d", args.WithdrawAmount),
 		args.Description,
+		proofBlobId,
 		args.IsFromLocalPool,
-		uint64(args.ClosedAt),
+		fmt.Sprintf("%d", args.ClosedAt),
+		args.Creator,
 		sui.CLOCK_OBJECT_ID,
 	}
 }
@@ -225,15 +240,17 @@ func (m *modulePool) ToCreateWithdrawProposalV2Arguments(args CreateWithdrawProp
 	}
 
 	return []interface{}{
+		os.Getenv(env.ADMIN_CAP_ID_1),
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
 		args.LocalPoolId,
-		uint64(args.WithdrawAmount),
+		fmt.Sprintf("%d", args.WithdrawAmount),
 		args.Description,
 		proofBlobId,
 		args.IsFromLocalPool,
-		uint64(args.ClosedAt),
+		fmt.Sprintf("%d", args.ClosedAt),
 		args.Creator,
+		args.Sender,
 		sui.CLOCK_OBJECT_ID,
 	}
 }
@@ -241,11 +258,11 @@ func (m *modulePool) ToCreateWithdrawProposalV2Arguments(args CreateWithdrawProp
 // ToVoteWithdrawProposal implements IModulePool.
 func (m *modulePool) ToVoteWithdrawProposalArguments(args VoteWithdrawProposalArguments) []interface{} {
 	return []interface{}{
-		args.ProposalId,
-		args.DonorId,
-		os.Getenv(env.POOL_WITHDRAW_DAO_OBJECT_ID),
-		args.IsApprove,
-		args.RefuseReason,
+		os.Getenv(env.ADMIN_CAP_ID_1),
+		os.Getenv(env.POOL_ID),
+		args.LocalPoolID,
+		args.ProposalID,
+		args.Sender,
 		sui.CLOCK_OBJECT_ID,
 	}
 }
@@ -253,17 +270,19 @@ func (m *modulePool) ToVoteWithdrawProposalArguments(args VoteWithdrawProposalAr
 // ToDonateToLocalPoolArguments implements IModulePool.
 func (m *modulePool) ToDonateToLocalPoolArguments(args DonateToLocalPoolArguments) []interface{} {
 	return []interface{}{
+		os.Getenv(env.ADMIN_CAP_ID_1),
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
 		args.LocalPoolId,
 		args.DonorID,
-		args.Amount,
+		fmt.Sprintf("%d", args.Amount),
 		args.FirstName,
 		args.LastName,
 		args.Gender,
 		args.PhoneNumber,
 		args.Email,
 		args.Message,
+		args.Sender,
 		sui.CLOCK_OBJECT_ID,
 	}
 }
@@ -271,16 +290,18 @@ func (m *modulePool) ToDonateToLocalPoolArguments(args DonateToLocalPoolArgument
 // ToDonateToPoolArguments implements IModulePool.
 func (m *modulePool) ToDonateToPoolArguments(args DonateToPoolArguments) []interface{} {
 	return []interface{}{
+		os.Getenv(env.ADMIN_CAP_ID_1),
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		os.Getenv(env.POOL_ID),
 		args.DonorID,
-		args.Amount,
+		fmt.Sprintf("%d", args.Amount),
 		args.FirstName,
 		args.LastName,
 		args.Gender,
 		args.PhoneNumber,
 		args.Email,
 		args.Message,
+		args.Sender,
 		sui.CLOCK_OBJECT_ID,
 	}
 }

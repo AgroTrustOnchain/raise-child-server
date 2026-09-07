@@ -10,6 +10,12 @@ type GetChildrenRequest struct {
 	Page        int    `form:"page"`
 }
 
+type UploadChildExtractRequest struct {
+	BirthCertImage        string `json:"birth_cert_image"`
+	FirstGuardianIDImage  string `json:"first_guardian_id_image"`
+	SecondGuardianIDImage string `json:"second_guardian_id_image"`
+}
+
 type UploadChildRequest struct {
 	HomeBlobID             string                `json:"home_blob_id" validate:"required"`
 	IdentityCode           string                `json:"identity_code" validate:"required"`
@@ -45,7 +51,7 @@ type AddChildNumberMetadataRequest struct {
 // childs/books-need/{id}/support
 
 // childs/meal-need/{id}/support
-type SupportMealNeedRequest struct {
+type SupportMealNeadRequest struct {
 	Months int `json:"months" validate:"required,min=1,max=12"`
 }
 

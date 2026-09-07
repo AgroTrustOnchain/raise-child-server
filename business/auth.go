@@ -18,6 +18,7 @@ import (
 	"raise-child/model/entities"
 	"raise-child/repository"
 	"raise-child/util"
+	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
 	"raise-child/util/security"
@@ -31,13 +32,15 @@ import (
 
 type authService struct {
 	profileRepo i_repo.IProfileRepository
+	redisCache  cache.IRedisCache
 	clients     map[string]sui.ISuiAPI
 	errLogger   *log.Logger
 }
 
-func InitializeAuthService(db *sql.DB, errLogger *log.Logger) business.IAuthService {
+func InitializeAuthService(db *sql.DB, errLogger *log.Logger, redisCache cache.IRedisCache) business.IAuthService {
 	return &authService{
 		profileRepo: repository.InitializeProfileRepository(db, errLogger),
+		redisCache:  redisCache,
 		clients:     _networkAliases,
 		errLogger:   errLogger,
 	}
@@ -51,26 +54,27 @@ func GenerateAuthService() (business.IAuthService, error) {
 		return nil, err
 	}
 
-	return InitializeAuthService(cnn, errLogger), nil
+	return InitializeAuthService(cnn, errLogger, cache.InitializeRedisCache()), nil
 }
 
 // LoginV2 implements business.IAuthService.
 func (a *authService) LoginV2(req request.LoginRequestV2, ctx context.Context) (response.LoginResponse, error) {
 	var address string = strings.TrimSpace(req.Address)
 	var client = a.clients[constant.SuiTestnet]
-	on_chain.FaucetTestnetBalance(client, address, a.errLogger, ctx)
 
 	var sub string = strings.TrimSpace(req.Sub)
-	manageObj, _ := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
 		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
 		ErrLogger: a.errLogger,
 	}, ctx)
+	if err != nil {
+		return response.LoginResponse{}, err
+	}
 
 	var roles []string
-	if manageObj != nil {
+	if manageObj.ID.ID != "" {
 		if slices.Contains(manageObj.AdminIds, address) {
-			a.errLogger.Println("Admin !!!!")
 			roles = append(roles, admin_role)
 		}
 
@@ -94,9 +98,22 @@ func (a *authService) LoginV2(req request.LoginRequestV2, ctx context.Context) (
 		return response.LoginResponse{}, err
 	}
 
-	if err := a.profileRepo.Login(sub, token, ctx); err != nil {
+	profile, err := a.profileRepo.GetProfile(sub, ctx)
+	if err != nil {
 		return response.LoginResponse{}, err
 	}
+
+	if profile == nil {
+		return response.LoginResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	if profile.WalletAddress != nil {
+		if *profile.WalletAddress != address {
+			return response.LoginResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+		}
+	}
+
+	a.profileRepo.Login(sub, token, address, ctx)
 
 	setLogin(sub, address)
 
@@ -149,7 +166,7 @@ func (a *authService) GetSalt(id string, ctx context.Context) (response.GetSaltR
 // Login implements business.IAuthService.
 func (a *authService) Login(req request.LoginRequest, ctx context.Context) (response.LoginResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 	var curTimeUnix int64 = time.Now().Unix()
 	var info securityInfo = getSecurityInfo(req.Address)
 

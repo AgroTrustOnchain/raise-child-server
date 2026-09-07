@@ -44,6 +44,78 @@ func GetTasks(ctx *gin.Context) {
 	})
 }
 
+// GetTasksOfRegionOnUser godoc
+// @Summary      List tasks of staff's region
+// @Description  Retrieve a list of tasks of staff's region with optional query filters
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Staff Wallet Address"
+// @Param        request  query     request.GetTasksRequest  true  "Filter Criteria"
+// @Success      200      {object}  response.PaginationDataResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /tasks/region/staff/{id} [get]
+func GetTasksOfRegionOnUser(ctx *gin.Context) {
+	var request request.GetTasksRequest
+	if ctx.ShouldBindQuery(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateTaskService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.GetTasksOfRegionOnUser(ctx.Param("id"), request, ctx)
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
+
+// GetUserTasks godoc
+// @Summary      List tasks of staff
+// @Description  Retrieve a list of tasks of staff
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Staff Wallet Address"
+// @Param        request  query     request.GetTasksRequest  true  "Filter Criteria"
+// @Success      200      {object}  response.PaginationDataResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /tasks/staff/{id} [get]
+func GetUserTasks(ctx *gin.Context) {
+	var request request.GetTasksRequest
+	if ctx.ShouldBindQuery(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateTaskService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.GetUserTasks(ctx.Param("id"), request, ctx)
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
+
 // GetTaskProof godoc
 // @Summary      Get a task
 // @Description  Retrieve details of a task by its ID
@@ -79,7 +151,7 @@ func GetTask(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        request  query     request.CreateTaskRequest  true  "Create Task Request Detail"
+// @Param        request  body     request.CreateTaskRequest  true  "Create Task Request Detail"
 // @Success      200      {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
@@ -87,7 +159,7 @@ func GetTask(ctx *gin.Context) {
 // @Router       /tasks [post]
 func CreateTask(ctx *gin.Context) {
 	var request request.CreateTaskRequest
-	if ctx.ShouldBindQuery(&request) != nil {
+	if ctx.ShouldBindJSON(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return
 	}
@@ -129,42 +201,40 @@ func ClaimTask(ctx *gin.Context) {
 	}
 
 	util.ProcessResponse(response.APIResponse{
-		ErrMsg:   service.ClaimTask(ctx.Param("id"), ctx),
-		Context:  ctx,
-		PostType: action_type.CREATE_ACTION,
+		ErrMsg:  service.ClaimTask(ctx.Param("id"), ctx),
+		Context: ctx,
 	})
 }
 
-// ReviewAssignedProfileOfTask godoc
-// @Summary      Review a task
-// @Description  Review a task
-// @Tags         tasks
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Task ID"
-// @Param        request  query     request.VoteRequest  true  "Review Request Detail"
-// @Success      200      {object}  response.MessageAPIResponse "Success"
-// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
-// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
-// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /tasks/{id}/review [post]
-func ReviewAssignedProfileOfTask(ctx *gin.Context) {
-	var request request.VoteRequest
-	if ctx.ShouldBindQuery(&request) != nil {
-		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
-		return
-	}
+// // ReviewAssignedProfileOfTask godoc
+// // @Summary      Review a task
+// // @Description  Review a task
+// // @Tags         tasks
+// // @Accept       json
+// // @Produce      json
+// // @Security     BearerAuth
+// // @Param        id   path      string  true  "Task ID"
+// // @Param        request  body     request.VoteRequest  true  "Review Request Detail"
+// // @Success      200      {object}  response.MessageAPIResponse "Success"
+// // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
+// // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// // @Router       /tasks/{id}/review [post]
+// func ReviewAssignedProfileOfTask(ctx *gin.Context) {
+// 	var request request.VoteRequest
+// 	if ctx.ShouldBindJSON(&request) != nil {
+// 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+// 		return
+// 	}
 
-	service, err := business.GenerateTaskService()
-	if err != nil {
-		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
-		return
-	}
+// 	service, err := business.GenerateTaskService()
+// 	if err != nil {
+// 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+// 		return
+// 	}
 
-	util.ProcessResponse(response.APIResponse{
-		ErrMsg:   service.ReviewAssignedProfileOfTask(ctx.Param("id"), request, ctx),
-		Context:  ctx,
-		PostType: action_type.NON_POST,
-	})
-}
+// 	util.ProcessResponse(response.APIResponse{
+// 		ErrMsg:  service.ReviewAssignedProfileOfTask(ctx.Param("id"), request, ctx),
+// 		Context: ctx,
+// 	})
+// }

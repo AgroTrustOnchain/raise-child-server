@@ -116,7 +116,7 @@ func (p *profileService) UploadProfile(id string, req request.UploadProfileReque
 	}
 
 	if isInfoExist {
-		return response.PersonalProfileResponse{}, errors.New(noti.GENERIC_PERSONAL_INFO_REGISTERED_WARN_MSG)
+		return response.PersonalProfileResponse{}, errors.New(noti.GENERIC_PERSONAL_INFO_REGISTERED_WANR_MSG)
 	}
 
 	var firstName string = strings.TrimSpace(req.FirstName)
@@ -132,6 +132,11 @@ func (p *profileService) UploadProfile(id string, req request.UploadProfileReque
 	profile.UpdatedAt = time.Now()
 
 	return (*profile).ToPersonalProfile(), p.profileRepo.UploadProfile(*profile, ctx)
+}
+
+// GetProfile implements business.IProfileService.
+func (p *profileService) GetProfile(id string, ctx context.Context) (*entities.Profile, error) {
+	return p.profileRepo.GetProfile(id, ctx)
 }
 
 // GetWalletPersonalProfile implements business.IProfileService.
@@ -171,26 +176,40 @@ func (p *profileService) GetWalletPersonalProfile(id string, req request.GetTran
 	}
 
 	var res response.PersonalWalletProfileResponse
-	var redisKey string = p.getGetWalletPersonalProfileRedisKey(id, req)
-	if p.redisCache.Get(redisKey, &res, ctx) {
-		return res, nil
-	}
-
 	var client = p.clients[constant.SuiTestnet]
 	var packageId string = os.Getenv(env.PACKAGE_ID)
-	var donorModule = on_chain.InitializeModuleDonor()
-	nfts, err := on_chain.GetOnChainOwnedObjects[entities.Donor](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: id,
-		StructType:   fmt.Sprintf("%s::%s::%s", packageId, donorModule.GetModule(), donorModule.GetDonorNftStruct()),
-		ErrLogger:    p.errLogger,
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: p.errLogger,
 	}, ctx)
 	if err != nil {
-		return res, err
+		return response.PersonalWalletProfileResponse{}, err
 	}
 
-	if nfts == nil || len(nfts) == 0 {
-		return res, nil
+	var foundIdx int = -1
+	for i, donor := range manage.DonorIds {
+		if donor == id {
+			foundIdx = i
+			break
+		}
+	}
+
+	if foundIdx == -1 {
+		return response.PersonalWalletProfileResponse{
+			WalletAddress: id,
+			Page:          1,
+			TotalPages:    1,
+		}, nil
+	}
+
+	nft, err := on_chain.GetOnChainObject[entities.Donor](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  manage.DonorNfts[foundIdx],
+		ErrLogger: p.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.PersonalWalletProfileResponse{}, err
 	}
 
 	var recordModule = on_chain.InitializeModuleRecord()
@@ -288,20 +307,18 @@ func (p *profileService) GetWalletPersonalProfile(id string, req request.GetTran
 		}
 	}
 
-	totalDonation, _ := strconv.ParseInt(nfts[0].TotalDonation, 10, 64)
+	totalDonation, _ := strconv.ParseInt(nft.TotalDonation, 10, 64)
 	res = response.PersonalWalletProfileResponse{
 		WalletAddress:   id,
-		FirstName:       nfts[0].FirstName,
-		LastName:        nfts[0].LastName,
+		FirstName:       nft.FirstName,
+		LastName:        nft.LastName,
 		TotalDonation:   totalDonation,
-		SupportedChilds: nfts[0].SupportedChilds,
+		SupportedChilds: nft.SupportedChilds,
 		TxRecords:       data,
 		RecordAmount:    len(data),
 		Page:            req.Page,
 		TotalPages:      int(math.Ceil(float64(len(filteredTxs)) / float64(req.PageSize))),
 	}
-
-	p.redisCache.Set(redisKey, res, time.Minute*5, ctx)
 
 	return res, nil
 }

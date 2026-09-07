@@ -24,11 +24,14 @@ func (b BankProfile) ToBankProfileResponse() response.BankProfileResponse {
 		return response.BankProfileResponse{}
 	}
 
+	var isUploadedInfo bool = b.PayosApiKey != ""
+
 	return response.BankProfileResponse{
-		ID:        b.ID,
-		Owner:     b.Owner,
-		BankOrg:   b.BankOrg,
-		BankCode:  b.BankCode,
-		OwnerName: b.OwnerName,
+		ID:             b.ID,
+		Owner:          b.Owner,
+		BankOrg:        b.BankOrg,
+		BankCode:       b.BankCode,
+		OwnerName:      b.OwnerName,
+		IsUploadedInfo: isUploadedInfo,
 	}
 }

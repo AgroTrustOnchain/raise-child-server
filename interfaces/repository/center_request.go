@@ -13,7 +13,7 @@ type ICenterRequestRepository interface {
 	CreateRegistrationRequest(req entities.CenterRequest, ctx context.Context) error
 	UpdateRegistrationRequest(req entities.CenterRequest, ctx context.Context) error
 	IsRegionRequested(region string, ctx context.Context) (bool, error)
-	GetPendingRequests(ctx context.Context) ([]entities.BackgroundRecord, []entities.BackgroundRecord, error)
-	SetApprovedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error
-	SetRefusedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error
+	GetPendingRequests(ctx context.Context) ([]entities.CenterRequest, error)
+	SetApprovedStatuses(reqs []entities.CenterRequest, ctx context.Context) error
+	SetRefusedStatuses(reqs []entities.CenterRequest, ctx context.Context) error
 }

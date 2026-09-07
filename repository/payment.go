@@ -45,7 +45,7 @@ func (p *paymentRepo) CreatePayment(payment entities.Payment, ctx context.Contex
 		payment.Message, payment.ExpiredAt, payment.CreatedAt, payment.UpdatedAt); err != nil {
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -60,14 +60,14 @@ func (p *paymentRepo) GetPaymentById(id string, ctx context.Context) (*entities.
 	if err := p.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.Actor, &res.ProfileID, &res.ProposalID, &res.DonationID, &res.IsDonateTx, &res.TransactionId,
 		&res.Amount, &res.Currency, &res.Status, &res.Method, &res.CancelReason, &res.Message, &res.ExpiredAt,
-		&res.CreatedAt, &res.UpdatedAt, &res.ProofBlobID, &res.ReviewedBy, &res.ReviewStatus, &res.IsTransferred); err != nil {
+		&res.CreatedAt, &res.UpdatedAt, &res.ProofBlobID, &res.ReviewedBy, &res.ReviewStatus, &res.IsTransferred, &res.TransferredAt); err != nil {
 
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -76,71 +76,71 @@ func (p *paymentRepo) GetPaymentById(id string, ctx context.Context) (*entities.
 // GetPayments implements repository.IPaymentRepository.
 func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Context) ([]entities.Payment, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "GetPayments - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviousCondition bool = false
+	var isHavePreviosCondition bool = false
 	if req.Status != "" {
 		queryCondition += fmt.Sprintf("status = '%s'", req.Status)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.Keyword != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(message) LIKE LOWER('%s')", req.Keyword)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.Method != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("method = '%s'", req.Method)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.Actor != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("actor = '%s'", req.Actor)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.MinAmount != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("amount >= %d", *req.MinAmount)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.MaxAmount != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("amount <= %d", *req.MaxAmount)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.IsDonatePayment != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("is_donate_tx = %v", req.IsDonatePayment)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.IsPaymentExpired != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
@@ -162,7 +162,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 		sortOrder = "DESC"
 	}
 
-	if isHavePreviousCondition {
+	if isHavePreviosCondition {
 		queryCondition += " "
 	}
 
@@ -180,6 +180,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 		p.errLogger.Println(errLogMsg + err.Error())
 		return nil, 0, internalErr
 	}
+	defer rows.Close()
 
 	var res []entities.Payment
 	for rows.Next() {
@@ -200,7 +201,7 @@ func (p *paymentRepo) GetPayments(req request.GetPaymentsRequest, ctx context.Co
 	var totalRecords int
 	p.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(payment_table, queryCondition)).Scan(&totalRecords)
 
-	return res, calculateTotalPages(totalRecords, req.PageSize), nil
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // UpdatePayment implements repository.IPaymentRepository.
@@ -211,7 +212,7 @@ func (p *paymentRepo) UpdatePayment(payment entities.Payment, ctx context.Contex
 	res, err := p.db.ExecContext(ctx, query, payment.Status, payment.Method, payment.CancelReason, payment.UpdatedAt,
 		payment.ProfileID, payment.ReviewedBy, payment.ReviewStatus, payment.IsTransferred, payment.TransferredAt, payment.ID)
 
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	if err != nil {
 		p.errLogger.Println(errLogMsg + err.Error())
@@ -225,7 +226,7 @@ func (p *paymentRepo) UpdatePayment(payment entities.Payment, ctx context.Contex
 	}
 
 	if rowsAffected == 0 {
-		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, payment_table))
+		return fmt.Errorf(noti.UNDEFINED_OBJECT_WARN_MSG, payment_table)
 	}
 
 	return nil
@@ -235,9 +236,9 @@ func (p *paymentRepo) UpdatePayment(payment entities.Payment, ctx context.Contex
 func (p *paymentRepo) IsWithdrawalPaymentInProcess(id string, ctx context.Context) (bool, error) {
 	var query string = "SELECT status, expired_at FROM " + payment_table + " WHERE proposal_id = $1 AND is_transferred = FALSE AND (status = 'Pending' OR status = 'Success')"
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PAYMENT_REPOSITORY) + "IsWithdrawalPaymentInProcess - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	rows, err := p.db.QueryContext(ctx, query)
+	rows, err := p.db.QueryContext(ctx, query, id)
 	if err != nil {
 		p.errLogger.Println(errLogMsg + err.Error())
 		return false, internalErr

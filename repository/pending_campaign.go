@@ -43,7 +43,7 @@ func (p *pendingCampaignRepo) CreatePendingCampaign(campaign entities.PendingCam
 	); err != nil {
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -66,7 +66,7 @@ func (p *pendingCampaignRepo) GetPendingCampaign(id string, ctx context.Context)
 		}
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -75,67 +75,67 @@ func (p *pendingCampaignRepo) GetPendingCampaign(id string, ctx context.Context)
 // GetPendingCampaigns implements repository.IPendingCampaignRepository.
 func (p *pendingCampaignRepo) GetPendingCampaigns(req request.GetPendingCampaignsRequest, ctx context.Context) ([]entities.PendingCampaign, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PENDING_CAMPAIGN_REPOSITORY) + "GetPendingCampaigns - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviousCondition bool = false
+	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
-		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%%%%%s%%%%')", req.Keyword)
-		isHavePreviousCondition = true
+		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%%%s%%')", req.Keyword)
+		isHavePreviosCondition = true
 	}
 
 	if req.PoolName != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(pool_name) = LOWER('%%%%%s%%%%')", req.PoolName)
-		isHavePreviousCondition = true
+		queryCondition += fmt.Sprintf("LOWER(pool_name) = LOWER('%%%s%%')", req.PoolName)
+		isHavePreviosCondition = true
 	}
 
 	if req.Status != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(review_status) = LOWER('%%%%%s%%%%')", req.Status)
-		isHavePreviousCondition = true
+		queryCondition += fmt.Sprintf("LOWER(review_status) = LOWER('%%%s%%')", req.Status)
+		isHavePreviosCondition = true
 	}
 
 	if req.Creator != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("actor_address = '%%%%%s%%%%'", req.Creator)
-		isHavePreviousCondition = true
+		queryCondition += fmt.Sprintf("actor_address = '%s'", req.Creator)
+		isHavePreviosCondition = true
 	}
 
 	if req.Reviewer != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("reviewed_bdy = '%%%%%s%%%%'", req.Creator)
-		isHavePreviousCondition = true
+		queryCondition += fmt.Sprintf("reviewed_bdy = '%s'", req.Creator)
+		isHavePreviosCondition = true
 	}
 
 	if req.MinAmount != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("target >= %d", *req.MinAmount)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.MaxAmount != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("target <= %d", *req.MaxAmount)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.SortCriteria == "" {
@@ -146,7 +146,7 @@ func (p *pendingCampaignRepo) GetPendingCampaigns(req request.GetPendingCampaign
 		req.SortOrder = "DESC"
 	}
 
-	if isHavePreviousCondition {
+	if isHavePreviosCondition {
 		queryCondition += " "
 	}
 
@@ -184,7 +184,7 @@ func (p *pendingCampaignRepo) GetPendingCampaigns(req request.GetPendingCampaign
 	var totalRecords int
 	p.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(pending_campaign_table, queryCondition)).Scan(&totalRecords)
 
-	return res, calculateTotalPages(totalRecords, req.PageSize), nil
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // UpdatePendingCampaign implements repository.IPendingCampaignRepository.
@@ -194,7 +194,7 @@ func (p *pendingCampaignRepo) UpdatePendingCampaign(campaign entities.PendingCam
 		"review_status = $4, reviewed_by = $5, updated_at = $6 WHERE id = $7"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PENDING_CAMPAIGN_REPOSITORY) + "UpdatePendingCampaign - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	res, err := p.db.ExecContext(ctx, query, campaign.Target, campaign.Description, campaign.ProofBlobID,
 		campaign.ReviewStatus, campaign.ReviewedBy, campaign.UpdatedAt, campaign.ID)
@@ -210,7 +210,7 @@ func (p *pendingCampaignRepo) UpdatePendingCampaign(campaign entities.PendingCam
 	}
 
 	if rowsAffected == 0 {
-		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, pending_campaign_table))
+		return fmt.Errorf(noti.UNDEFINED_OBJECT_WARN_MSG, pending_campaign_table)
 	}
 
 	return nil

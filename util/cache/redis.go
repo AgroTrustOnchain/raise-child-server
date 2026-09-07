@@ -49,9 +49,6 @@ var (
 func InitializeRedisCache() IRedisCache {
 	_once.Do(func() {
 		options, _ := redis.ParseURL(os.Getenv(env.REDIS_URL))
-		if options == nil {
-			return
-		}
 
 		options.PoolSize = 10
 		options.MinIdleConns = 2
@@ -75,10 +72,6 @@ func InitializeRedisCache() IRedisCache {
 
 // Delete implements IRedisCache.
 func (r *redisCache) Delete(key string, ctx context.Context) {
-	if r == nil || r.client == nil {
-		return
-	}
-
 	if err := r.client.Del(ctx, key).Err(); err != nil {
 		r.errLogger.Println(err)
 	}
@@ -86,10 +79,6 @@ func (r *redisCache) Delete(key string, ctx context.Context) {
 
 // Get implements IRedisCache.
 func (r *redisCache) Get(key string, value any, ctx context.Context) bool {
-	if r == nil || r.client == nil {
-		return false
-	}
-
 	data, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
 		if err != redis.Nil {
@@ -104,10 +93,6 @@ func (r *redisCache) Get(key string, value any, ctx context.Context) bool {
 
 // Set implements IRedisCache.
 func (r *redisCache) Set(key string, value any, duration time.Duration, ctx context.Context) {
-	if r == nil || r.client == nil {
-		return
-	}
-
 	data, err := json.Marshal(value)
 	if err != nil {
 		r.errLogger.Println(err)

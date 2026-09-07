@@ -1,6 +1,7 @@
 package onchain
 
 import (
+	"fmt"
 	"os"
 	"raise-child/constants/env"
 	"raise-child/constants/on-chain/sui"
@@ -21,6 +22,7 @@ type CreateGiftForCenterArguments struct {
 	Email           string
 	Message         string
 	Description     string
+	Sender          string
 }
 
 type CreateGiftForChildArguments struct {
@@ -30,6 +32,7 @@ type CreateGiftForChildArguments struct {
 type CancelGiftArguments struct {
 	GiftID       string
 	CancelReason string
+	Sender       string
 }
 
 type ConfirmReceiveGiftArguments struct {
@@ -37,6 +40,7 @@ type ConfirmReceiveGiftArguments struct {
 	Recipient   string
 	StaffID     string
 	ImageBlobID string
+	Sender      string
 }
 
 type IModuleGift interface {
@@ -61,7 +65,7 @@ func InitializeModuleGift() IModuleGift {
 
 // GetFunctionConfirmReceiveCenterGift implements IModuleGift.
 func (m *moduleGift) GetFunctionConfirmReceiveCenterGift() string {
-	return sui.CONFIRM_RECEIVE_CENTER_GIFT_FUNCTION
+	return sui.CONFIRM_RECIEVE_CENTER_GIFT_FUNCTION
 }
 
 // GetFunctionCreateGiftForCenter implements IModuleGift.
@@ -76,7 +80,7 @@ func (m *moduleGift) GetFunctionCancelGift() string {
 
 // GetFunctionConfirmReceiveChildGift implements IModuleGift.
 func (m *moduleGift) GetFunctionConfirmReceiveChildGift() string {
-	return sui.CONFIRM_RECEIVE_CHILD_GIFT_FUNCTION
+	return sui.CONFIRM_RECIEVE_CHILD_GIFT_FUNCTION
 }
 
 // GetFunctionCreateGiftForChild implements IModuleGift.
@@ -97,8 +101,10 @@ func (m *moduleGift) GetModule() string {
 // ToCancelGiftArguments implements IModuleGift.
 func (m *moduleGift) ToCancelGiftArguments(args CancelGiftArguments) []interface{} {
 	return []interface{}{
+		os.Getenv(env.ADMIN_CAP_ID_1),
 		args.GiftID,
 		args.CancelReason,
+		args.Sender,
 		sui.CLOCK_OBJECT_ID,
 	}
 }
@@ -106,10 +112,12 @@ func (m *moduleGift) ToCancelGiftArguments(args CancelGiftArguments) []interface
 // ToConfirmReceiveGiftArguments implements IModuleGift.
 func (m *moduleGift) ToConfirmReceiveGiftArguments(args ConfirmReceiveGiftArguments) []interface{} {
 	return []interface{}{
+		os.Getenv(env.ADMIN_CAP_ID_1),
 		args.GiftID,
 		args.Recipient,
 		args.StaffID,
 		args.ImageBlobID,
+		args.Sender,
 		sui.CLOCK_OBJECT_ID,
 	}
 }
@@ -117,6 +125,7 @@ func (m *moduleGift) ToConfirmReceiveGiftArguments(args ConfirmReceiveGiftArgume
 // ToCreateGiftArguments implements IModuleGift.
 func (m *moduleGift) ToCreateGiftForCenterArguments(args CreateGiftForCenterArguments) []interface{} {
 	return []interface{}{
+		os.Getenv(env.ADMIN_CAP_ID_1),
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		args.DonorID,
 		args.CenterID,
@@ -124,7 +133,7 @@ func (m *moduleGift) ToCreateGiftForCenterArguments(args CreateGiftForCenterArgu
 		args.Carrier,
 		args.GiftImageBlobID,
 		args.Category,
-		uint64(args.Amount),
+		fmt.Sprintf("%d", args.Amount),
 		args.FirstName,
 		args.LastName,
 		args.Gender,
@@ -132,6 +141,7 @@ func (m *moduleGift) ToCreateGiftForCenterArguments(args CreateGiftForCenterArgu
 		args.Email,
 		args.Message,
 		args.Description,
+		args.Sender,
 		sui.CLOCK_OBJECT_ID,
 	}
 }
@@ -139,6 +149,7 @@ func (m *moduleGift) ToCreateGiftForCenterArguments(args CreateGiftForCenterArgu
 // ToCreateGiftForChildArguments implements IModuleGift.
 func (m *moduleGift) ToCreateGiftForChildArguments(args CreateGiftForChildArguments) []interface{} {
 	return []interface{}{
+		os.Getenv(env.ADMIN_CAP_ID_1),
 		os.Getenv(env.MANAGE_OBJECT_ID),
 		args.DonorID,
 		args.ChildID,
@@ -147,7 +158,7 @@ func (m *moduleGift) ToCreateGiftForChildArguments(args CreateGiftForChildArgume
 		args.Carrier,
 		args.GiftImageBlobID,
 		args.Category,
-		uint64(args.Amount),
+		fmt.Sprintf("%d", args.Amount),
 		args.FirstName,
 		args.LastName,
 		args.Gender,
@@ -155,6 +166,7 @@ func (m *moduleGift) ToCreateGiftForChildArguments(args CreateGiftForChildArgume
 		args.Email,
 		args.Message,
 		args.Description,
+		args.Sender,
 		sui.CLOCK_OBJECT_ID,
 	}
 }

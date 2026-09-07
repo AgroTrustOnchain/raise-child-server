@@ -16,7 +16,7 @@ const (
 
 	RECOVER_ACCOUNT_MESSAGE string = "Please check your mail box to reactivate your account."
 
-	ACTIVATE_ACCOUNT_MESSAGE string = "You have still not activated your account yet. Please check your mail box to complete the process."
+	ACTIVATE_ACCOUNT_MESSAGE string = "You have still not acitavted your account yet. Please check your mail box to complete the process."
 
 	VERIFY_ACCOUNT_MESSAGE string = "Please check your mail box to verify your account."
 
@@ -40,7 +40,7 @@ const (
 
 	NOT_UPLOADED_PROFILE_MESSAGE string = "You have not uploaded your personal information yet."
 
-	PAYMENT_EXPIRED_MESSAGE string = "This payment transaction has been expired."
+	PAYMENT_EXPIRED_MESSAGE string = "This payment transaction has been exipred."
 
 	PAYMENT_CANCEL_MESSAGE string = "Your payment has been canceled."
 
@@ -48,13 +48,15 @@ const (
 
 	WITHDRAW_PROPOSAL_CLOSED_MESSAGE string = "This withdraw proposal has been closed."
 
-	HAVE_TO_DONATE_TO_VOTE string = "You have to donate to RaiseChild Platform to vote this request."
+	HAVE_TO_DONATE_TO_VOTE string = "You have to donate to AgroTrust Platform to vote this request."
 
-	WITHDRAW_PROPOSAL_EXECUTED_MESSAGE string = "This withdraw proposal has been executed."
+	WITHDRAW_PROPOSAL_EXECUTED_MESSSAGE string = "This withdraw proposal has been cancelled."
+
+	WITHDRAW_PROPOSAL_CANCELLED_MESSSAGE string = "This withdraw proposal has been executed."
 
 	WITHDRAW_PROPOSAL_FAIL_CONDITION_MESSAGE string = "This withdraw proposal approve rate has been failed."
 
-	POOL_CURRENTLY_NOT_ENOUGH_BALANCE string = "Pool is now not enough balance for this withdraw request."
+	POOL_CURRENTLY_NOT_ENOUGH_BALENCE string = "Pool is now not enough balence for this withdraw request."
 
 	CHILD_AGE_OUT_OF_SUPPORT_MESSAGE string = "This child's age is out of our support range."
 
@@ -63,6 +65,8 @@ const (
 	LEADER_NOT_UPLOAD_BANK_PROFILE_MESSAGE string = "Leader has not uploaded bank profile yet."
 
 	WITHDRAW_PROPOSAL_IN_PROCESS_MESSAGE string = "This withdraw proposal is in process."
+
+	NEED_ALREADY_WITHDRAWN_MESSAGE string = "This need was already withdrawn."
 
 	SPECIAL_NEED_PROPOSAL_CONFIRMED_MESSAGE string = "This special need proposal has been confirmed."
 
@@ -76,7 +80,7 @@ const (
 
 	SUPPORT_SURPASS_CAMPAIGN_TARGET_MESSAGE string = "The donation is surpassed the campaign target."
 
-	SUPPORT_REGION_REQUEST_MESSAGE string = "This to-supported region is requested with proposal."
+	SUPPORRT_REGION_REQUEST_MESSAGE string = "This to-supported region is requested with proposal."
 
 	CHILD_PROVIDED_MEAL_MESSAGE string = "This child has received meal today."
 
@@ -85,6 +89,8 @@ const (
 	REQUEST_REVIEWED_MESSAGE string = "This request has been reviewed."
 
 	TASK_ENDED_MESSAGE string = "This task has been ended."
+
+	TASK_NOT_SUBMITTED_DATE_MESSAGE string = "This is not date to submit for this task."
 
 	TASK_CLAIMED_MESSAGE string = "This task has been claimed."
 
@@ -121,6 +127,14 @@ const (
 	STILL_PENDING_PAYMENT_MESSAGE string = "This payment is still pending."
 
 	PAYMENT_NOT_TRANSFERRED_MESSAGE string = "This payment is not transferred yet."
+
+	CHILDREN_WITHDRAW_PROPOSED_MESSAGE string = "Children Withdraw Proposal for this region on this date has been proposed."
+
+	NOT_CHILDREN_WITHDRAW_PROPOSED_DATE string = "This is not date to propose children withdraw proposal."
+
+	EMPTY_REMAIN_VOTE_POWER_MESSAGE string = "You have casted all vote powers."
+
+	REGION_NOT_HAVE_LEADER_MESSAGE string = "Region must have leader first to apply other roles."
 )
 
 const (

@@ -70,7 +70,7 @@ func GeneratePendingWithdrawProposalService() (business.IPendingWithdrawProposal
 	return initializePendingWithdrawProposalService(
 		repository.InitializePendingWithdrawProposalRepo(cnn, errLogger),
 		repository.InitializeBankProfileRepository(cnn, errLogger),
-		ai.InitializeAiProvider(nil, errLogger),
+		ai.InitializeAiProvider(errLogger),
 		walrus_pkg.InitializeWalrusProvider(errLogger),
 		_networkAliases,
 		errLogger,
@@ -94,13 +94,21 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 
 	var client = p.clients[constant.SuiTestnet]
 	var reviewer string = ctx.Value("address").(string)
-	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
-		ErrLogger: p.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
+	var manageObj entities.Manage
+	if !p.redisCache.Get(manageObj.GetRedisKey(), &manageObj, ctx) {
+		res, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+			Client:    p.clients[constant.SuiTestnet],
+			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+			ErrLogger: p.errLogger,
+		}, ctx)
+		if err != nil {
+			return response.BuildTransactionResponse{}, err
+		}
+
+		if res != nil {
+			p.redisCache.Set(manageObj.GetRedisKey(), res, time.Minute, ctx)
+			manageObj = *res
+		}
 	}
 
 	if !slices.Contains(manageObj.AdminIds, reviewer) {
@@ -280,13 +288,21 @@ func (p *pendingWithdrawProposalService) ApprovePendingWithdrawProposal(id strin
 // CreatePendingWithdrawProposal implements business.IPendingWithdrawProposalService.
 func (p *pendingWithdrawProposalService) CreatePendingWithdrawProposal(req request.CreatePendingWithdrawProposalRequest, ctx context.Context) (*entities.PendingWithdrawProposal, error) {
 	var client = p.clients[constant.SuiTestnet]
-	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
-		ErrLogger: p.errLogger,
-	}, ctx)
-	if err != nil {
-		return nil, err
+	var manageObj entities.Manage
+	if !p.redisCache.Get(manageObj.GetRedisKey(), &manageObj, ctx) {
+		res, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+			Client:    p.clients[constant.SuiTestnet],
+			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+			ErrLogger: p.errLogger,
+		}, ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if res != nil {
+			p.redisCache.Set(manageObj.GetRedisKey(), res, time.Minute, ctx)
+			manageObj = *res
+		}
 	}
 
 	var sender string = ctx.Value("address").(string)
@@ -339,20 +355,20 @@ func (p *pendingWithdrawProposalService) CreatePendingWithdrawProposal(req reque
 
 	var purpose string = string(entities.WITHDRAW_PURPOSE)
 	var description string = strings.TrimSpace(req.Description)
-	var aiEvaluation string
-	if req.ProofBlobID != nil {
-		proofBytes, _ := p.walrusProvider.FetchBytesImage(*req.ProofBlobID)
-		if proofBytes != nil {
-			aiEvaluation = p.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
-				Purpose:         purpose,
-				WithdrawAmount:  req.WithdrawAmount,
-				Description:     description,
-				ProofBytesImage: proofBytes,
-			}, ctx)
-		}
-	}
 
-	// todo: AI validation
+	// var aiEvaluation string
+	// if req.ProofBlobID != nil {
+	// 	proofBytes, _ := p.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+	// 	if proofBytes != nil {
+	// 		aiEvaluation = p.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+	// 			Purpose:         purpose,
+	// 			WithdrawAmount:  req.WithdrawAmount,
+	// 			Description:     description,
+	// 			ProofBytesImage: proofBytes,
+	// 		}, ctx)
+	// 	}
+	// }
+
 	var curTime time.Time = time.Now()
 	var proposal = entities.PendingWithdrawProposal{
 		ID:             util.GenerateId(),
@@ -366,9 +382,9 @@ func (p *pendingWithdrawProposalService) CreatePendingWithdrawProposal(req reque
 		ProofBlobID:    req.ProofBlobID,
 		Description:    description,
 		Status:         request_pending_status,
-		AIEvaluation:   aiEvaluation,
-		CreatedAt:      curTime,
-		UpdatedAt:      curTime,
+		// AIEvaluation:   aiEvaluation,
+		CreatedAt: curTime,
+		UpdatedAt: curTime,
 	}
 
 	return &proposal, p.pendingWithdrawProposalRepo.CreatePendingWithdrawProposal(proposal, ctx)
@@ -387,13 +403,21 @@ func (p *pendingWithdrawProposalService) GetPendingWithdrawProposal(id string, c
 
 	var sender string = ctx.Value("address").(string)
 	if res.Creator != sender {
-		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-			Client:    p.clients[constant.SuiTestnet],
-			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
-			ErrLogger: p.errLogger,
-		}, ctx)
-		if err != nil {
-			return nil, err
+		var manageObj entities.Manage
+		if !p.redisCache.Get(manageObj.GetRedisKey(), &manageObj, ctx) {
+			res, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+				Client:    p.clients[constant.SuiTestnet],
+				ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+				ErrLogger: p.errLogger,
+			}, ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			if res != nil {
+				p.redisCache.Set(manageObj.GetRedisKey(), res, time.Minute, ctx)
+				manageObj = *res
+			}
 		}
 
 		if !slices.Contains(manageObj.AdminIds, sender) {
@@ -422,13 +446,21 @@ func (p *pendingWithdrawProposalService) GetPendingWithdrawProposals(req request
 
 	var sender string = ctx.Value("address").(string)
 	if sender != req.Creator {
-		manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-			Client:    p.clients[constant.SuiTestnet],
-			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
-			ErrLogger: p.errLogger,
-		}, ctx)
-		if err != nil {
-			return response.PaginationDataResponse{}, err
+		var manageObj entities.Manage
+		if !p.redisCache.Get(manageObj.GetRedisKey(), &manageObj, ctx) {
+			res, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+				Client:    p.clients[constant.SuiTestnet],
+				ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+				ErrLogger: p.errLogger,
+			}, ctx)
+			if err != nil {
+				return response.PaginationDataResponse{}, err
+			}
+
+			if res != nil {
+				p.redisCache.Set(manageObj.GetRedisKey(), res, time.Minute, ctx)
+				manageObj = *res
+			}
 		}
 
 		if !slices.Contains(manageObj.AdminIds, sender) {
@@ -467,10 +499,10 @@ func (p *pendingWithdrawProposalService) GetPendingWithdrawProposals(req request
 	}
 
 	var res response.PaginationDataResponse
-	var redisKey string = p.getGetPendingWithdrawProposalsRedisKey(req)
-	if p.redisCache.Get(redisKey, &res, ctx) {
-		return res, nil
-	}
+	// var redisKey string = p.getGetPendingWithdrawProposalsRedisKey(req)
+	// if p.redisCache.Get(redisKey, &res, ctx) {
+	// 	return res, nil
+	// }
 
 	data, pages, err := p.pendingWithdrawProposalRepo.GetPendingWithdrawProposals(req, ctx)
 	if err != nil {
@@ -478,7 +510,7 @@ func (p *pendingWithdrawProposalService) GetPendingWithdrawProposals(req request
 	}
 
 	var amount int
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		amount = 0
 	} else {
 		amount = len(data)
@@ -491,7 +523,7 @@ func (p *pendingWithdrawProposalService) GetPendingWithdrawProposals(req request
 		TotalPages: pages,
 	}
 
-	p.redisCache.Set(redisKey, res, time.Minute, ctx)
+	// p.redisCache.Set(redisKey, res, time.Minute, ctx)
 
 	return res, nil
 }
@@ -513,13 +545,21 @@ func (p *pendingWithdrawProposalService) RefusePendingWithdrawProposal(id string
 
 	var client = p.clients[constant.SuiTestnet]
 	var reviewer string = ctx.Value("address").(string)
-	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
-		ErrLogger: p.errLogger,
-	}, ctx)
-	if err != nil {
-		return err
+	var manageObj entities.Manage
+	if !p.redisCache.Get(manageObj.GetRedisKey(), &manageObj, ctx) {
+		res, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+			Client:    client,
+			ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+			ErrLogger: p.errLogger,
+		}, ctx)
+		if err != nil {
+			return err
+		}
+
+		if res != nil {
+			p.redisCache.Set(manageObj.GetRedisKey(), res, time.Minute, ctx)
+			manageObj = *res
+		}
 	}
 
 	if !slices.Contains(manageObj.AdminIds, reviewer) {

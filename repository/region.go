@@ -38,7 +38,7 @@ func (s *supportedRegionProposalRepo) CreateSupportedRegionSuggestion(proposal e
 	if _, err := s.db.ExecContext(ctx, query, proposal.ID, proposal.ProfileID, proposal.Region, proposal.Content, proposal.CreatedBy); err != nil {
 
 		s.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -51,7 +51,7 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestion(id string, ct
 
 	var res entities.SupportedRegionSuggestion
 	if err := s.db.QueryRowContext(ctx, query, id).Scan(
-		&res.ID, &res.ProfileID, &res.Region, &res.Content, &res.Status,
+		&res.ID, &res.ProfileID, &res.Region, &res.Content, &res.Status, &res.RefuseReason,
 		&res.CreatedBy, &res.ReviewedBy, &res.CreatedAt, &res.UpdatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
@@ -59,7 +59,7 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestion(id string, ct
 		}
 
 		s.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -68,31 +68,40 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestion(id string, ct
 // GetSupportedRegionSuggestions implements repository.ISupportedRegionSuggestionRepository.
 func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.GetSupportedRegionSuggestionsRequest, isGuestView bool, ctx context.Context) ([]entities.SupportedRegionSuggestion, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.SUPPORTED_REGION_PROPOSAL) + "GetSupportedRegionSuggestions - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviousCondition bool = false
+	var isHavePreviosCondition bool = false
 	if isGuestView {
 		queryCondition += "status = 'Approved'"
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.Keyword != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("(LOWER(region) LIKE LOWER('%s') OR LOWER(content) LIKE LOWER('%s'))", req.Keyword, req.Keyword)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.CreatedBy != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("created_by = '%s'", req.CreatedBy)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
+	}
+
+	if req.Region != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("region = '%s'", req.Region)
+		isHavePreviosCondition = true
 	}
 
 	var order string = "DESC"
@@ -114,12 +123,13 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.
 		s.errLogger.Println(errLogMsg + err.Error())
 		return nil, 0, internalErr
 	}
+	defer rows.Close()
 
 	var res []entities.SupportedRegionSuggestion
 	for rows.Next() {
 		var x entities.SupportedRegionSuggestion
 		if err := rows.Scan(
-			&x.ID, &x.ProfileID, &x.Region, &x.Content, &x.Status,
+			&x.ID, &x.ProfileID, &x.Region, &x.Content, &x.Status, &x.RefuseReason,
 			&x.CreatedBy, &x.ReviewedBy, &x.CreatedAt, &x.UpdatedAt); err != nil {
 			s.errLogger.Println(errLogMsg + err.Error())
 			return nil, 0, internalErr
@@ -131,7 +141,7 @@ func (s *supportedRegionProposalRepo) GetSupportedRegionSuggestions(req request.
 	var totalRecords int
 	s.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(supported_region_proposal_table, queryCondition)).Scan(&totalRecords)
 
-	return res, calculateTotalPages(totalRecords, req.PageSize), nil
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // IsRegionRequested implements repository.ISupportedRegionSuggestionRepository.
@@ -145,7 +155,7 @@ func (s *supportedRegionProposalRepo) IsRegionRequested(region string, ctx conte
 		}
 
 		s.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.SUPPORTED_REGION_PROPOSAL) + "IsRegionRequested - " + err.Error())
-		return false, errors.New(noti.INTERNAL_ERR_MSG)
+		return false, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return id != "", nil
@@ -154,10 +164,10 @@ func (s *supportedRegionProposalRepo) IsRegionRequested(region string, ctx conte
 // UpdateSupportedRegionSuggestion implements repository.ISupportedRegionSuggestionRepository.
 func (s *supportedRegionProposalRepo) UpdateSupportedRegionSuggestion(proposal entities.SupportedRegionSuggestion, ctx context.Context) error {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.SUPPORTED_REGION_PROPOSAL) + "UpdateSupportedRegionSuggestion - "
-	var query string = "UPDATE " + volunteer_noti_table + " SET content = $1, status = $2, reviewed_by = $3 WHERE id = $4"
+	var query string = "UPDATE " + supported_region_proposal_table + " SET content = $1, status = $2, reviewed_by = $3, refuse_reason = $4 WHERE id = $5"
 
-	res, err := s.db.ExecContext(ctx, query, proposal.Content, proposal.Status, proposal.ReviewedBy, proposal.ID)
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	res, err := s.db.ExecContext(ctx, query, proposal.Content, proposal.Status, proposal.ReviewedBy, proposal.RefuseReason, proposal.ID)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	if err != nil {
 		s.errLogger.Println(errLogMsg + err.Error())
@@ -171,7 +181,7 @@ func (s *supportedRegionProposalRepo) UpdateSupportedRegionSuggestion(proposal e
 	}
 
 	if rowsAffected == 0 {
-		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, supported_region_proposal_table))
+		return fmt.Errorf(noti.UNDEFINED_OBJECT_WARN_MSG, supported_region_proposal_table)
 	}
 
 	return nil

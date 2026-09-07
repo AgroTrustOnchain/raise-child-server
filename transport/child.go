@@ -44,6 +44,41 @@ func GetChildren(ctx *gin.Context) {
 	})
 }
 
+// GetUserSupportedChildren godoc
+// @Summary      List of user's supported children
+// @Description  Retrieves a list of user's supported children based on filter criteria
+// @Tags         children
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "User Wallet Address"
+// @Param        request  query     request.GetChildrenRequest  true  "Filter Criteria"
+// @Success      200      {object}  response.PaginationDataResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /children/user/{id}/supported [get]
+func GetUserSupportedChildren(ctx *gin.Context) {
+	var request request.GetChildrenRequest
+	if ctx.ShouldBindQuery(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateChildService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.GetUserSupportedChildren(ctx.Param("id"), request, ctx)
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
+
 // GetChild godoc
 // @Summary      Get child details
 // @Description  Retrieves child information by its unique ID
@@ -253,14 +288,14 @@ func SupportHealthInsuranceNeed(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Meal Need ID"
-// @Param        request  body      request.SupportMealNeedRequest   true  "Support Child Meal Need Detail"
+// @Param        request  body      request.SupportMealNeadRequest   true  "Support Child Meal Need Detail"
 // @Success      200      {object}  response.PaymentUrlResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /children/meal-need/{id}/support [post]
 func SupportMealNeed(ctx *gin.Context) {
-	var request request.SupportMealNeedRequest
+	var request request.SupportMealNeadRequest
 	if ctx.ShouldBindJSON(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return
@@ -361,13 +396,13 @@ func ConfirmProvideMealForChild(ctx *gin.Context) {
 
 // CreateBooksNeedWithdrawProposal godoc
 // @Summary      Create books need withdraw proposal
-// @Description  Create books need withdraw proposal from a child and wait for admin to review the proposal
+// @Description  Create books need withdraw proposal
 // @Tags         children
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.CreateNormalNeedWithdrawProposalRequest   true  "Create Books Need Withdraw Proposal Detail"
-// @Success      201      {object}  entities.PendingWithdrawProposal
+// @Success      201      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -385,26 +420,21 @@ func CreateBooksNeedWithdrawProposal(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.CreateBooksNeedWithdrawProposalV2(request, ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.CREATE_ACTION,
+		ErrMsg:  service.CreateBooksNeedWithdrawProposal(request, ctx),
+		Context: ctx,
 	})
 }
 
 // CreateMealNeedWithdrawProposal godoc
 // @Summary      Create meal need withdraw proposal
-// @Description  Create meal need withdraw proposal from a child and wait for admin to review the proposal
+// @Description  Create meal need withdraw proposal
 // @Tags         children
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.CreateNormalNeedWithdrawProposalRequest   true  "Create Meal Need Withdraw Proposal Detail"
-// @Success      201      {object}  entities.PendingWithdrawProposal
+// @Success      201      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -422,26 +452,21 @@ func CreateMealNeedWithdrawProposal(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.CreateMealNeedWithdrawProposalV2(request, ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.CREATE_ACTION,
+		ErrMsg:  service.CreateMealNeedWithdrawProposal(request, ctx),
+		Context: ctx,
 	})
 }
 
 // CreateHealthInsuranceNeedWithdrawProposal godoc
 // @Summary      Create health insurance need withdraw proposal
-// @Description  Create health insurance need withdraw proposal from a child and wait for admin to review the proposal
+// @Description  Create health insurance need withdraw proposal
 // @Tags         children
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.CreateNormalNeedWithdrawProposalRequest   true  "Create Health Insurance Need Withdraw Proposal Detail"
-// @Success      201      {object}  entities.PendingWithdrawProposal
+// @Success      201      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -459,26 +484,21 @@ func CreateHealthInsuranceNeedWithdrawProposal(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.CreateHealthInsuranceNeedWithdrawProposalV2(request, ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.CREATE_ACTION,
+		ErrMsg:  service.CreateHealthInsuranceNeedWithdrawProposal(request, ctx),
+		Context: ctx,
 	})
 }
 
 // CreateSpecialNeedWithdrawProposal godoc
 // @Summary      Create special need campaign withdraw proposal
-// @Description  Create special need withdraw proposal from a child and wait for admin to review the proposal
+// @Description  Create special need withdraw proposal from a child
 // @Tags         children
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.CreateSpecialNeedWithdrawProposalRequest   true  "Create Special Need Campaign Withdraw Proposal Detail"
-// @Success      201      {object}  entities.PendingWithdrawProposal
+// @Success      201      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -496,14 +516,9 @@ func CreateSpecialNeedWithdrawProposal(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.CreateSpecialNeedWithdrawProposalV2(request, ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.CREATE_ACTION,
+		ErrMsg:  service.CreateSpecialNeedWithdrawProposal(request, ctx),
+		Context: ctx,
 	})
 }
 
@@ -546,13 +561,13 @@ func CreateSpecialNeedProposal(ctx *gin.Context) {
 
 // ConfirmSpecialNeedProposal godoc
 // @Summary      Confirm a special need proposal
-// @Description  Prepares and builds a transaction for confirming a special need proposal for a child if accepted to create a new campaign on-chain
+// @Description  Prepares and executes a transaction for confirming a special need proposal for a child if accepted to create a new campaign on-chain
 // @Tags         children
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Special Need Proposal ID"
-// @Success      200      {object}  response.BuildTransactionResponse
+// @Success      200      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -564,27 +579,22 @@ func ConfirmSpecialNeedProposal(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.ConfirmSpecialNeedProposal(ctx.Param("id"), ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.ConfirmSpecialNeedProposal(ctx.Param("id"), ctx),
+		Context: ctx,
 	})
 }
 
 // VoteSpecialNeedProposal godoc
 // @Summary      Vote a special need proposal
-// @Description  Prepares and builds a transaction for voting a special need proposal of a child on-chain
+// @Description  Prepares and executes a transaction for voting a special need proposal of a child on-chain
 // @Tags         children
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Special Need Proposal ID"
 // @Param        request  body      request.VoteRequest   true  "Voting Detail"
-// @Success      200      {object}  response.BuildTransactionResponse
+// @Success      200      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -602,26 +612,21 @@ func VoteSpecialNeedProposal(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.VoteSpecialNeedProposal(ctx.Param("id"), request, ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.VoteSpecialNeedProposal(ctx.Param("id"), request, ctx),
+		Context: ctx,
 	})
 }
 
 // UpdateBooksNeed godoc
 // @Summary      Update a child's books need
-// @Description  Prepares and builds a transaction for updating a child's books need on-chain
+// @Description  Prepares and executes a transaction for updating a child's books need on-chain
 // @Tags         children
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.UpdateChildNeedRequest   true  "Update Child Books Need Detail"
-// @Success      200      {object}  response.BuildTransactionResponse
+// @Success      200      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -639,26 +644,21 @@ func UpdateBooksNeed(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.UpdateBooksNeed(request, ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.UpdateBooksNeed(request, ctx),
+		Context: ctx,
 	})
 }
 
 // UpdateMealNeed godoc
 // @Summary      Update a child's meal need
-// @Description  Prepares and builds a transaction for updating a child's meal need on-chain
+// @Description  Prepares and executes a transaction for updating a child's meal need on-chain
 // @Tags         children
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.UpdateChildNeedRequest   true  "Update Child Meal Need Detail"
-// @Success      200      {object}  response.BuildTransactionResponse
+// @Success      200      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -676,26 +676,21 @@ func UpdateMealNeed(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.UpdateMealNeed(request, ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.UpdateMealNeed(request, ctx),
+		Context: ctx,
 	})
 }
 
 // UpdateHealthInsuranceNeed godoc
 // @Summary      Update a child's health insurance need
-// @Description  Prepares and builds a transaction for updating a child's health insurance need on-chain
+// @Description  Prepares and executes a transaction for updating a child's health insurance need on-chain
 // @Tags         children
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.UpdateChildNeedRequest   true  "Update Child Health Insurance Need Detail"
-// @Success      200      {object}  response.BuildTransactionResponse
+// @Success      200      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -713,13 +708,8 @@ func UpdateHealthInsuranceNeed(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.UpdateHealthInsuranceNeed(request, ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.UpdateHealthInsuranceNeed(request, ctx),
+		Context: ctx,
 	})
 }

@@ -2,11 +2,13 @@ package business
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math"
 	"os"
 	"raise-child/constants/env"
+	"raise-child/constants/noti"
 	"raise-child/constants/shared"
 	"raise-child/interfaces/business"
 	"raise-child/model/dtos/request"
@@ -45,6 +47,71 @@ func GenerateCenterService() (business.ICenterService, error) {
 	), nil
 }
 
+// GetCenterDetailByLeaderRegion implements business.ICenterService.
+func (c *centerService) GetCenterDetailByLeaderRegion(ctx context.Context) (response.CenterCardMinimumResponse, error) {
+	var client = c.clients[constant.SuiTestnet]
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.CenterCardMinimumResponse{}, err
+	}
+
+	var sender string = ctx.Value("address").(string)
+	var leaderNftId string
+	for i, leader := range manage.LocalLeaderIds {
+		if leader == sender {
+			leaderNftId = manage.LocalLeaderNfts[i]
+			break
+		}
+	}
+
+	if leaderNftId == "" {
+		return response.CenterCardMinimumResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	}
+
+	nft, err := on_chain.GetOnChainObject[entities.StaffNft](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  leaderNftId,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.CenterCardMinimumResponse{}, err
+	}
+
+	var foundIdx int = -1
+	for i, region := range manage.LocalRegions {
+		if nft.Region == region {
+			foundIdx = i
+			break
+		}
+	}
+
+	if foundIdx == -1 {
+		return response.CenterCardMinimumResponse{}, errors.New(noti.REGION_NOT_ESTABLISHED_MESSAGE)
+	}
+
+	if !manage.CenterConfirmStatuses[foundIdx] {
+		return response.CenterCardMinimumResponse{
+			ID:     manage.ChildrenCenters[foundIdx],
+			Region: manage.LocalRegions[foundIdx],
+		}, nil
+	}
+
+	center, err := on_chain.GetOnChainObject[entities.Center](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  manage.ChildrenCenters[foundIdx],
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.CenterCardMinimumResponse{}, err
+	}
+
+	return center.ToCenterCardMinimumResponse(), nil
+}
+
 // GetCenters implements business.ICenterService.
 func (c *centerService) GetCenters(req request.GetCentersRequest, ctx context.Context) (response.PaginationDataResponse, error) {
 	req.Keyword = util.StandardizeString(req.Keyword)
@@ -56,12 +123,7 @@ func (c *centerService) GetCenters(req request.GetCentersRequest, ctx context.Co
 		req.PageSize = default_page_size
 	}
 
-	var redisKey string = c.getGetCentersRedisKey(req)
 	var res response.PaginationDataResponse
-	if c.redisCache.Get(redisKey, &res, ctx) {
-		return res, nil
-	}
-
 	var client = c.clients[constant.SuiTestnet]
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
 		Client:    client,
@@ -70,6 +132,11 @@ func (c *centerService) GetCenters(req request.GetCentersRequest, ctx context.Co
 	}, ctx)
 	if err != nil {
 		return response.PaginationDataResponse{}, err
+	}
+
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	if manageObj == nil {
+		return response.PaginationDataResponse{}, internalErr
 	}
 
 	centers, err := on_chain.GetOnChainObjects[entities.Center](on_chain.GetOnChainObjectsRequest{
@@ -81,7 +148,7 @@ func (c *centerService) GetCenters(req request.GetCentersRequest, ctx context.Co
 		return response.PaginationDataResponse{}, err
 	}
 
-	if centers == nil || len(centers) == 0 {
+	if len(centers) == 0 {
 		return response.PaginationDataResponse{
 			Page:   req.Page,
 			Amount: 0,
@@ -91,7 +158,7 @@ func (c *centerService) GetCenters(req request.GetCentersRequest, ctx context.Co
 	var filteredCenters []entities.Center
 	for _, center := range centers {
 		if req.Keyword != "" {
-			if !strings.Contains(strings.ToLower(center.Region), req.Keyword) && !strings.Contains(strings.ToLower(center.CenterAddress), req.Keyword) && !strings.Contains(strings.ToLower(center.CenterPhoneNumber), req.Keyword) { // Not matched
+			if !strings.Contains(strings.ToLower(center.Region), req.Keyword) && !strings.Contains(strings.ToLower(center.CenterAddress), req.Keyword) && !strings.Contains(strings.ToLower(center.CenterPhoneNumber), req.Keyword) {
 				continue
 			}
 		}
@@ -128,8 +195,6 @@ func (c *centerService) GetCenters(req request.GetCentersRequest, ctx context.Co
 		Page:       req.Page,
 		TotalPages: int(math.Ceil(float64(len(filteredCenters)) / float64(req.PageSize))),
 	}
-
-	c.redisCache.Set(redisKey, res, time.Minute*5, ctx)
 
 	return res, nil
 }

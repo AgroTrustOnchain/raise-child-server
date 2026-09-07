@@ -13,6 +13,8 @@ import (
 	"raise-child/model/entities"
 	"raise-child/util"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type leaderNotiRepo struct {
@@ -32,10 +34,10 @@ func InitializeLeaderNotiRepository(db *sql.DB, errLogger *log.Logger) repositor
 // AssignLeader implements repository.ILeaderNotiRepository.
 func (l *leaderNotiRepo) AssignLeader(leader string, region string, ctx context.Context) error {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_NOTI_REPOSITORY) + "AssignLeader - "
-	var query string = "UPDATE " + leader_noti_table + " SET assigned_leaders = array_append(assigned_leaders, $1) WHERE region = $2"
+	var query string = "UPDATE " + leader_noti_table + " SET assgined_leaders = array_append(assgined_leaders, $1) WHERE region = $2"
 
 	res, err := l.db.ExecContext(ctx, query, leader, region)
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	if err != nil {
 		l.errLogger.Println(errLogMsg + err.Error())
@@ -49,7 +51,7 @@ func (l *leaderNotiRepo) AssignLeader(leader string, region string, ctx context.
 	}
 
 	if rowsAffected == 0 {
-		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, leader_noti_table))
+		return fmt.Errorf(noti.UNDEFINED_OBJECT_WARN_MSG, leader_noti_table)
 	}
 
 	return nil
@@ -57,18 +59,19 @@ func (l *leaderNotiRepo) AssignLeader(leader string, region string, ctx context.
 
 // CreateNoti implements repository.ILeaderNotiRepository.
 func (l *leaderNotiRepo) CreateNoti(notification entities.LeaderNoti, ctx context.Context) error {
-	var query string = "INSERT INTO " + volunteer_noti_table +
+	var query string = "INSERT INTO " + leader_noti_table +
 		" (id, need_id, need_type, child_id, region, " +
-		"assigned_leaders, expected_withdraw_periods, contents) " +
-		"values ($1, $2, $3, $4, $5, $6, $7, $8)"
+		"assigned_leaders, expected_withdraw_periods, general_content, contents) " +
+		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_NOTI_REPOSITORY) + "CreateNoti - "
 
 	if _, err := l.db.ExecContext(ctx, query, notification.ID, notification.NeedID, notification.NeedType, notification.ChildID, notification.Region,
-		notification.AssignedLeaders, notification.ExpectedWithdrawPeriods, notification.Contents); err != nil {
+		pq.Array(notification.AssignedLeaders), pq.Array(notification.ExpectedWithdrawPeriods),
+		notification.GeneralContent, pq.Array(notification.Contents)); err != nil {
 
 		l.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -80,24 +83,26 @@ func (l *leaderNotiRepo) GetCurrentLeaderNotis(req request.GetNotisRequest, lead
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
 		table:       leader_noti_table,
 		limitAmount: req.PageSize,
-		condition:   fmt.Sprintf("'%s' = ANY(assigned_leaders) AND '%s' = ANY(expected_withdraw_periods) ORDER BY created_at DESC", leader, rawCurTime),
+		condition:   fmt.Sprintf("'%s' = ANY(assgined_leaders) AND '%s' = ANY(expected_withdraw_periods) ORDER BY created_at DESC", leader, rawCurTime),
 		page:        req.Page,
 		isGetCount:  false,
 	})
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.VOLUNTEER_NOTI_REPOSITORY) + "GetCurrentLeaderNotis - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 	rows, err := l.db.QueryContext(ctx, query)
 	if err != nil {
 		l.errLogger.Println(errLogMsg + err.Error())
 		return nil, internalErr
 	}
+	defer rows.Close()
 
 	var res []entities.LeaderNoti
 	for rows.Next() {
 		var x entities.LeaderNoti
 		if err := rows.Scan(&x.ID, &x.NeedID, &x.NeedType, &x.ChildID, &x.Region,
-			&x.AssignedLeaders, &x.ExpectedWithdrawPeriods, &x.Contents, &x.CreatedAt, &x.UpdatedAt); err != nil {
+			pq.Array(&x.AssignedLeaders), pq.Array(&x.ExpectedWithdrawPeriods), &x.GeneralContent,
+			pq.Array(&x.Contents), &x.CreatedAt, &x.UpdatedAt); err != nil {
 			l.errLogger.Println(errLogMsg + err.Error())
 			return nil, internalErr
 		}
@@ -110,7 +115,23 @@ func (l *leaderNotiRepo) GetCurrentLeaderNotis(req request.GetNotisRequest, lead
 
 // GetNoti implements repository.ILeaderNotiRepository.
 func (l *leaderNotiRepo) GetNoti(id string, ctx context.Context) (*entities.LeaderNoti, error) {
-	panic("unimplemented")
+	var query string = "SELECT * FROM " + leader_noti_table + " WHERE id = $1"
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_NOTI_REPOSITORY) + "GetNoti - "
+
+	var res entities.LeaderNoti
+	if err := l.db.QueryRowContext(ctx, query, id).Scan(&res.ID, &res.NeedID, &res.NeedType, &res.ChildID, &res.Region,
+		pq.Array(&res.AssignedLeaders), pq.Array(&res.ExpectedWithdrawPeriods), &res.GeneralContent,
+		pq.Array(&res.Contents), &res.CreatedAt, &res.UpdatedAt); err != nil {
+
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		l.errLogger.Println(errLogMsg + err.Error())
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	return &res, nil
 }
 
 // GetNotiByMealNeed implements repository.ILeaderNotiRepository.
@@ -119,15 +140,16 @@ func (l *leaderNotiRepo) GetNotiByMealNeed(id string, ctx context.Context) (*ent
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_NOTI_REPOSITORY) + "GetNotiByMealNeed - "
 
 	var res entities.LeaderNoti
-	if err := l.db.QueryRowContext(ctx, query, id).Scan(res.ID, res.NeedID, res.NeedType, res.ChildID, res.Region,
-		res.AssignedLeaders, res.ExpectedWithdrawPeriods, res.Contents, res.CreatedAt, res.UpdatedAt); err != nil {
+	if err := l.db.QueryRowContext(ctx, query, id).Scan(&res.ID, &res.NeedID, &res.NeedType, &res.ChildID, &res.Region,
+		pq.Array(&res.AssignedLeaders), pq.Array(&res.ExpectedWithdrawPeriods), &res.GeneralContent,
+		pq.Array(&res.Contents), &res.CreatedAt, &res.UpdatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 
 		l.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -135,16 +157,32 @@ func (l *leaderNotiRepo) GetNotiByMealNeed(id string, ctx context.Context) (*ent
 
 // GetNotiByNeed implements repository.ILeaderNotiRepository.
 func (l *leaderNotiRepo) GetNotiByNeed(id string, ctx context.Context) (*entities.LeaderNoti, error) {
-	panic("unimplemented")
+	var query string = "SELECT * FROM " + leader_noti_table + " WHERE need_id = $1"
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_NOTI_REPOSITORY) + "GetNotiByNeed - "
+
+	var res entities.LeaderNoti
+	if err := l.db.QueryRowContext(ctx, query, id).Scan(&res.ID, &res.NeedID, &res.NeedType, &res.ChildID, &res.Region,
+		pq.Array(&res.AssignedLeaders), pq.Array(&res.ExpectedWithdrawPeriods), &res.GeneralContent,
+		pq.Array(&res.Contents), &res.CreatedAt, &res.UpdatedAt); err != nil {
+
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		l.errLogger.Println(errLogMsg + err.Error())
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	return &res, nil
 }
 
 // UpdateNoti implements repository.ILeaderNotiRepository.
 func (l *leaderNotiRepo) UpdateNoti(notification entities.LeaderNoti, ctx context.Context) error {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.LEADER_NOTI_REPOSITORY) + "AssignLeader - "
-	var query string = "UPDATE " + leader_noti_table + " SET assigned_leaders = $1, expected_withdraw_periods = $2  WHERE id = $3"
+	var query string = "UPDATE " + leader_noti_table + " SET assgined_leaders = $1, expected_withdraw_periods = $2  WHERE id = $3"
 
 	res, err := l.db.ExecContext(ctx, query, notification.AssignedLeaders, notification.ExpectedWithdrawPeriods)
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	if err != nil {
 		l.errLogger.Println(errLogMsg + err.Error())
@@ -158,7 +196,7 @@ func (l *leaderNotiRepo) UpdateNoti(notification entities.LeaderNoti, ctx contex
 	}
 
 	if rowsAffected == 0 {
-		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, leader_noti_table))
+		return fmt.Errorf(noti.UNDEFINED_OBJECT_WARN_MSG, leader_noti_table)
 	}
 
 	return nil

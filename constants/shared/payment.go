@@ -4,7 +4,7 @@ package shared
 const (
 	PAYMENT_PENDING_STATUS  string = "Pending"
 	PAYMENT_SUCCESS_STATUS  string = "Success"
-	PAYMENT_CANCELED_STATUS string = "Canceled"
+	PAYMENT_CANCELED_STATUS string = "Cancelled"
 )
 
 // Payment methods

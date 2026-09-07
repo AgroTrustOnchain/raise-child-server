@@ -7,9 +7,11 @@ import (
 	"raise-child/model/entities"
 )
 
+// ApprovePendingChildSpecialNeedProposal(id string, ctx context.Context) (response.BuildTransactionResponse, error)
+
 type IPendingChildSpecialNeedProposalService interface {
 	GetPendingChildSpecialNeedProposals(req request.GetPendingChildSpecialNeedProposalsRequest, ctx context.Context) (response.PaginationDataResponse, error)
 	GetPendingChildSpecialNeedProposal(id string, ctx context.Context) (*entities.PendingChildSpecialNeedProposal, error)
-	ApprovePendingChildSpecialNeedProposal(id string, ctx context.Context) (response.BuildTransactionResponse, error)
+	ApprovePendingChildSpecialNeedProposal(id string, ctx context.Context) error
 	RefusePendingChildSpecialNeedProposal(id string, ctx context.Context) error
 }

@@ -6,7 +6,7 @@ type VolunteerNoti struct {
 	ID                 string    `json:"id"`
 	ChildID            string    `json:"child_id"`
 	Region             string    `json:"region"`
-	AssignedVolunteers []string  `json:"assigned_volunteers"`
+	AssginedVolunteers []string  `json:"assgined_volunteers"`
 	Content            string    `json:"content"`
 	StartPeriod        time.Time `json:"start_period"`
 	EndPeriod          time.Time `json:"end_period"`
@@ -20,7 +20,7 @@ type LeaderNoti struct {
 	NeedType                string    `json:"need_tpe"`
 	ChildID                 string    `json:"child_id"`
 	Region                  string    `json:"region"`
-	AssignedLeaders         []string  `json:"assigned_leaders"`
+	AssignedLeaders         []string  `json:"assgined_leaders"`
 	ExpectedWithdrawPeriods []string  `json:"expected_withdraw_periods"`
 	GeneralContent          string    `json:"general_content"`
 	Contents                []string  `json:"contents"`

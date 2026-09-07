@@ -43,12 +43,6 @@ definitions:
         type: string
       image_blob_id:
         type: string
-      is_confirm_register:
-        description: Default as false, when status approved, user clicks to update
-          to true, call smart contract to register role
-        type: boolean
-      isAvailableToConfirm:
-        type: boolean
       phone_number:
         type: string
       profile_id:
@@ -217,8 +211,56 @@ definitions:
       updatedAt:
         type: string
       withdrawAmount:
-        format: int64
         type: integer
+    type: object
+  entities.PlatformConfig:
+    properties:
+      actor_address:
+        type: string
+      actor_profile_id:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      key:
+        type: string
+      updated_at:
+        type: string
+      value: {}
+    type: object
+  entities.Profile:
+    properties:
+      created_at:
+        type: string
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      identity_code:
+        type: string
+      last_name:
+        type: string
+      phone_number:
+        type: string
+      salt:
+        type: string
+      status:
+        type: string
+      token:
+        type: string
+      updated_at:
+        type: string
+      wallet_address:
+        type: string
     type: object
   entities.RegistrationRequest:
     properties:
@@ -249,12 +291,12 @@ definitions:
       identity_code:
         type: string
       is_confirm_register:
-        description: Default as false, when status approved, user clicks to update
+        description: Default as false, when status aprroved, user clicks to update
           to true, call smart contract to register role
         type: boolean
-      isAvailableToConfirm:
-        type: boolean
       last_name:
+        type: string
+      on_chain_id:
         type: string
       phone_number:
         type: string
@@ -282,36 +324,30 @@ definitions:
     properties:
       content:
         type: string
-      createdAt:
+      created_at:
         type: string
-      createdBy:
+      created_by:
         type: string
       id:
         type: string
-      profileID:
+      profile_id:
+        type: string
+      refuse_reason:
         type: string
       region:
         type: string
-      reviewedBy:
+      reviewed_by:
         type: string
       status:
         type: string
-      updatedAt:
+      updated_at:
         type: string
     type: object
   entities.UploadChildRequest:
     properties:
-      ai_evaluation:
-        type: string
-      approvers:
-        items:
-          type: string
-        type: array
       avatar_blob_id:
         type: string
       birth_certificate_blob_id:
-        type: string
-      closed_at:
         type: string
       created_at:
         type: string
@@ -334,32 +370,20 @@ definitions:
       identity_code:
         type: string
       is_confirm_upload:
-        description: Default as false, when status approved, user clicks to update
-          to true, call smart contract to register role
         type: boolean
       last_name:
         type: string
+      on_chain_id:
+        type: string
       profile_id:
         type: string
-      refuse_reasons:
-        items:
-          type: string
-        type: array
-      refusers:
-        items:
-          type: string
-        type: array
       region:
-        type: string
-      review_status:
-        description: e.g. "Pending", "Approved", "Refused"
         type: string
       reviewed_by:
         type: string
       second_guardian_profile:
         $ref: '#/definitions/entities.ChildGuardianProfile'
       status:
-        description: e.g. "Pending", "Approved", "Refused"
         type: string
       updated_at:
         type: string
@@ -537,7 +561,7 @@ definitions:
     properties:
       avatar_blob_id:
         type: string
-      identity_card_blob_id:
+      identity_card_cloudinary_id:
         type: string
       region:
         type: string
@@ -545,7 +569,7 @@ definitions:
         type: string
     required:
     - avatar_blob_id
-    - identity_card_blob_id
+    - identity_card_cloudinary_id
     - region
     - register_role
     type: object
@@ -591,6 +615,28 @@ definitions:
     - content
     - region
     type: object
+  request.CreateTaskRequest:
+    properties:
+      child_id:
+        type: string
+      description:
+        type: string
+      end_period:
+        type: string
+      is_child_task:
+        type: boolean
+      need_id:
+        type: string
+      region:
+        type: string
+      start_period:
+        type: string
+    required:
+    - description
+    - end_period
+    - region
+    - start_period
+    type: object
   request.CreateWithdrawProposalRequest:
     properties:
       description:
@@ -621,6 +667,13 @@ definitions:
     - amount
     - pool_id
     type: object
+  request.EditDaoRequest:
+    properties:
+      min_rate:
+        type: integer
+      min_voters:
+        type: integer
+    type: object
   request.ExecuteTransactionRequest:
     properties:
       center_req:
@@ -639,28 +692,13 @@ definitions:
     - signature
     - tx_bytes
     type: object
-  request.GetTransactionRecordsRequest:
+  request.ExtractChildUploadInfoRequest:
     properties:
-      action_type:
-        description: e.g. "Withdraw", "Donate"
+      child_birth_certificate_url:
         type: string
-      actor:
+      first_guardian_id_card_url:
         type: string
-      keyword:
-        type: string
-      max_amount:
-        type: integer
-      min_amount:
-        type: integer
-      page:
-        type: integer
-      page_size:
-        type: integer
-      pool_id:
-        type: string
-      sort_criteria:
-        type: string
-      sort_order:
+      second_guardian_id_card_url:
         type: string
     type: object
   request.LoginRequestV2:
@@ -680,6 +718,16 @@ definitions:
     required:
     - proof_blob_id
     type: object
+  request.SubmitTaskProofRequest:
+    properties:
+      image_cloudinary_blob_id:
+        type: string
+      image_url:
+        type: string
+    required:
+    - image_cloudinary_blob_id
+    - image_url
+    type: object
   request.SupportCampaignRequest:
     properties:
       amount:
@@ -691,7 +739,7 @@ definitions:
     - amount
     - description
     type: object
-  request.SupportMealNeedRequest:
+  request.SupportMealNeadRequest:
     properties:
       months:
         maximum: 12
@@ -744,6 +792,12 @@ definitions:
     required:
     - child_id
     - need_id
+    type: object
+  request.UpdatePlatformConfigRequest:
+    properties:
+      description:
+        type: string
+      value: {}
     type: object
   request.UpdatePublisherInfoRequest:
     properties:
@@ -831,8 +885,6 @@ definitions:
         type: string
       phone_number:
         type: string
-      region:
-        type: string
     required:
     - date_of_birth
     - email
@@ -841,7 +893,6 @@ definitions:
     - identity_code
     - last_name
     - phone_number
-    - region
     type: object
   request.VoteRequest:
     properties:
@@ -852,6 +903,35 @@ definitions:
     required:
     - is_vote_yes
     type: object
+  response.AdminNftResponse:
+    properties:
+      avatar_blob_id:
+        type: string
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      identity_card_blob_id:
+        type: string
+      identity_code:
+        type: string
+      last_name:
+        type: string
+      name:
+        type: string
+      phone_number:
+        type: string
+      uploaded_at:
+        type: string
+      url:
+        type: string
+    type: object
   response.BankProfileResponse:
     properties:
       bank_code:
@@ -860,6 +940,8 @@ definitions:
         type: string
       id:
         type: string
+      is_upload_info:
+        type: boolean
       owner:
         type: string
       owner_name:
@@ -877,6 +959,22 @@ definitions:
         type: array
       id:
         type: string
+      provide_dates:
+        items:
+          type: string
+        type: array
+      provide_image_blob_ids:
+        items:
+          type: string
+        type: array
+      provide_periods:
+        items:
+          type: string
+        type: array
+      provide_staffs:
+        items:
+          type: string
+        type: array
       semester:
         type: integer
       supported_years:
@@ -913,11 +1011,39 @@ definitions:
       upload_child_req:
         type: string
     type: object
+  response.CenterCardMinimumResponse:
+    properties:
+      center_address:
+        type: string
+      center_phone_number:
+        type: string
+      id:
+        type: string
+      image_blob_id:
+        type: string
+      region:
+        type: string
+      updated_at:
+        type: string
+      uploaded_at:
+        type: string
+    type: object
+  response.ChildGuardianProfile:
+    properties:
+      guardian_full_name:
+        type: string
+      guardian_phone_number:
+        type: string
+      guardian_relation:
+        type: string
+      identity_card_img_url:
+        type: string
+    type: object
   response.ChildResponse:
     properties:
       avatar_blob_id:
         type: string
-      birth_certificate_blob_id:
+      birth_certificate_img_url:
         type: string
       books_needs:
         items:
@@ -933,7 +1059,7 @@ definitions:
         additionalProperties: true
         type: object
       first_guardian:
-        $ref: '#/definitions/request.ChildGuardianProfile'
+        $ref: '#/definitions/response.ChildGuardianProfile'
       first_name:
         type: string
       gender:
@@ -963,7 +1089,7 @@ definitions:
       region:
         type: string
       second_guardian:
-        $ref: '#/definitions/request.ChildGuardianProfile'
+        $ref: '#/definitions/response.ChildGuardianProfile'
       special_need_campaigns:
         items:
           type: string
@@ -1001,6 +1127,8 @@ definitions:
         type: string
       name:
         type: string
+      owner:
+        type: string
       phone_number:
         type: string
       supported_childs:
@@ -1011,6 +1139,42 @@ definitions:
         type: integer
       url:
         type: string
+    type: object
+  response.ExtractChildUploadInfoResponse:
+    properties:
+      date_of_birth:
+        type: string
+      first_guardian_full_name:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      identity_code:
+        type: string
+      last_name:
+        type: string
+      second_guardian_full_name:
+        type: string
+    type: object
+  response.GetTransactionRecordsResponse:
+    properties:
+      amount:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/response.TransactionResponse'
+        type: array
+      page:
+        type: integer
+      pool_id:
+        type: string
+      pool_name:
+        type: string
+      pool_total_donation:
+        type: integer
+      total_pages:
+        type: integer
     type: object
   response.GiftResponse:
     properties:
@@ -1061,6 +1225,22 @@ definitions:
         type: array
       id:
         type: string
+      provide_dates:
+        items:
+          type: string
+        type: array
+      provide_image_blob_ids:
+        items:
+          type: string
+        type: array
+      provide_periods:
+        items:
+          type: string
+        type: array
+      provide_staffs:
+        items:
+          type: string
+        type: array
       supported_years:
         items:
           type: integer
@@ -1098,15 +1278,19 @@ definitions:
         type: array
       id:
         type: string
-      provide_meal_dates:
+      provide_dates:
         items:
           type: string
         type: array
-      provide_meal_periods:
+      provide_image_blob_ids:
         items:
           type: string
         type: array
-      provide_meal_staffs:
+      provide_periods:
+        items:
+          type: string
+        type: array
+      provide_staffs:
         items:
           type: string
         type: array
@@ -1236,12 +1420,90 @@ definitions:
       wallet_address:
         type: string
     type: object
+  response.PoolResponse:
+    properties:
+      id:
+        type: string
+      pool_name:
+        type: string
+      total_donation:
+        type: integer
+    type: object
+  response.PresignedUrlResponse:
+    properties:
+      api_key:
+        type: string
+      folder:
+        type: string
+      signature:
+        type: string
+      timestamp:
+        type: integer
+      upload_url:
+        type: string
+    type: object
   response.RegionsResponse:
     properties:
       regions:
         items:
           type: string
         type: array
+    type: object
+  response.RegistrationRequestResponse:
+    properties:
+      approvers:
+        items:
+          type: string
+        type: array
+      avatar_blob_id:
+        type: string
+      closed_at:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      identity_card_img_url:
+        type: string
+      identity_code:
+        type: string
+      is_confirm_register:
+        description: Default as false, when status aprroved, user clicks to update
+          to true, call smart contract to register role
+        type: boolean
+      last_name:
+        type: string
+      phone_number:
+        type: string
+      profile_id:
+        type: string
+      refuse_reasons:
+        items:
+          type: string
+        type: array
+      refusers:
+        items:
+          type: string
+        type: array
+      region:
+        type: string
+      register_role:
+        type: string
+      status:
+        description: e.g. "Pending", "Approved", "Refused"
+        type: string
+      updated_at:
+        type: string
     type: object
   response.StaffNftResponse:
     properties:
@@ -1257,7 +1519,7 @@ definitions:
         type: string
       id:
         type: string
-      identity_card_blob_id:
+      identity_card_img_url:
         type: string
       identity_code:
         type: string
@@ -1278,39 +1540,6 @@ definitions:
       url:
         type: string
     type: object
-  response.StaffResponse:
-    properties:
-      avatar_blob_id:
-        type: string
-      date_of_birth:
-        type: string
-      email:
-        type: string
-      first_name:
-        type: string
-      gender:
-        type: string
-      id:
-        type: string
-      identity_code:
-        type: string
-      last_name:
-        type: string
-      nfts:
-        items:
-          $ref: '#/definitions/response.StaffNftResponse'
-        type: array
-      phone_number:
-        type: string
-      region:
-        type: string
-      string:
-        type: string
-      uploaded_at:
-        type: string
-      user:
-        type: string
-    type: object
   response.TransactionResponse:
     properties:
       action_type:
@@ -1321,7 +1550,7 @@ definitions:
       amount:
         type: integer
       coin_type:
-        description: e.g., "Sui", "USDC"
+        description: e.g., "VND"
         type: string
       created_at:
         type: string
@@ -1332,10 +1561,56 @@ definitions:
       pool_name:
         type: string
     type: object
-  response.UrlAPIResponse:
+  response.UploadChildRequestResponse:
     properties:
-      url:
+      avatar_blob_id:
         type: string
+      birth_certificate_img_url:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      date_of_birth:
+        type: string
+      first_guardian_profile:
+        $ref: '#/definitions/response.ChildGuardianProfile'
+      first_name:
+        type: string
+      gender:
+        type: string
+      home_address:
+        type: string
+      home_blob_id:
+        type: string
+      id:
+        type: string
+      identity_code:
+        type: string
+      is_confirm_upload:
+        type: boolean
+      last_name:
+        type: string
+      on_chain_id:
+        type: string
+      profile_id:
+        type: string
+      region:
+        type: string
+      reviewed_by:
+        type: string
+      second_guardian_profile:
+        $ref: '#/definitions/response.ChildGuardianProfile'
+      status:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - date_of_birth
+    - first_name
+    - gender
+    - last_name
+    - region
     type: object
   response.WithdrawProposalResponse:
     properties:
@@ -1398,7 +1673,7 @@ definitions:
       year:
         type: integer
     type: object
-host: localhost:8080
+host: https://agrotrust-fkhwgwh5ecgwhrbf.indonesiacentral-01.azurewebsites.net/
 info:
   contact: {}
   description: API for AgroTrust Server
@@ -1486,6 +1761,66 @@ paths:
       security:
       - BearerAuth: []
       summary: Update publisher information
+      tags:
+      - admins
+  /admins/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve an admin
+      parameters:
+      - description: Admin NFT ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.AdminNftResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Retrieve an admin
+      tags:
+      - admins
+  /admins/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve an admin by owner address
+      parameters:
+      - description: Admin Address
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.AdminNftResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Retrieve an admin by owner address
       tags:
       - admins
   /auth/login:
@@ -1755,9 +2090,6 @@ paths:
       description: Retrieve center requests with filtering based on query parameters
       parameters:
       - in: query
-        name: is_available_to_confirm
-        type: boolean
-      - in: query
         name: is_closed
         type: boolean
       - in: query
@@ -1880,9 +2212,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -1898,7 +2230,7 @@ paths:
             $ref: '#/definitions/response.MessageAPIResponse'
       security:
       - BearerAuth: []
-      summary: Confirm and upload center information to Sui Blockchain
+      summary: Confirm and upload center information to Sui Blockhain
       tags:
       - center-reqs
   /center-reqs/{id}/vote:
@@ -2001,6 +2333,34 @@ paths:
             $ref: '#/definitions/response.PaginationDataResponse'
         "400":
           description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List centers
+      tags:
+      - centers
+  /centers/leader:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of centers based on filter criteria
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CenterCardMinimumResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "403":
+          description: You have no rights to access this action.
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
         "500":
@@ -2201,7 +2561,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.PaginationDataResponse'
+            $ref: '#/definitions/response.UploadChildRequestResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2212,43 +2572,6 @@ paths:
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
       summary: Get upload-child request details
-      tags:
-      - Child Upload Request
-  /child-upload-reqs/{id}/confirm:
-    post:
-      consumes:
-      - application/json
-      description: Prepares and builds a transaction for registering new child information
-        on-chain
-      parameters:
-      - description: UploadChild Request ID (UUID)
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
-        "400":
-          description: Invalid data. Please try again.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-        "401":
-          description: You have no rights to access this action.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-        "500":
-          description: There is something wrong in the system during the process.
-            Please try again later.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-      security:
-      - BearerAuth: []
-      summary: Confirm and store a child information to Sui Blockchain
       tags:
       - Child Upload Request
   /child-upload-reqs/{id}/review:
@@ -2288,45 +2611,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Review an upload-child request
-      tags:
-      - Child Upload Request
-  /child-upload-reqs/{id}/vote:
-    post:
-      consumes:
-      - application/json
-      description: Submit an approval or refusal vote for a specific child upload
-        request using its ID.
-      parameters:
-      - description: Upload Child Request ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Voting details (e.g., vote type, comments)
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.VoteRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-        "400":
-          description: Invalid data. Please try again.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-        "500":
-          description: There is something wrong in the system during the process.
-            Please try again later.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-      security:
-      - BearerAuth: []
-      summary: Vote on an upload-child request
       tags:
       - Child Upload Request
   /child-upload-reqs/user/{id}:
@@ -2601,7 +2885,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for updating a child's books
+      description: Prepares and executes a transaction for updating a child's books
         need on-chain
       parameters:
       - description: Update Child Books Need Detail
@@ -2614,9 +2898,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2675,8 +2959,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create books need withdraw proposal from a child and wait for admin
-        to review the proposal
+      description: Create books need withdraw proposal
       parameters:
       - description: Create Books Need Withdraw Proposal Detail
         in: body
@@ -2688,9 +2971,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Success
           schema:
-            $ref: '#/definitions/entities.PendingWithdrawProposal'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2713,7 +2996,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for updating a child's health
+      description: Prepares and executes a transaction for updating a child's health
         insurance need on-chain
       parameters:
       - description: Update Child Health Insurance Need Detail
@@ -2726,9 +3009,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2787,8 +3070,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create health insurance need withdraw proposal from a child and
-        wait for admin to review the proposal
+      description: Create health insurance need withdraw proposal
       parameters:
       - description: Create Health Insurance Need Withdraw Proposal Detail
         in: body
@@ -2800,9 +3082,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Success
           schema:
-            $ref: '#/definitions/entities.PendingWithdrawProposal'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2825,8 +3107,8 @@ paths:
     put:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for updating a child's meal need
-        on-chain
+      description: Prepares and executes a transaction for updating a child's meal
+        need on-chain
       parameters:
       - description: Update Child Meal Need Detail
         in: body
@@ -2838,9 +3120,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -2875,7 +3157,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/request.SupportMealNeedRequest'
+          $ref: '#/definitions/request.SupportMealNeadRequest'
       produces:
       - application/json
       responses:
@@ -2905,8 +3187,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create meal need withdraw proposal from a child and wait for admin
-        to review the proposal
+      description: Create meal need withdraw proposal
       parameters:
       - description: Create Meal Need Withdraw Proposal Detail
         in: body
@@ -2918,9 +3199,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Success
           schema:
-            $ref: '#/definitions/entities.PendingWithdrawProposal'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -3023,7 +3304,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for confirming a special need
+      description: Prepares and executes a transaction for confirming a special need
         proposal for a child if accepted to create a new campaign on-chain
       parameters:
       - description: Special Need Proposal ID
@@ -3035,9 +3316,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -3060,7 +3341,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for voting a special need proposal
+      description: Prepares and executes a transaction for voting a special need proposal
         of a child on-chain
       parameters:
       - description: Special Need Proposal ID
@@ -3078,9 +3359,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -3103,8 +3384,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create special need withdraw proposal from a child and wait for
-        admin to review the proposal
+      description: Create special need withdraw proposal from a child
       parameters:
       - description: Create Special Need Campaign Withdraw Proposal Detail
         in: body
@@ -3116,9 +3396,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Success
           schema:
-            $ref: '#/definitions/entities.PendingWithdrawProposal'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -3137,11 +3417,62 @@ paths:
       summary: Create special need campaign withdraw proposal
       tags:
       - children
+  /children/user/{id}/supported:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of user's supported children based on filter criteria
+      parameters:
+      - description: User Wallet Address
+        in: path
+        name: id
+        required: true
+        type: string
+      - in: query
+        name: gender
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: year_of_birth
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List of user's supported children
+      tags:
+      - children
   /configs/books-need-edit-dates:
     put:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for updating child books need
+      description: Prepares and executes a transaction for updating child books need
         edit dates on-chain
       parameters:
       - description: Update Child Books Need Edit Dates Detail
@@ -3154,9 +3485,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -3175,11 +3506,49 @@ paths:
       summary: Update child books need edit dates
       tags:
       - configs
+  /configs/child-special-need-dao:
+    put:
+      consumes:
+      - application/json
+      description: Prepares and executes a transaction for updating child special
+        need dao on-chain
+      parameters:
+      - description: Edit Child Special Need DAO Request Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.EditDaoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update child special need dao
+      tags:
+      - configs
   /configs/health-insurance-need-edit-dates:
     put:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for updating child health insurance
+      description: Prepares and executes a transaction for updating child health insurance
         need edit dates on-chain
       parameters:
       - description: Update Child Health Insurance Need Edit Dates Detail
@@ -3192,9 +3561,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -3217,7 +3586,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for updating child meal need
+      description: Prepares and executes a transaction for updating child meal need
         edit dates on-chain
       parameters:
       - description: Update Child Meal Need Edit Dates Detail
@@ -3334,14 +3703,14 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
-        "401":
+        "403":
           description: You have no rights to access this action.
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
@@ -3389,7 +3758,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Finalize and confirm a specific withdraw proposal by ID
+      description: Confirm recieve a gift
       parameters:
       - description: Gift ID
         in: path
@@ -3424,7 +3793,7 @@ paths:
             $ref: '#/definitions/response.MessageAPIResponse'
       security:
       - BearerAuth: []
-      summary: Confirm a withdraw proposal
+      summary: Confirm recieve a gift
       tags:
       - gift
   /gifts/child/{id}:
@@ -3475,6 +3844,36 @@ paths:
       summary: List gifts of a child
       tags:
       - gift
+  /images/presigned-url:
+    get:
+      consumes:
+      - application/json
+      description: Presign before upload image to Cloudinary
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PresignedUrlResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "403":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Presign before upload image to Cloudinary
+      tags:
+      - image
   /notis/user/{id}:
     get:
       consumes:
@@ -3513,6 +3912,36 @@ paths:
       summary: List notifications of a user
       tags:
       - notification
+  /ocr/extract-child-info:
+    post:
+      consumes:
+      - application/json
+      description: Extract child information from an uploaded OCR payload
+      parameters:
+      - description: OCR request payload - second_guardian_id_card_url is optional
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ExtractChildUploadInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ExtractChildUploadInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Extract child information from OCR input
+      tags:
+      - OCR
   /payments:
     get:
       consumes:
@@ -3609,7 +4038,7 @@ paths:
       consumes:
       - application/json
       description: Prepares and builds a transaction for approve and upload Payment
-        on-chain
+        with method as Manual Bank on-chain
       parameters:
       - description: Payment ID
         in: path
@@ -3620,9 +4049,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -3638,7 +4067,7 @@ paths:
             $ref: '#/definitions/response.MessageAPIResponse'
       security:
       - BearerAuth: []
-      summary: Approve a Payment and upload to Sui Blockchain
+      summary: Approve a Payment with method as Manual Bank and upload to Sui Blockchain
       tags:
       - payment
   /payments/{id}/refuse:
@@ -3768,7 +4197,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.UrlAPIResponse'
+            $ref: '#/definitions/response.PaymentUrlResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -3927,7 +4356,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for approve and upload Pending
+      description: Prepares and executes a transaction for approve and upload Pending
         Pool Campaign on-chain
       parameters:
       - description: Pending Pool Campaign ID
@@ -4102,7 +4531,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Prepares and builds a transaction for approve and upload child
+      description: Prepares and executes a transaction for approve and upload child
         pending special need proposal on-chain
       parameters:
       - description: Pending Child Special Need Proposal ID
@@ -4114,9 +4543,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -4313,7 +4742,7 @@ paths:
       description: Approve a pending withdraw proposal to prepare and build a transaction
         to publish this proposal on chain
       parameters:
-      - description: Pending Withdraw Proposal ID
+      - description: Oending Withdraw Proposal ID
         in: path
         name: id
         required: true
@@ -4349,7 +4778,7 @@ paths:
       - application/json
       description: Refuse a pending withdraw proposal
       parameters:
-      - description: Pending Withdraw Proposal ID
+      - description: Oending Withdraw Proposal ID
         in: path
         name: id
         required: true
@@ -4379,6 +4808,228 @@ paths:
       summary: Refuse a pending withdraw proposal
       tags:
       - Pending Withdrawal
+  /platform-configs/numeric:
+    get:
+      consumes:
+      - application/json
+      description: Get numeric platform configs
+      parameters:
+      - in: query
+        name: actor_address
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get numeric platform configs
+      tags:
+      - Platform Config
+  /platform-configs/numeric/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get numeric platform config
+      parameters:
+      - description: Platform Config ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.PlatformConfig'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get numeric platform config
+      tags:
+      - Platform Config
+    put:
+      consumes:
+      - application/json
+      description: Update numeric platform config
+      parameters:
+      - description: Platform Config ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Platform Config Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdatePlatformConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "403":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update numeric platform config
+      tags:
+      - Platform Config
+  /platform-configs/string:
+    get:
+      consumes:
+      - application/json
+      description: Get string platform configs
+      parameters:
+      - in: query
+        name: actor_address
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get string platform configs
+      tags:
+      - Platform Config
+  /platform-configs/string/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get string platform config
+      parameters:
+      - description: Platform Config ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.PlatformConfig'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get string platform config
+      tags:
+      - Platform Config
+    put:
+      consumes:
+      - application/json
+      description: Update string platform config
+      parameters:
+      - description: Platform Config ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Platform Config Detail
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdatePlatformConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "403":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update string platform config
+      tags:
+      - Platform Config
   /pool-campaigns:
     get:
       consumes:
@@ -4519,8 +5170,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create Pool Campaign Pending Withdraw Proposal and wait for admin
-        to review it
+      description: Create Pool Campaign Pending Withdraw Proposal
       parameters:
       - description: Create Pool Campaign Pending Withdraw Proposal Detail
         in: body
@@ -4532,9 +5182,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Success
           schema:
-            $ref: '#/definitions/entities.PendingWithdrawProposal'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -4553,7 +5203,68 @@ paths:
       summary: Create Pool Campaign Pending Withdraw Proposal
       tags:
       - pool-campaigns
+  /pools/leader/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get pool detail of leader's region
+      parameters:
+      - description: Leader Wallet Address
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PoolResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get pool detail of leader's region
+      tags:
+      - pools
   /profiles/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a profile
+      parameters:
+      - description: Profile ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Profile'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get a profile
+      tags:
+      - profile
     post:
       consumes:
       - application/json
@@ -4797,6 +5508,9 @@ paths:
         name: page_size
         type: integer
       - in: query
+        name: region
+        type: string
+      - in: query
         name: sort_order
         type: string
       produces:
@@ -4921,6 +5635,52 @@ paths:
       summary: Review supported region proposal
       tags:
       - regions
+  /regions/supported-suggestionsv2:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of supported region proposals based on filter
+        criteria
+      parameters:
+      - in: query
+        name: created_by
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of supported region proposals V2
+      tags:
+      - regions
   /regions/user/{id}/supported-suggestions:
     get:
       consumes:
@@ -4945,6 +5705,9 @@ paths:
       - in: query
         name: page_size
         type: integer
+      - in: query
+        name: region
+        type: string
       - in: query
         name: sort_order
         type: string
@@ -4982,9 +5745,6 @@ paths:
       - in: query
         name: gender
         type: string
-      - in: query
-        name: is_available_to_confirm
-        type: boolean
       - in: query
         name: is_closed
         type: boolean
@@ -5083,7 +5843,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.PaginationDataResponse'
+            $ref: '#/definitions/response.RegistrationRequestResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -5094,43 +5854,6 @@ paths:
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
       summary: Get registration request details
-      tags:
-      - registration
-  /registrations/{id}/confirm:
-    post:
-      consumes:
-      - application/json
-      description: Prepares and builds a transaction for registering new staff information
-        on-chain
-      parameters:
-      - description: Registration Request ID (UUID)
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
-        "400":
-          description: Invalid data. Please try again.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-        "401":
-          description: You have no rights to access this action.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-        "500":
-          description: There is something wrong in the system during the process.
-            Please try again later.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-      security:
-      - BearerAuth: []
-      summary: Confirm and register a staff role uploaded to Sui Blockchain
       tags:
       - registration
   /registrations/{id}/vote:
@@ -5274,7 +5997,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.StaffResponse'
+            $ref: '#/definitions/response.StaffNftResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -5287,6 +6010,36 @@ paths:
       summary: Get staff details
       tags:
       - staffs
+  /staffs/owner/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get staff details by owner
+      parameters:
+      - description: Staff Owner Wallet Address
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.StaffNftResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: Get staff details by owner
+      tags:
+      - staffs
   /task-proofs:
     get:
       consumes:
@@ -5297,6 +6050,9 @@ paths:
         name: actor_address
         type: string
       - in: query
+        name: is_child_task
+        type: boolean
+      - in: query
         name: keyword
         type: string
       - in: query
@@ -5305,6 +6061,9 @@ paths:
       - in: query
         name: page_size
         type: integer
+      - in: query
+        name: region
+        type: string
       - in: query
         name: reviewed_by
         type: string
@@ -5379,9 +6138,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -5415,7 +6174,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Success
+          description: Sucsess
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
         "400":
@@ -5447,15 +6206,17 @@ paths:
         name: id
         required: true
         type: string
-      - in: query
-        name: image_blob_id
+      - description: Submit Task Proof Detail
+        in: body
+        name: request
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/request.SubmitTaskProofRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Success
+          description: Sucsess
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
         "400":
@@ -5483,7 +6244,7 @@ paths:
       description: Retrieve a list of tasks with optional query filters
       parameters:
       - in: query
-        name: assigned_staff
+        name: assgined_staff
         type: string
       - in: query
         name: keyword
@@ -5496,9 +6257,6 @@ paths:
         type: integer
       - in: query
         name: region
-        type: string
-      - in: query
-        name: reviewed_by
         type: string
       - in: query
         name: sort_order
@@ -5530,22 +6288,12 @@ paths:
       - application/json
       description: Create a task
       parameters:
-      - in: query
-        name: description
+      - description: Create Task Request Detail
+        in: body
+        name: request
         required: true
-        type: string
-      - in: query
-        name: end_period
-        required: true
-        type: string
-      - in: query
-        name: region
-        required: true
-        type: string
-      - in: query
-        name: start_period
-        required: true
-        type: string
+        schema:
+          $ref: '#/definitions/request.CreateTaskRequest'
       produces:
       - application/json
       responses:
@@ -5637,37 +6385,48 @@ paths:
       summary: Claim a task
       tags:
       - tasks
-  /tasks/{id}/review:
-    post:
+  /tasks/region/staff/{id}:
+    get:
       consumes:
       - application/json
-      description: Review a task
+      description: Retrieve a list of tasks of staff's region with optional query
+        filters
       parameters:
-      - description: Task ID
+      - description: Staff Wallet Address
         in: path
         name: id
         required: true
         type: string
       - in: query
-        name: is_vote_yes
-        required: true
-        type: boolean
+        name: assgined_staff
+        type: string
       - in: query
-        name: refuse_reason
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Success
+          description: OK
           schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
+            $ref: '#/definitions/response.PaginationDataResponse'
         "400":
           description: Invalid data. Please try again.
-          schema:
-            $ref: '#/definitions/response.MessageAPIResponse'
-        "401":
-          description: You have no rights to access this action.
           schema:
             $ref: '#/definitions/response.MessageAPIResponse'
         "500":
@@ -5677,7 +6436,60 @@ paths:
             $ref: '#/definitions/response.MessageAPIResponse'
       security:
       - BearerAuth: []
-      summary: Review a task
+      summary: List tasks of staff's region
+      tags:
+      - tasks
+  /tasks/staff/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of tasks of staff
+      parameters:
+      - description: Staff Wallet Address
+        in: path
+        name: id
+        required: true
+        type: string
+      - in: query
+        name: assgined_staff
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: List tasks of staff
       tags:
       - tasks
   /tx-records:
@@ -5686,19 +6498,44 @@ paths:
       - application/json
       description: Get a list of transaction records
       parameters:
-      - description: Filter criteria
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.GetTransactionRecordsRequest'
+      - description: e.g. "Withdraw", "Donate"
+        in: query
+        name: action_type
+        type: string
+      - in: query
+        name: actor
+        type: string
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: max_amount
+        type: integer
+      - in: query
+        name: min_amount
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: pool_id
+        type: string
+      - in: query
+        name: sort_criteria
+        type: string
+      - in: query
+        name: sort_order
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.PaginationDataResponse'
+            $ref: '#/definitions/response.GetTransactionRecordsResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -5850,9 +6687,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -5992,20 +6829,13 @@ paths:
         name: id
         required: true
         type: string
-      - in: query
-        name: is_vote_yes
-        required: true
-        type: boolean
-      - in: query
-        name: refuse_reason
-        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Success
           schema:
-            $ref: '#/definitions/response.BuildTransactionResponse'
+            $ref: '#/definitions/response.MessageAPIResponse'
         "400":
           description: Invalid data. Please try again.
           schema:
@@ -6024,8 +6854,89 @@ paths:
       summary: Vote on a withdraw proposal
       tags:
       - Withdrawal
+  /withdraw-proposals/children/propose:
+    post:
+      consumes:
+      - application/json
+      description: Propose children withdraw proposals
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "401":
+          description: You have no rights to access this action.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Propose children withdraw proposals
+      tags:
+      - Withdrawal
+  /withdraw-proposals/pending:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of on-chain pending withdraw proposals with optional
+        query filters
+      parameters:
+      - in: query
+        name: creator
+        type: string
+      - description: Filter for pool ID, pool name, desc
+        in: query
+        name: keyword
+        type: string
+      - in: query
+        name: max_amount
+        type: integer
+      - in: query
+        name: min_amount
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: page_size
+        type: integer
+      - in: query
+        name: sort_criteria
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginationDataResponse'
+        "400":
+          description: Invalid data. Please try again.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+        "500":
+          description: There is something wrong in the system during the process.
+            Please try again later.
+          schema:
+            $ref: '#/definitions/response.MessageAPIResponse'
+      summary: List on-chain pending withdraw proposals
+      tags:
+      - Withdrawal
 schemes:
-- http
+- https
 securityDefinitions:
   BearerAuth:
     in: header

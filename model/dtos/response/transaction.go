@@ -9,6 +9,6 @@ type TransactionResponse struct {
 	PoolName     string    `json:"pool_name"`
 	Amount       int64     `json:"amount"`
 	Message      string    `json:"message"`
-	CoinType     string    `json:"coin_type"` // e.g., "Sui", "USDC"
+	CoinType     string    `json:"coin_type"` // e.g., "VND"
 	CreatedAt    time.Time `json:"created_at"`
 }

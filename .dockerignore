@@ -1,0 +1,33 @@
+# Git
+.git
+.gitignore
+ 
+# Docker
+Dockerfile
+.dockerignore
+ 
+# CI/CD
+.github
+ 
+# Dev tools & IDE
+.vscode
+.idea
+# *.env
+# *.env.*
+ 
+# Test artifacts
+**/*_test.go
+coverage.out
+*.test
+ 
+# OS
+.DS_Store
+Thumbs.db
+ 
+# Build output (local)
+bin/
+dist/
+
+# Documentation
+*.md
+ 

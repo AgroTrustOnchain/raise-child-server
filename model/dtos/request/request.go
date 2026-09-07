@@ -39,7 +39,7 @@ type LocalLeaderRegistrationRequest struct {
 }
 
 // For Admin role
-type GetAdminRegistrationRequest struct {
+type GetAdminRegistrationRequets struct {
 	Keyword   string `form:"keyword"`
 	Gender    string `form:"gender"`
 	Status    string `form:"status"`
@@ -53,19 +53,18 @@ type GetAdminRegistrationRequest struct {
 // For Volunteer, Local Leader role
 type GetNormalStaffRegistrationRequests struct {
 	Region string `form:"region"`
-	GetAdminRegistrationRequest
+	GetAdminRegistrationRequets
 }
 
 type CreateRegistrationRequest struct {
-	RegisterRole       string `json:"register_role" validate:"required"`
-	Region             string `json:"region" validate:"required"`
-	IdentityCardBlobID string `json:"identity_card_blob_id" validate:"required"`
-	AvatarBlobID       string `json:"avatar_blob_id" validate:"required"`
+	RegisterRole             string `json:"register_role" validate:"required"`
+	Region                   string `json:"region" validate:"required"`
+	IdentityCardCloudinaryID string `json:"identity_card_cloudinary_id" validate:"required"`
+	AvatarBlobID             string `json:"avatar_blob_id" validate:"required"`
 }
 
 type GetRegistrationRequests struct {
-	RegisterRole         string `form:"register_role"`
-	IsAvailableToConfirm *bool  `form:"is_available_to_confirm"`
+	RegisterRole string `form:"register_role"`
 	GetUploadChildRequests
 }
 

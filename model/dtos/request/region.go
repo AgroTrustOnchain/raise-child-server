@@ -1,6 +1,7 @@
 package request
 
 type GetSupportedRegionSuggestionsRequest struct {
+	Region    string
 	Keyword   string `form:"keyword"`
 	CreatedBy string `form:"created_by"`
 	SortOrder string `form:"sort_order"`

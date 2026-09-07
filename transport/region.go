@@ -129,6 +129,42 @@ func GetSupportedRegionSuggestions(ctx *gin.Context) {
 	})
 }
 
+// GetSupportedRegionSuggestions godoc
+// @Summary      Get list of supported region proposals V2
+// @Description  Retrieves a list of supported region proposals based on filter criteria
+// @Tags         regions
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request  query     request.GetSupportedRegionSuggestionsRequest  true  "Filter Criteria"
+// @Success      200  {object}  response.PaginationDataResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /regions/supported-suggestionsv2 [get]
+func GetSupportedRegionSuggestionsV2(ctx *gin.Context) {
+	var request request.GetSupportedRegionSuggestionsRequest
+	if ctx.ShouldBindQuery(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
+
+	service, err := business.GenerateRegionService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	res, err := service.GetSupportedRegionSuggestionsV2(request, ctx)
+
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
+
 // GetWalletSupportedRegionSuggestions godoc
 // @Summary      Get list of supported region proposals created by a user
 // @Description  Retrieves a list of supported region proposals of a user based on filter criteria
@@ -300,8 +336,7 @@ func ReviewRegionSuggestion(ctx *gin.Context) {
 	}
 
 	util.ProcessResponse(response.APIResponse{
-		ErrMsg:   service.ReviewRegionSuggestion(ctx.Param("id"), request, ctx),
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.ReviewRegionSuggestion(ctx.Param("id"), request, ctx),
+		Context: ctx,
 	})
 }

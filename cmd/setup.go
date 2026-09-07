@@ -90,8 +90,23 @@ func setupApiRoutes(server *gin.Engine) {
 	// Pool Campaign API endpoints
 	api_route.InitializeCampaignRoutes(server)
 
-	// Center API endpoints
+	// Center API enpoints
 	api_route.InitializeCenterRoute(server)
+
+	// Pool API endpoints
+	api_route.InitializePoolRoutes(server)
+
+	// Staff API endpoints
+	api_route.InitializeStaffRoute(server)
+
+	// Platform Config API endpoints
+	api_route.InitializePlatformConfigsRoutes(server)
+
+	// Image API endpoints
+	api_route.InitializeImageRoute(server)
+
+	// OCR API endpoints
+	api_route.InitializeORCRoute(server)
 
 	// Default route to Swagger documentation
 	server.GET("/", func(ctx *gin.Context) {
@@ -107,20 +122,22 @@ func setupPayments(errLogger *log.Logger) {
 }
 
 func setupBackgroundService(ctx context.Context, wg *sync.WaitGroup) {
-	var services = []func(context.Context, *sync.WaitGroup, time.Duration){
-		processCenterBackgroundService,
+	var services = []func(context.Context, *sync.WaitGroup){
+		processRefundVotePowerBackgroundService,
+		processCreateChildrenWithdrawsBackgroundService,
 		processRegistrationBackgroundService,
+		processCenterBackgroundService,
 	}
 
 	wg.Add(len(services))
-	var duration time.Duration = time.Minute
 	for _, service := range services {
-		go service(ctx, wg, duration)
+		go service(ctx, wg)
 	}
 }
 
-func processCenterBackgroundService(ctx context.Context, wg *sync.WaitGroup, duration time.Duration) {
+func processCenterBackgroundService(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
+	var duration time.Duration = time.Minute / 2
 	var ticker = time.NewTicker(duration)
 	defer ticker.Stop()
 	for {
@@ -135,8 +152,9 @@ func processCenterBackgroundService(ctx context.Context, wg *sync.WaitGroup, dur
 	}
 }
 
-func processRegistrationBackgroundService(ctx context.Context, wg *sync.WaitGroup, duration time.Duration) {
+func processRegistrationBackgroundService(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
+	var duration time.Duration = time.Minute / 2
 	var ticker = time.NewTicker(duration)
 	defer ticker.Stop()
 	for {
@@ -146,6 +164,40 @@ func processRegistrationBackgroundService(ctx context.Context, wg *sync.WaitGrou
 		case <-ticker.C:
 			if service, err := business.GenerateBackgroundService(); err == nil {
 				service.ProcessBackgroundRegistrationRequests(ctx)
+			}
+		}
+	}
+}
+
+func processRefundVotePowerBackgroundService(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	var duration time.Duration = time.Minute / 2
+	var ticker = time.NewTicker(duration)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if service, err := business.GenerateBackgroundService(); err == nil {
+				service.ProcessRefundVotePower(ctx)
+			}
+		}
+	}
+}
+
+func processCreateChildrenWithdrawsBackgroundService(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	var duration time.Duration = time.Minute / 2
+	var ticker = time.NewTicker(duration)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if service, err := business.GenerateBackgroundService(); err == nil {
+				service.ProcessCreateChildrenWithdrawProposals(ctx)
 			}
 		}
 	}

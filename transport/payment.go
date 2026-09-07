@@ -74,14 +74,14 @@ func GetPayment(ctx *gin.Context) {
 }
 
 // ApprovePayment godoc
-// @Summary      Approve a Payment and upload to Sui Blockchain
-// @Description  Prepares and builds a transaction for approve and upload Payment on-chain
+// @Summary      Approve a Payment with method as Manual Bank and upload to Sui Blockchain
+// @Description  Prepares and builds a transaction for approve and upload Payment with method as Manual Bank on-chain
 // @Tags         payment
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Payment ID"
-// @Success      200      {object}  response.BuildTransactionResponse
+// @Success      200      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -93,14 +93,9 @@ func ApprovePayment(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.ApprovePayment(ctx.Param("id"), ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.ApprovePayment(ctx.Param("id"), ctx),
+		Context: ctx,
 	})
 }
 
@@ -125,9 +120,8 @@ func RefusePayment(ctx *gin.Context) {
 	}
 
 	util.ProcessResponse(response.APIResponse{
-		ErrMsg:   service.RefusePayment(ctx.Param("id"), ctx),
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.RefusePayment(ctx.Param("id"), ctx),
+		Context: ctx,
 	})
 }
 
@@ -139,7 +133,7 @@ func RefusePayment(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.DonateRequest  true  "Donation Details"
-// @Success      200      {object}  response.UrlAPIResponse
+// @Success      200      {object}  response.PaymentUrlResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -157,7 +151,7 @@ func Donate(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.Donate(request, ctx)
+	res, err := service.DonateV2(request, ctx)
 
 	util.ProcessResponse(response.APIResponse{
 		Data1:    res,
@@ -187,9 +181,8 @@ func CallbackTransaction(ctx *gin.Context) {
 	}
 
 	util.ProcessResponse(response.APIResponse{
-		ErrMsg:   service.CallbackV2(ctx.Param("id"), ctx),
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.CallbackV2(ctx.Param("id"), ctx),
+		Context: ctx,
 	})
 }
 
@@ -221,8 +214,7 @@ func CallbackWithAuthTransaction(ctx *gin.Context) {
 	}
 
 	util.ProcessResponse(response.APIResponse{
-		ErrMsg:   service.CallbackWithAuthV2(ctx.Param("id"), request, ctx),
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.CallbackWithAuthV2(ctx.Param("id"), request, ctx),
+		Context: ctx,
 	})
 }

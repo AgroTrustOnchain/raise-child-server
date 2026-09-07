@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"raise-child/model/dtos/request"
 	"raise-child/model/dtos/response"
 	"raise-child/util"
 	"strconv"
@@ -51,33 +50,29 @@ func (c Child) ToMinimumChildResponse() response.ChildResponse {
 	uploadedAt, _ := strconv.ParseInt(c.UploadedAt, 10, 64)
 	updatedAt, _ := strconv.ParseInt(c.UpdatedAt, 10, 64)
 
-	var secondGuardianProfile *request.ChildGuardianProfile
+	var secondGuardianProfile *response.ChildGuardianProfile
 	if len(c.GuardianProfiles) > 1 && c.GuardianProfiles[1].Fields.FullName != "" {
-		secondGuardianProfile = &request.ChildGuardianProfile{
-			FullName:           c.GuardianProfiles[1].Fields.FullName,
-			PhoneNumber:        c.GuardianProfiles[1].Fields.PhoneNumber,
-			Relation:           c.GuardianProfiles[1].Fields.Relation,
-			IdentityCardBlobID: c.GuardianProfiles[1].Fields.IdentityCardBlobID,
+		secondGuardianProfile = &response.ChildGuardianProfile{
+			FullName:    c.GuardianProfiles[1].Fields.FullName,
+			PhoneNumber: c.GuardianProfiles[1].Fields.PhoneNumber,
+			Relation:    c.GuardianProfiles[1].Fields.Relation,
 		}
 	}
 
 	return response.ChildResponse{
-		ID:                     c.ID.ID,
-		IdentityCode:           c.IdentityCode,
-		BirthCertificateBlobID: c.BirthCertificateBlobID,
-		FirstName:              c.FirstName,
-		LastName:               c.LastName,
-		Gender:                 c.Gender,
-		DateOfBirth:            util.RawDateToTime(c.DateOfBirth),
-		HomeAddress:            c.HomeAddress,
-		Region:                 c.Region,
-		AvatarBlobId:           c.AvatarBlobId,
-		HomeBlobID:             c.HomeBlobID,
-		FirstGuardian: request.ChildGuardianProfile{
-			FullName:           c.GuardianProfiles[0].Fields.FullName,
-			PhoneNumber:        c.GuardianProfiles[0].Fields.PhoneNumber,
-			Relation:           c.GuardianProfiles[0].Fields.Relation,
-			IdentityCardBlobID: c.GuardianProfiles[0].Fields.IdentityCardBlobID,
+		ID:           c.ID.ID,
+		IdentityCode: c.IdentityCode,
+		FirstName:    c.FirstName,
+		LastName:     c.LastName,
+		Gender:       c.Gender,
+		DateOfBirth:  util.RawDateToTime(c.DateOfBirth),
+		HomeAddress:  c.HomeAddress,
+		Region:       c.Region,
+		AvatarBlobId: c.AvatarBlobId,
+		FirstGuardian: response.ChildGuardianProfile{
+			FullName:    c.GuardianProfiles[0].Fields.FullName,
+			PhoneNumber: c.GuardianProfiles[0].Fields.PhoneNumber,
+			Relation:    c.GuardianProfiles[0].Fields.Relation,
 		},
 		SecondGuardian:       secondGuardianProfile,
 		ImageBlobIds:         c.ImageBlobIds,
@@ -107,33 +102,29 @@ func (c Child) ToChildResponse() response.ChildResponse {
 	uploadedAt, _ := strconv.ParseInt(c.UploadedAt, 10, 64)
 	updatedAt, _ := strconv.ParseInt(c.UpdatedAt, 10, 64)
 
-	var secondGuardianProfile *request.ChildGuardianProfile
+	var secondGuardianProfile *response.ChildGuardianProfile
 	if len(c.GuardianProfiles) > 1 && c.GuardianProfiles[1].Fields.FullName != "" {
-		secondGuardianProfile = &request.ChildGuardianProfile{
-			FullName:           c.GuardianProfiles[1].Fields.FullName,
-			PhoneNumber:        c.GuardianProfiles[1].Fields.PhoneNumber,
-			Relation:           c.GuardianProfiles[1].Fields.Relation,
-			IdentityCardBlobID: c.GuardianProfiles[1].Fields.IdentityCardBlobID,
+		secondGuardianProfile = &response.ChildGuardianProfile{
+			FullName:    c.GuardianProfiles[1].Fields.FullName,
+			PhoneNumber: c.GuardianProfiles[1].Fields.PhoneNumber,
+			Relation:    c.GuardianProfiles[1].Fields.Relation,
 		}
 	}
 
 	return response.ChildResponse{
-		ID:                     c.ID.ID,
-		IdentityCode:           c.IdentityCode,
-		BirthCertificateBlobID: c.BirthCertificateBlobID,
-		FirstName:              c.FirstName,
-		LastName:               c.LastName,
-		Gender:                 c.Gender,
-		DateOfBirth:            util.RawDateToTime(c.DateOfBirth),
-		HomeAddress:            c.HomeAddress,
-		Region:                 c.Region,
-		AvatarBlobId:           c.AvatarBlobId,
-		HomeBlobID:             c.HomeBlobID,
-		FirstGuardian: request.ChildGuardianProfile{
-			FullName:           c.GuardianProfiles[0].Fields.FullName,
-			PhoneNumber:        c.GuardianProfiles[0].Fields.PhoneNumber,
-			Relation:           c.GuardianProfiles[0].Fields.Relation,
-			IdentityCardBlobID: c.GuardianProfiles[0].Fields.IdentityCardBlobID,
+		ID:           c.ID.ID,
+		IdentityCode: c.IdentityCode,
+		FirstName:    c.FirstName,
+		LastName:     c.LastName,
+		Gender:       c.Gender,
+		DateOfBirth:  util.RawDateToTime(c.DateOfBirth),
+		HomeAddress:  c.HomeAddress,
+		Region:       c.Region,
+		AvatarBlobId: c.AvatarBlobId,
+		FirstGuardian: response.ChildGuardianProfile{
+			FullName:    c.GuardianProfiles[0].Fields.FullName,
+			PhoneNumber: c.GuardianProfiles[0].Fields.PhoneNumber,
+			Relation:    c.GuardianProfiles[0].Fields.Relation,
 		},
 		SecondGuardian:       secondGuardianProfile,
 		ImageBlobIds:         c.ImageBlobIds,
@@ -161,5 +152,6 @@ func (c Child) ToChildCardMinimumResponse() response.ChildCardMinimumResponse {
 		FirstName:    c.FirstName,
 		LastName:     c.LastName,
 		Gender:       c.Gender,
+		AvatarBlobID: c.AvatarBlobId,
 	}
 }

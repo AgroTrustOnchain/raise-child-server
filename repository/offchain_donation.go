@@ -39,7 +39,7 @@ func (o *offChainDonationRepo) CreateDonation(donation entities.OffChainDonation
 	if _, err := o.db.ExecContext(ctx, query, donation.ID, donation.Purpose, donation.Target, donation.MealDurationID, donation.CreatedAt); err != nil {
 
 		o.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -59,7 +59,7 @@ func (o *offChainDonationRepo) GetDonation(id string, ctx context.Context) (*ent
 		}
 
 		o.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"raise-child/constants/env"
@@ -107,17 +106,6 @@ func (a *adminRequestService) ConfirmRequest(id string, ctx context.Context) (re
 	}
 
 	var client = a.clients[constant.SuiTestnet]
-	var mangeModule = on_chain.InitializeModuleManage()
-	caps, err := on_chain.GetOnChainOwnedObjects[entities.Cap](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), mangeModule.GetModule(), mangeModule.GetRegisterAdminCapStruct()),
-		ErrLogger:    a.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
-
 	var staffModule = on_chain.InitializeModuleStaff()
 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
 		Client:    client,
@@ -126,7 +114,6 @@ func (a *adminRequestService) ConfirmRequest(id string, ctx context.Context) (re
 		Function:  staffModule.GetFunctionRegisterAdmin(),
 		ErrLogger: a.errLogger,
 		Arguments: staffModule.ToRegisterAdminArguments(on_chain.RegisterAdminArguments{
-			CapID:              caps[0].ID.ID,
 			IdentityCode:       req.IdentityCode,
 			IdentityCardBlobID: req.IdentityCardBlobID,
 			AvatarBlobID:       req.AvatarBlobID,
@@ -149,7 +136,7 @@ func (a *adminRequestService) CreateRequest(req request.AdminRegistrationRequest
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 
 	var sender string = ctx.Value("address").(string)
-	if !!util.IsValidSuiAddressStrict(sender) {
+	if !util.IsValidSuiAddressStrict(sender) {
 		return nil, genericErr
 	}
 
@@ -158,7 +145,7 @@ func (a *adminRequestService) CreateRequest(req request.AdminRegistrationRequest
 		return nil, err
 	}
 
-	if reqs != nil && len(reqs) > 0 {
+	if len(reqs) > 0 {
 		for _, req := range reqs {
 			if req.Status == request_pending_status || req.Status == request_approved_status {
 				return nil, genericErr
@@ -209,7 +196,7 @@ func (a *adminRequestService) GetRequest(id string, ctx context.Context) (*entit
 }
 
 // GetRequests implements business.IAdminRequestService.
-func (a *adminRequestService) GetRequests(req request.GetAdminRegistrationRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+func (a *adminRequestService) GetRequests(req request.GetAdminRegistrationRequets, ctx context.Context) (response.PaginationDataResponse, error) {
 	if req.Page < 1 {
 		req.Page = 1
 	}
@@ -229,7 +216,7 @@ func (a *adminRequestService) GetRequests(req request.GetAdminRegistrationReques
 
 // GetWalletRequests implements business.IAdminRequestService.
 func (a *adminRequestService) GetWalletRequests(id string, ctx context.Context) ([]entities.AdminRegistrationRequest, error) {
-	if !!util.IsValidSuiAddressStrict(id) {
+	if !util.IsValidSuiAddressStrict(id) {
 		return nil, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
@@ -241,7 +228,7 @@ func (a *adminRequestService) VoteRequest(id string, req request.VoteRequest, ct
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 
 	var voter string = ctx.Value("address").(string)
-	if !!util.IsValidSuiAddressStrict(voter) {
+	if !util.IsValidSuiAddressStrict(voter) {
 		return genericErr
 	}
 

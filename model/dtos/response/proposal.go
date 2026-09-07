@@ -15,7 +15,7 @@ type WithdrawProposalResponse struct {
 	RefuseReasons   []string    `json:"refuse_reasons"`
 	IsExecuted      bool        `json:"is_executed"`
 	IsFromLocalPool bool        `json:"is_from_local_pool"`
-	ApprovedPeriods []time.Time `json:"approved_periods"`
+	AprrovedPeriods []time.Time `json:"approved_periods"`
 	RefusedPeriods  []time.Time `json:"refused_periods"`
 	CreatedAt       time.Time   `json:"created_at"`
 	UpdatedAt       time.Time   `json:"updated_at"`
@@ -33,7 +33,7 @@ type SpecialNeedProposalResponse struct {
 	ApproveWeight   int64       `json:"approve_weight"`
 	RefuseWeight    int64       `json:"refuse_weight"`
 	RefuseReasons   []string    `json:"refuse_reasons"`
-	ApprovedPeriods []time.Time `json:"approved_periods"`
+	AprrovedPeriods []time.Time `json:"approved_periods"`
 	RefusedPeriods  []time.Time `json:"refused_periods"`
 	IsConfirm       bool        `json:"is_confirm"`
 	CreatedAt       time.Time   `json:"created_at"`

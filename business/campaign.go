@@ -86,18 +86,86 @@ func GenerateCampaignService() (business.ICampaignService, error) {
 		repository.InitializePendingWithdrawProposalRepo(cnn, errLogger),
 		repository.InitializeOffChainDonationRepository(cnn, errLogger),
 		repository.InitializeOffChainWithdrawProposalRepository(cnn, errLogger),
-		ai.InitializeAiProvider(nil, errLogger),
+		ai.InitializeAiProvider(errLogger),
 		walrus_pkg.InitializeWalrusProvider(errLogger),
 		_networkAliases,
 		errLogger,
 	), nil
 }
 
+// // CreateCampaignWithdrawProposal implements business.ICampaignService.
+// func (c *campaignService) CreateCampaignWithdrawProposal(req request.CreateCampaignWithdrawProposalRequest, ctx context.Context) (*entities.PendingWithdrawProposal, error) {
+// 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+// 	if !util.IsValidSuiAddressStrict(req.CampaignID) {
+// 		return nil, genericErr
+// 	}
+
+// 	var client = c.clients[constant.SuiTestnet]
+// 	campaign, err := on_chain.GetOnChainObject[entities.OnChainCampaign](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  req.CampaignID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	if campaign == nil {
+// 		return nil, genericErr
+// 	}
+
+// 	var sender string = ctx.Value("address").(string)
+// 	if campaign.Creator != sender {
+// 		return nil, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+// 	}
+
+// 	totalWithdrawAmount, _ := strconv.ParseInt(campaign.WithdrawAmount, 10, 64)
+// 	totalDonation, _ := strconv.ParseInt(campaign.TotalDonated, 10, 64)
+// 	if req.Amount > totalDonation-totalWithdrawAmount {
+// 		return nil, errors.New(noti.CURRENT_BUDGET_NOT_ENOUGH_MESSAGE)
+// 	}
+
+// 	var description string = strings.TrimSpace(req.Description)
+// 	var purpose string = string(entities.CAMPAIGN_PURPOSE)
+// 	var aiEvaluation string
+// 	if req.ProofBlobID != nil {
+// 		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+// 		if proofBytes != nil {
+// 			aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+// 				Purpose:         purpose,
+// 				WithdrawAmount:  req.Amount,
+// 				Description:     description,
+// 				ProofBytesImage: proofBytes,
+// 			}, ctx)
+// 		}
+// 	}
+
+// 	var curTime time.Time = time.Now()
+// 	var res = entities.PendingWithdrawProposal{
+// 		ID:             util.GenerateId(),
+// 		ProfileID:      ctx.Value("sub").(string),
+// 		Creator:        sender,
+// 		PoolID:         campaign.PoolID,
+// 		PoolName:       campaign.PoolName,
+// 		Purpose:        purpose,
+// 		Target:         req.CampaignID,
+// 		WithdrawAmount: req.Amount,
+// 		ProofBlobID:    req.ProofBlobID,
+// 		Description:    description,
+// 		Status:         request_pending_status,
+// 		AIEvaluation:   aiEvaluation,
+// 		CreatedAt:      curTime,
+// 		UpdatedAt:      curTime,
+// 	}
+
+// 	return &res, c.pendingWithdrawProposalRepo.CreatePendingWithdrawProposal(res, ctx)
+// }
+
 // CreateCampaignWithdrawProposal implements business.ICampaignService.
-func (c *campaignService) CreateCampaignWithdrawProposal(req request.CreateCampaignWithdrawProposalRequest, ctx context.Context) (*entities.PendingWithdrawProposal, error) {
+func (c *campaignService) CreateCampaignWithdrawProposal(req request.CreateCampaignWithdrawProposalRequest, ctx context.Context) error {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !util.IsValidSuiAddressStrict(req.CampaignID) {
-		return nil, genericErr
+		return genericErr
 	}
 
 	var client = c.clients[constant.SuiTestnet]
@@ -107,58 +175,48 @@ func (c *campaignService) CreateCampaignWithdrawProposal(req request.CreateCampa
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if campaign == nil {
-		return nil, genericErr
+		return genericErr
 	}
 
 	var sender string = ctx.Value("address").(string)
 	if campaign.Creator != sender {
-		return nil, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+		return errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
 
 	totalWithdrawAmount, _ := strconv.ParseInt(campaign.WithdrawAmount, 10, 64)
 	totalDonation, _ := strconv.ParseInt(campaign.TotalDonated, 10, 64)
 	if req.Amount > totalDonation-totalWithdrawAmount {
-		return nil, errors.New(noti.CURRENT_BUDGET_NOT_ENOUGH_MESSAGE)
+		return errors.New(noti.CURRENT_BUDGET_NOT_ENOUGH_MESSAGE)
 	}
 
-	var description string = strings.TrimSpace(req.Description)
-	var purpose string = string(entities.CAMPAIGN_PURPOSE)
-	var aiEvaluation string
-	if req.ProofBlobID != nil {
-		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
-		if proofBytes != nil {
-			aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
-				Purpose:         purpose,
-				WithdrawAmount:  req.Amount,
-				Description:     description,
-				ProofBytesImage: proofBytes,
-			}, ctx)
-		}
+	var localPoolId string
+	if campaign.PoolID != os.Getenv(env.POOL_ID) {
+		localPoolId = os.Getenv(env.SHARED_LOCAL_POOL_ID)
+	} else {
+		localPoolId = campaign.PoolID
 	}
 
-	var curTime time.Time = time.Now()
-	var res = entities.PendingWithdrawProposal{
-		ID:             util.GenerateId(),
-		ProfileID:      ctx.Value("sub").(string),
-		Creator:        sender,
-		PoolID:         campaign.PoolID,
-		PoolName:       campaign.PoolName,
-		Purpose:        purpose,
-		Target:         req.CampaignID,
-		WithdrawAmount: req.Amount,
-		ProofBlobID:    req.ProofBlobID,
-		Description:    description,
-		Status:         request_pending_status,
-		AIEvaluation:   aiEvaluation,
-		CreatedAt:      curTime,
-		UpdatedAt:      curTime,
-	}
+	var campaignModule = on_chain.InitializeModuleCampaign()
+	_, errRes := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
+		Client:   client,
+		Module:   campaignModule.GetModule(),
+		Function: campaignModule.GetFunctionCreateCampaignWithdrawProposal(),
+		Arguments: campaignModule.ToCreateCampaignWithdrawProposalArguments(on_chain.CreateCampaignWithdrawProposalArguments{
+			LocalPoolID:    localPoolId,
+			CampaignID:     req.CampaignID,
+			WithdrawAmount: req.Amount,
+			Description:    strings.TrimSpace(req.Description),
+			ProofBlobID:    req.ProofBlobID,
+			ClosedAt:       util.ToMilliseconds(util.GetRequestDuration()),
+			Creator:        sender,
+		}),
+	}, ctx)
 
-	return &res, c.pendingWithdrawProposalRepo.CreatePendingWithdrawProposal(res, ctx)
+	return errRes
 }
 
 // GetCampaign implements business.ICampaignService.
@@ -223,11 +281,6 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 	}
 
 	var res response.PaginationDataResponse
-	var redisKey string = c.getGetCampaignsRedisKey(req)
-	if c.redisCache.Get(redisKey, &res, ctx) {
-		return res, nil
-	}
-
 	var client = c.clients[constant.SuiTestnet]
 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
 		Client:    client,
@@ -238,11 +291,15 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 		return response.PaginationDataResponse{}, err
 	}
 
-	var campaigns []entities.OnChainCampaign
+	if pool == nil {
+		return response.PaginationDataResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	var camapaigns []entities.OnChainCampaign
 	var errRes error
 	if req.PoolName != "" {
 		if req.PoolName == "Main Pool" {
-			campaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
+			camapaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
 				Client:    client,
 				ObjectIds: pool.Campaigns,
 				ErrLogger: c.errLogger,
@@ -251,10 +308,6 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 				return response.PaginationDataResponse{}, errRes
 			}
 		} else {
-			if !isRegionExist(req.PoolName) {
-				return response.PaginationDataResponse{}, genericErr
-			}
-
 			localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
 				Client:    client,
 				ObjectIds: pool.Campaigns,
@@ -276,7 +329,7 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 				return response.PaginationDataResponse{}, genericErr
 			}
 
-			campaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
+			camapaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
 				Client:    client,
 				ObjectIds: foundLocalPool.Campaigns,
 				ErrLogger: c.errLogger,
@@ -286,7 +339,7 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 			}
 		}
 	} else {
-		campaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
+		camapaigns, errRes = on_chain.GetOnChainObjects[entities.OnChainCampaign](on_chain.GetOnChainObjectsRequest{
 			Client:    client,
 			ObjectIds: pool.AllCampaigns,
 			ErrLogger: c.errLogger,
@@ -296,15 +349,15 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 		}
 	}
 
-	if campaigns == nil || len(campaigns) == 0 {
+	if len(camapaigns) == 0 {
 		return response.PaginationDataResponse{
 			Page: req.Page,
 		}, nil
 	}
 
 	var filteredCampaigns []entities.OnChainCampaign
-	for i := len(campaigns) - 1; i >= 0; i-- {
-		var campaign entities.OnChainCampaign = campaigns[i]
+	for i := len(camapaigns) - 1; i >= 0; i-- {
+		var campaign entities.OnChainCampaign = camapaigns[i]
 		if req.Creator != "" {
 			if campaign.Creator != req.Creator { // Not matched
 				continue
@@ -371,7 +424,6 @@ func (c *campaignService) GetCampaigns(req request.GetCampaignsRequest, ctx cont
 		TotalPages: int(math.Ceil(float64(len(filteredCampaigns)) / float64(req.PageSize))),
 	}
 
-	c.redisCache.Set(redisKey, res, time.Minute*5, ctx)
 	return res, nil
 }
 
@@ -424,7 +476,7 @@ func (c *campaignService) SupportCampaign(id string, req request.SupportCampaign
 	})
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()

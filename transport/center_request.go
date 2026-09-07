@@ -164,21 +164,20 @@ func VoteCenterRequest(ctx *gin.Context) {
 	}
 
 	util.ProcessResponse(response.APIResponse{
-		ErrMsg:   service.VoteRequest(ctx.Param("id"), request, ctx),
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.VoteRequest(ctx.Param("id"), request, ctx),
+		Context: ctx,
 	})
 }
 
 // ConfirmCenterRequest godoc
-// @Summary      Confirm and upload center information to Sui Blockchain
+// @Summary      Confirm and upload center information to Sui Blockhain
 // @Description  Prepares and builds a transaction for uploading center information on-chain
 // @Tags         center-reqs
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id       path      string  true  "Center Request ID (UUID)"
-// @Success      200      {object}  response.BuildTransactionResponse
+// @Success      200      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -190,12 +189,8 @@ func ConfirmCenterRequest(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.ConfirmRequest(ctx.Param("id"), ctx)
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.NON_POST,
+		ErrMsg:  service.ConfirmRequest(ctx.Param("id"), ctx),
+		Context: ctx,
 	})
 }

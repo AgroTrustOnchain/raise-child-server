@@ -21,7 +21,7 @@ const (
 
 	PHONE_NUMBER_REGISTERED_WARN_MSG string = "Phone number registered. Please try another phone number."
 
-	GENERIC_PERSONAL_INFO_REGISTERED_WARN_MSG string = "These personal information has been registered."
+	GENERIC_PERSONAL_INFO_REGISTERED_WANR_MSG string = "These personal information has been registered."
 
 	DATA_EXISTED_WARN_MSG string = "%s is already existed. Please try another %s."
 
@@ -35,13 +35,15 @@ const (
 
 	REGION_NOT_ADDED_WARN_MSG string = "This region temporarily has not been supported yet."
 
-	NOT_APPROVED_REQUEST_WARN_MSG string = "This request has been not approved yet."
+	NOT_ARRPOVED_REQUEST_WARN_MSG string = "This request has been not approved yet."
 
 	NUMBER_NEGATIVE_WARN_MSG string = ""
 
 	TOO_MANY_REQUESTS_WARN_MSG string = "Too many requests."
 
 	NEED_VALUE_INVALID_WARN_MSG string = "Invalid value of child need."
+
+	NEGATIVE_AGE_WARN_MSG string = "Age must be at least 0."
 )
 
 const (

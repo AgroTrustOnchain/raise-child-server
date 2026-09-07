@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net/http"
 	"raise-child/business"
 	"raise-child/constants/shared"
 	"raise-child/util"
@@ -11,7 +12,28 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Authorize(ctx *gin.Context) {
+var (
+	Authorize                  = skipOnPreflight(authorize)
+	AdminAuthorize             = skipOnPreflight(adminAuthorize)
+	LeaderAuthorize            = skipOnPreflight(leaderAuthorize)
+	ManagerRoleAuthorize       = skipOnPreflight(managerRoleAuthorize)
+	StaffRoleAuthorize         = skipOnPreflight(staffRoleAuthorize)
+	VolunteerRoleAuthorize     = skipOnPreflight(volunteerRoleAuthorize)
+	GotRolesAuthorizeAuthorize = skipOnPreflight(gotRolesAuthorize)
+	OptinalAuthorize           = skipOnPreflight(optinalAuthorize)
+)
+
+func skipOnPreflight(handler gin.HandlerFunc) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		if ctx.Request.Method == http.MethodOptions {
+			ctx.Next()
+			return
+		}
+		handler(ctx)
+	}
+}
+
+func authorize(ctx *gin.Context) {
 	var unAuthBodyResponse = util.GetUnAuthBodyResponse(ctx)
 	var authHeader string = ctx.GetHeader("Authorization")
 	if authHeader == "" {
@@ -36,8 +58,7 @@ func Authorize(ctx *gin.Context) {
 		return
 	}
 
-	var wallets = business.GetWallets()
-	if _, isExist := wallets[sub]; !isExist {
+	if !business.IsWalletRegistered(sub) {
 		util.ProcessResponse(unAuthBodyResponse)
 		ctx.Abort()
 		return
@@ -49,7 +70,7 @@ func Authorize(ctx *gin.Context) {
 		return
 	}
 
-	if roles == nil || len(roles) == 0 {
+	if len(roles) == 0 {
 		util.ProcessResponse(unAuthBodyResponse)
 		ctx.Abort()
 		return
@@ -61,7 +82,49 @@ func Authorize(ctx *gin.Context) {
 	ctx.Next()
 }
 
-func AdminAuthorize(ctx *gin.Context) {
+func optinalAuthorize(ctx *gin.Context) {
+	var authHeader string = ctx.GetHeader("Authorization")
+	if authHeader == "" {
+		ctx.Next()
+		return
+	}
+
+	//var token string = strings.TrimPrefix(authHeader, "Bearer ")
+
+	address, sub, roles, exp, err := security.ExtractDataFromTokenV2(authHeader, util.GetLogConfig(shared.ERROR_LEVEL))
+	if err != nil {
+		ctx.Next()
+		return
+	}
+
+	// Token expired
+	if time.Now().After(exp) {
+		ctx.Next()
+		return
+	}
+
+	if !business.IsWalletRegistered(sub) {
+		ctx.Next()
+		return
+	}
+
+	if !util.IsValidSuiAddressStrict(address) {
+		ctx.Next()
+		return
+	}
+
+	if len(roles) == 0 {
+		ctx.Next()
+		return
+	}
+
+	ctx.Set("address", address)
+	ctx.Set("sub", sub)
+	ctx.Set("roles", roles)
+	ctx.Next()
+}
+
+func adminAuthorize(ctx *gin.Context) {
 	val, exists := ctx.Get("roles")
 	if !exists {
 		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
@@ -85,7 +148,7 @@ func AdminAuthorize(ctx *gin.Context) {
 	ctx.Next()
 }
 
-func LeaderAuthorize(ctx *gin.Context) {
+func leaderAuthorize(ctx *gin.Context) {
 	val, exists := ctx.Get("roles")
 	if !exists {
 		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
@@ -109,7 +172,7 @@ func LeaderAuthorize(ctx *gin.Context) {
 	ctx.Next()
 }
 
-func ManagerRoleAuthorize(ctx *gin.Context) {
+func managerRoleAuthorize(ctx *gin.Context) {
 	val, exists := ctx.Get("roles")
 	if !exists {
 		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
@@ -133,7 +196,7 @@ func ManagerRoleAuthorize(ctx *gin.Context) {
 	ctx.Next()
 }
 
-func StaffRoleAuthorize(ctx *gin.Context) {
+func staffRoleAuthorize(ctx *gin.Context) {
 	val, exists := ctx.Get("roles")
 	if !exists {
 		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
@@ -149,6 +212,54 @@ func StaffRoleAuthorize(ctx *gin.Context) {
 	}
 
 	if !slices.Contains(roles, "Volunteer") && !slices.Contains(roles, "Local Leader") {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	ctx.Next()
+}
+
+func volunteerRoleAuthorize(ctx *gin.Context) {
+	val, exists := ctx.Get("roles")
+	if !exists {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	roles, ok := val.([]string)
+	if !ok {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	if !slices.Contains(roles, "Volunteer") {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	ctx.Next()
+}
+
+func gotRolesAuthorize(ctx *gin.Context) {
+	val, exists := ctx.Get("roles")
+	if !exists {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	roles, ok := val.([]string)
+	if !ok {
+		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
+		ctx.Abort()
+		return
+	}
+
+	if !slices.Contains(roles, "Admin") && !slices.Contains(roles, "Local Leader") && !slices.Contains(roles, "Volunteer") {
 		util.ProcessResponse(util.GetUnAuthBodyResponse(ctx))
 		ctx.Abort()
 		return

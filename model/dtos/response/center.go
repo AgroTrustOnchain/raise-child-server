@@ -18,6 +18,7 @@ type CenterCardMinimumResponse struct {
 	Region            string    `json:"region"`
 	CenterAddress     string    `json:"center_address"`
 	CenterPhoneNumber string    `json:"center_phone_number"`
+	ImageBlobID       string    `json:"image_blob_id"`
 	UploadedAt        time.Time `json:"uploaded_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }

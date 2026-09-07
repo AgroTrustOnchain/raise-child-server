@@ -19,7 +19,7 @@ func (u *uploadChildRequestMockRepo) SetReviewStatus(id string, reviewStatus str
 	panic("unimplemented")
 }
 
-func InitializeUploadChildRequestMockRepo() repository.IUploadChildRequestRepository {
+func InializeUploadChildRequestMockRepo() repository.IUploadChildRequestRepository {
 	return &uploadChildRequestMockRepo{}
 }
 

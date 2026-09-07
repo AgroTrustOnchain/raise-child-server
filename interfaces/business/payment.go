@@ -7,10 +7,12 @@ import (
 	"raise-child/model/entities"
 )
 
+// ApprovePayment(id string, ctx context.Context) (response.BuildTransactionResponse, error)
+
 type IPaymentService interface {
 	GetPayments(req request.GetPaymentsRequest, ctx context.Context) (response.PaginationDataResponse, error)
 	GetPayment(id string, ctx context.Context) (*entities.Payment, error)
-	ApprovePayment(id string, ctx context.Context) (response.BuildTransactionResponse, error)
+	ApprovePayment(id string, ctx context.Context) error
 	RefusePayment(id string, ctx context.Context) error
 	Donate(req request.DonateRequest, ctx context.Context) (response.UrlAPIResponse, error)
 	DonateV2(req request.DonateRequest, ctx context.Context) (response.PaymentUrlResponse, error)

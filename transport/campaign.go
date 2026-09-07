@@ -117,13 +117,13 @@ func SupportCampaign(ctx *gin.Context) {
 
 // CreateCampaignWithdrawProposal godoc
 // @Summary      Create Pool Campaign Pending Withdraw Proposal
-// @Description  Create Pool Campaign Pending Withdraw Proposal and wait for admin to review it
+// @Description  Create Pool Campaign Pending Withdraw Proposal
 // @Tags         pool-campaigns
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.CreateCampaignWithdrawProposalRequest   true  "Create Pool Campaign Pending Withdraw Proposal Detail"
-// @Success      201      {object}  entities.PendingWithdrawProposal
+// @Success      201      {object}  response.MessageAPIResponse "Success"
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
@@ -141,13 +141,8 @@ func CreateCampaignWithdrawProposal(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.CreateCampaignWithdrawProposal(request, ctx)
-
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.CREATE_ACTION,
+		ErrMsg:  service.CreateCampaignWithdrawProposal(request, ctx),
+		Context: ctx,
 	})
 }

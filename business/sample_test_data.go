@@ -48,15 +48,6 @@ var (
 		"donor_ids":               sampleDonorIds,
 		"donor_nfts":              sampleDonorNfts,
 	}
-	samplePoolObj = map[string]interface{}{
-		"id": map[string]string{
-			"id": "",
-		},
-	}
-	sampleDaoObjJson = map[string]interface{}{
-		"min_approved_rate": "8000",
-		"min_voters":        "10",
-	}
 )
 
 // Admin NFT
@@ -76,7 +67,7 @@ var (
 		"phone_number":          "094901234567",
 		"email":                 "minh.nguyen@example.com",
 		"uploaded_at":           "1698397200000",
-		"name":                  "AgroTrust Admin NFT",
+		"name":                  "RaiseChild Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft2 = map[string]interface{}{
@@ -94,7 +85,7 @@ var (
 		"phone_number":          "+84912345678",
 		"email":                 "linh.tran@example.com",
 		"uploaded_at":           "1698397500000",
-		"name":                  "AgroTrust Admin NFT",
+		"name":                  "RaiseChild Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft3 = map[string]interface{}{
@@ -112,7 +103,7 @@ var (
 		"phone_number":          "+84923456789",
 		"email":                 "hoang.le@example.com",
 		"uploaded_at":           "1698397800000",
-		"name":                  "AgroTrust Admin NFT",
+		"name":                  "RaiseChild Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft4 = map[string]interface{}{
@@ -130,7 +121,7 @@ var (
 		"phone_number":          "+84934567890",
 		"email":                 "huong.pham@example.com",
 		"uploaded_at":           "1698398100000",
-		"name":                  "AgroTrust Admin NFT",
+		"name":                  "RaiseChild Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft5 = map[string]interface{}{
@@ -148,7 +139,7 @@ var (
 		"phone_number":          "+84945678901",
 		"email":                 "tuan.ngo@example.com",
 		"uploaded_at":           "1698398400000",
-		"name":                  "AgroTrust Admin NFT",
+		"name":                  "RaiseChild Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft6 = map[string]interface{}{
@@ -166,7 +157,7 @@ var (
 		"phone_number":          "+84956789012",
 		"email":                 "thao.vu@example.com",
 		"uploaded_at":           "1698398700000",
-		"name":                  "AgroTrust Admin NFT",
+		"name":                  "RaiseChild Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft7 = map[string]interface{}{
@@ -184,7 +175,7 @@ var (
 		"phone_number":          "+84978901234",
 		"email":                 "ngoc.bui@example.com",
 		"uploaded_at":           "1698399300000",
-		"name":                  "AgroTrust Admin NFT",
+		"name":                  "RaiseChild Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft8 = map[string]interface{}{
@@ -202,7 +193,7 @@ var (
 		"phone_number":          "+84934567890",
 		"email":                 "huong.pham@example.com",
 		"uploaded_at":           "1698398100000",
-		"name":                  "AgroTrust Admin NFT",
+		"name":                  "RaiseChild Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft9 = map[string]interface{}{
@@ -220,7 +211,7 @@ var (
 		"phone_number":          "+84989012345",
 		"email":                 "dung.do@example.com",
 		"uploaded_at":           "1698399600000",
-		"name":                  "AgroTrust Admin NFT",
+		"name":                  "RaiseChild Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 	sampleJsonAdminNft10 = map[string]interface{}{
@@ -238,7 +229,7 @@ var (
 		"phone_number":          "+84990123456",
 		"email":                 "trang.phan@example.com",
 		"uploaded_at":           "1698399900000",
-		"name":                  "AgroTrust Admin NFT",
+		"name":                  "RaiseChild Admin NFT",
 		"url":                   "https://nft-storage.com",
 	}
 )
@@ -262,7 +253,7 @@ var (
 		"phone_number":          "+84912345678",
 		"email":                 "minh.nguyen@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Local Leader NFT",
+		"name":                  "RaiseChild Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft2 = map[string]interface{}{
@@ -282,7 +273,7 @@ var (
 		"phone_number":          "+84987654321",
 		"email":                 "linh.tran@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Local Leader NFT",
+		"name":                  "RaiseChild Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft3 = map[string]interface{}{
@@ -302,7 +293,7 @@ var (
 		"phone_number":          "+84901122334",
 		"email":                 "hoang.pham@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Local Leader NFT",
+		"name":                  "RaiseChild Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft4 = map[string]interface{}{
@@ -322,7 +313,7 @@ var (
 		"phone_number":          "+84933445566",
 		"email":                 "an.le@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Local Leader NFT",
+		"name":                  "RaiseChild Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft5 = map[string]interface{}{
@@ -342,7 +333,7 @@ var (
 		"phone_number":          "+84944556677",
 		"email":                 "bach.vu@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Local Leader NFT",
+		"name":                  "RaiseChild Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft6 = map[string]interface{}{
@@ -362,7 +353,7 @@ var (
 		"phone_number":          "+84955667788",
 		"email":                 "thao.do@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Local Leader NFT",
+		"name":                  "RaiseChild Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft7 = map[string]interface{}{
@@ -382,7 +373,7 @@ var (
 		"phone_number":          "+84966778899",
 		"email":                 "dung.bui@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Local Leader NFT",
+		"name":                  "RaiseChild Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft8 = map[string]interface{}{
@@ -402,7 +393,7 @@ var (
 		"phone_number":          "+84977889900",
 		"email":                 "nhi.phan@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Local Leader NFT",
+		"name":                  "RaiseChild Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft9 = map[string]interface{}{
@@ -422,7 +413,7 @@ var (
 		"phone_number":          "+84988990011",
 		"email":                 "kien.dang@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Local Leader NFT",
+		"name":                  "RaiseChild Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonLeaderNft10 = map[string]interface{}{
@@ -442,7 +433,7 @@ var (
 		"phone_number":          "+84999001122",
 		"email":                 "mai.hoang@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Local Leader NFT",
+		"name":                  "RaiseChild Local Leader NFT",
 		"url":                   "https://arweave.net",
 	}
 )
@@ -466,7 +457,7 @@ var (
 		"phone_number":          "+84912345678",
 		"email":                 "minh.nguyen@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Volunteer NFT",
+		"name":                  "RaiseChild Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft2 = map[string]interface{}{
@@ -475,7 +466,7 @@ var (
 		},
 		"owner":                 sampleVolunteerIds[1],
 		"role":                  "Volunteer",
-		"region":                sampleLocalRegions[0],
+		"region":                sampleLocalRegions[1],
 		"identity_code":         "STF-002",
 		"identity_card_blob_id": "bafybeic...key2",
 		"avatar_blob_id":        "bafybeid...img2",
@@ -486,7 +477,7 @@ var (
 		"phone_number":          "+84987654321",
 		"email":                 "linh.tran@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Volunteer NFT",
+		"name":                  "RaiseChild Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft3 = map[string]interface{}{
@@ -495,7 +486,7 @@ var (
 		},
 		"owner":                 sampleVolunteerIds[2],
 		"role":                  "Volunteer",
-		"region":                sampleLocalRegions[0],
+		"region":                sampleLocalRegions[2],
 		"identity_code":         "STF-003",
 		"identity_card_blob_id": "bafybeic...key3",
 		"avatar_blob_id":        "bafybeid...img3",
@@ -506,7 +497,7 @@ var (
 		"phone_number":          "+84901122334",
 		"email":                 "hoang.pham@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Volunteer NFT",
+		"name":                  "RaiseChild Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft4 = map[string]interface{}{
@@ -515,7 +506,7 @@ var (
 		},
 		"owner":                 sampleVolunteerIds[3],
 		"role":                  "Volunteer",
-		"region":                sampleLocalRegions[0],
+		"region":                sampleLocalRegions[3],
 		"identity_code":         "STF-004",
 		"identity_card_blob_id": "bafybeic...key4",
 		"avatar_blob_id":        "bafybeid...img4",
@@ -526,7 +517,7 @@ var (
 		"phone_number":          "+84933445566",
 		"email":                 "an.le@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Volunteer NFT",
+		"name":                  "RaiseChild Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft5 = map[string]interface{}{
@@ -535,7 +526,7 @@ var (
 		},
 		"owner":                 sampleVolunteerIds[4],
 		"role":                  "Volunteer",
-		"region":                sampleLocalRegions[0],
+		"region":                sampleLocalRegions[4],
 		"identity_code":         "STF-005",
 		"identity_card_blob_id": "bafybeic...key5",
 		"avatar_blob_id":        "bafybeid...img5",
@@ -546,7 +537,7 @@ var (
 		"phone_number":          "+84944556677",
 		"email":                 "bach.vu@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Volunteer NFT",
+		"name":                  "RaiseChild Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft6 = map[string]interface{}{
@@ -566,7 +557,7 @@ var (
 		"phone_number":          "+84955667788",
 		"email":                 "thao.do@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Volunteer NFT",
+		"name":                  "RaiseChild Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft7 = map[string]interface{}{
@@ -586,7 +577,7 @@ var (
 		"phone_number":          "+84966778899",
 		"email":                 "dung.bui@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Volunteer NFT",
+		"name":                  "RaiseChild Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft8 = map[string]interface{}{
@@ -606,7 +597,7 @@ var (
 		"phone_number":          "+84977889900",
 		"email":                 "nhi.phan@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Volunteer NFT",
+		"name":                  "RaiseChild Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft9 = map[string]interface{}{
@@ -626,7 +617,7 @@ var (
 		"phone_number":          "+84988990011",
 		"email":                 "kien.dang@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Volunteer NFT",
+		"name":                  "RaiseChild Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 	sampleJsonVolunteerNft10 = map[string]interface{}{
@@ -646,433 +637,10 @@ var (
 		"phone_number":          "+84999001122",
 		"email":                 "mai.hoang@corp.it",
 		"uploaded_at":           "1709283600000",
-		"name":                  "AgroTrust Volunteer NFT",
+		"name":                  "RaiseChild Volunteer NFT",
 		"url":                   "https://arweave.net",
 	}
 )
-
-// Donor NFT
-var (
-	sampleJsonDonor1 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleDonorNfts[0],
-		},
-		"owner":        sampleDonorIds[0],
-		"first_name":   "Minh",
-		"last_name":    "Nguyen",
-		"gender":       "Male",
-		"phone_number": "+84999001122",
-		"email":        "minh.nguyen@corp.it",
-		"name":         "AgroTrust Donor NFT",
-		"url":          "https://arweave.net",
-	}
-	sampleJsonDonor2 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleDonorNfts[1],
-		},
-		"owner":        sampleDonorIds[1],
-		"first_name":   "Linh",
-		"last_name":    "Tran",
-		"gender":       "Female",
-		"phone_number": "+84987654321",
-		"email":        "linh.tran@corp.it",
-		"name":         "AgroTrust Donor NFT",
-		"url":          "https://arweave.net",
-	}
-	sampleJsonDonor3 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleDonorNfts[2],
-		},
-		"first_name":   "Hoang",
-		"last_name":    "Pham",
-		"gender":       "Male",
-		"phone_number": "+84987654321",
-		"email":        "hoang.pham@corp.it",
-		"name":         "AgroTrust Donor NFT",
-		"url":          "https://arweave.net",
-	}
-	sampleJsonDonor4 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleDonorNfts[3],
-		},
-		"owner":        sampleDonorIds[3],
-		"first_name":   "An",
-		"last_name":    "Le",
-		"gender":       "Female",
-		"phone_number": "+84999001122",
-		"email":        "an.le@corp.it",
-		"name":         "AgroTrust Donor NFT",
-		"url":          "https://arweave.net",
-	}
-	sampleJsonDonor5 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleDonorNfts[4],
-		},
-		"owner":        sampleDonorIds[4],
-		"first_name":   "Bach",
-		"last_name":    "Vu",
-		"gender":       "Male",
-		"phone_number": "+84999001122",
-		"email":        "bach.vu@corp.it",
-		"name":         "AgroTrust Donor NFT",
-		"url":          "https://arweave.net",
-	}
-	sampleJsonDonor6 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleDonorNfts[5],
-		},
-		"owner":        sampleDonorIds[5],
-		"first_name":   "Thao",
-		"last_name":    "Do",
-		"gender":       "Female",
-		"phone_number": "+84999001122",
-		"email":        "thao.do@corp.it",
-		"name":         "AgroTrust Donor NFT",
-		"url":          "https://arweave.net",
-	}
-	sampleJsonDonor7 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleDonorNfts[6],
-		},
-		"owner":        sampleDonorIds[6],
-		"first_name":   "Dung",
-		"last_name":    "Bui",
-		"gender":       "Male",
-		"phone_number": "+84999001122",
-		"email":        "dung.bui@corp.it",
-		"name":         "AgroTrust Donor NFT",
-		"url":          "https://arweave.net",
-	}
-	sampleJsonDonor8 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleDonorNfts[7],
-		},
-		"owner":        sampleDonorIds[7],
-		"first_name":   "Nhi",
-		"last_name":    "Phan",
-		"gender":       "Female",
-		"phone_number": "+84999001122",
-		"email":        "nhi.phan@corp.it",
-		"name":         "AgroTrust Donor NFT",
-		"url":          "https://arweave.net",
-	}
-	sampleJsonDonor9 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleDonorNfts[8],
-		},
-		"owner":        sampleDonorIds[8],
-		"first_name":   "Kien",
-		"last_name":    "Dang",
-		"gender":       "Male",
-		"phone_number": "+84999001122",
-		"email":        "kien.dang@corp.it",
-		"name":         "AgroTrust Donor NFT",
-		"url":          "https://arweave.net",
-	}
-	sampleJsonDonor10 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleDonorNfts[9],
-		},
-		"owner":        sampleDonorIds[9],
-		"first_name":   "Mai",
-		"last_name":    "Hoang",
-		"gender":       "Female",
-		"phone_number": "+84999001122",
-		"email":        "mai.hoang@corp.it",
-		"name":         "AgroTrust Donor NFT",
-		"url":          "https://arweave.net",
-	}
-)
-
-// Sample test child objects
-var (
-	sampleJsonChild1 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleChildIds[0],
-		},
-		"identity_code":         "CHLD-001",
-		"first_name":            "Minh",
-		"last_name":             "Nguyễn Văn",
-		"gender":                "male",
-		"date_of_birth":         "2018-05-15",
-		"region":                sampleLocalRegions[0],
-		"avatar_blob_id":        "blob-avatar-001",
-		"image_blob_ids":        []string{"img-001-1", "img-001-2"},
-		"books_needs":           []string{sampleAddress},
-		"meal_need":             sampleAddress,
-		"health_insurance_need": sampleAddress,
-		"uploaded_by":           "0x123...abc",
-		"uploaded_at":           "1696149000000",
-		"updated_at":            "1696491300000",
-	}
-	sampleJsonChild2 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleChildIds[1],
-		},
-		"identity_code":  "CHLD-002",
-		"first_name":     "Linh",
-		"last_name":      "Trần Thị",
-		"gender":         "female",
-		"date_of_birth":  "22/08/2019",
-		"region":         sampleLocalRegions[1],
-		"avatar_blob_id": "blob-avatar-001",
-		"image_blob_ids": []string{"img-001-1", "img-001-2"},
-		"uploaded_by":    "0x123...abc",
-		"uploaded_at":    "1696149000000",
-		"updated_at":     "1696491300000",
-	}
-	sampleJsonChild3 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleChildIds[2],
-		},
-		"identity_code":  "CHLD-003",
-		"first_name":     "Gia Bảo",
-		"last_name":      "Lê",
-		"gender":         "male",
-		"date_of_birth":  "10/12/2017",
-		"region":         sampleLocalRegions[2],
-		"avatar_blob_id": "blob-avatar-001",
-		"image_blob_ids": []string{"img-001-1", "img-001-2"},
-		"uploaded_by":    "0x123...abc",
-		"uploaded_at":    "1696149000000",
-		"updated_at":     "1696491300000",
-	}
-	sampleJsonChild4 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleChildIds[3],
-		},
-		"identity_code":  "CHLD-004",
-		"first_name":     "An",
-		"last_name":      "Phạm Thùy",
-		"gender":         "female",
-		"date_of_birth":  "28/02/2020",
-		"region":         sampleLocalRegions[3],
-		"avatar_blob_id": "blob-avatar-001",
-		"image_blob_ids": []string{"img-001-1", "img-001-2"},
-		"uploaded_by":    "0x123...abc",
-		"uploaded_at":    "1696149000000",
-		"updated_at":     "1696491300000",
-	}
-	sampleJsonChild5 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleChildIds[4],
-		},
-		"identity_code":  "CHLD-005",
-		"first_name":     "Hải",
-		"last_name":      "Hoàng Nam",
-		"gender":         "male",
-		"date_of_birth":  "04/07/2016",
-		"region":         sampleLocalRegions[4],
-		"avatar_blob_id": "blob-avatar-001",
-		"image_blob_ids": []string{"img-001-1", "img-001-2"},
-		"uploaded_by":    "0x123...abc",
-		"uploaded_at":    "1696149000000",
-		"updated_at":     "1696491300000",
-	}
-	sampleJsonChild6 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleChildIds[5],
-		},
-		"identity_code":  "CHLD-006",
-		"first_name":     "Vy",
-		"last_name":      "Đặng Mai",
-		"gender":         "female",
-		"date_of_birth":  "30/11/2021",
-		"region":         sampleLocalRegions[5],
-		"avatar_blob_id": "blob-avatar-001",
-		"image_blob_ids": []string{"img-001-1", "img-001-2"},
-		"uploaded_by":    "0x123...abc",
-		"uploaded_at":    "1696149000000",
-		"updated_at":     "1696491300000",
-	}
-	sampleJsonChild7 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleChildIds[6],
-		},
-		"identity_code":  "CHLD-007",
-		"first_name":     "Khôi",
-		"last_name":      "Vũ Đăng",
-		"gender":         "male",
-		"date_of_birth":  "12/01/2019",
-		"region":         sampleLocalRegions[6],
-		"avatar_blob_id": "blob-avatar-001",
-		"image_blob_ids": []string{"img-001-1", "img-001-2"},
-		"uploaded_by":    "0x123...abc",
-		"uploaded_at":    "1696149000000",
-		"updated_at":     "1696491300000",
-	}
-	sampleJsonChild8 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleChildIds[7],
-		},
-		"identity_code":  "CHLD-008",
-		"first_name":     "Chi",
-		"last_name":      "Bùi Khánh",
-		"gender":         "female",
-		"date_of_birth":  "09/09/2018",
-		"region":         sampleLocalRegions[7],
-		"avatar_blob_id": "blob-avatar-001",
-		"image_blob_ids": []string{"img-001-1", "img-001-2"},
-		"uploaded_by":    "0x123...abc",
-		"uploaded_at":    "1696149000000",
-		"updated_at":     "1696491300000",
-	}
-	sampleJsonChild9 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleChildIds[8],
-		},
-		"identity_code":  "CHLD-009",
-		"first_name":     "Duy",
-		"last_name":      "Phan Anh",
-		"gender":         "male",
-		"date_of_birth":  "25/04/25",
-		"region":         sampleLocalRegions[8],
-		"avatar_blob_id": "blob-avatar-001",
-		"image_blob_ids": []string{"img-001-1", "img-001-2"},
-		"uploaded_by":    "0x123...abc",
-		"uploaded_at":    "1696149000000",
-		"updated_at":     "1696491300000",
-	}
-	sampleJsonChild10 = map[string]interface{}{
-		"id": map[string]string{
-			"id": sampleChildIds[9],
-		},
-		"identity_code":  "CHLD-010",
-		"first_name":     "Ngọc",
-		"last_name":      "Lý Bảo",
-		"gender":         "female",
-		"date_of_birth":  "15/05/2020",
-		"region":         sampleLocalRegions[9],
-		"avatar_blob_id": "blob-avatar-010",
-		"image_blob_ids": []string{"img-010-1"},
-		"uploaded_by":    "0x123...abc",
-		"uploaded_at":    "1709294400000",
-		"updated_at":     "1709294400000",
-	}
-)
-
-// Child Needs
-var (
-	sampleSupportedBooksNeedJson = map[string]interface{}{
-		"supported_years": []string{"1"},
-		"year":            "1",
-	}
-	sampleNotSupportedBooksNeedJson = map[string]interface{}{
-		"supported_years": []string{"0"},
-		"year":            "1",
-		"value":           "10000",
-		"child":           sampleAddress,
-		"is_updated":      true,
-	}
-	sampleWithdrawnBooksNeedJson = map[string]interface{}{
-		"donations":          []string{"1", "2"},
-		"withdraws_for_need": []string{"1", "2"},
-	}
-	sampleStillNotWithdrawnBooksNeedJson = map[string]interface{}{
-		"donations":          []string{"1", "2"},
-		"withdraws_for_need": []string{"1"},
-	}
-	sampleMealNeedJson = map[string]interface{}{
-		"child":     "child-456",
-		"year":      "2026",
-		"value":     "200000",
-		"donors":    []string{"donor-a", "donor-b"},
-		"donations": []string{"donation-001"},
-		"durations": []map[string]interface{}{
-			{
-				"fields": map[string]interface{}{
-					"start_period": "11/02/2026",
-					"end_period":   "11/12/2026",
-				},
-			},
-		},
-		"total_supported_months": "11",
-		"supported_years": map[string]interface{}{
-			"fields": map[string]interface{}{
-				"contents": []map[string]interface{}{
-					{
-						"fields": map[string]interface{}{
-							"key":   "2026",
-							"value": "11",
-						},
-					},
-				},
-			},
-		},
-		"provide_meal_dates":   []string{"2026-04-01"},
-		"provide_meal_periods": []string{"lunch"},
-		"provide_meal_staffs":  []string{"staff-01"},
-		"withdraw_proposals":   []string{},
-		"withdraws_for_need":   []string{},
-		"is_updated":           true,
-	}
-	sampleSpecialNeedCampaignJson = map[string]interface{}{
-		"child":           sampleAddress,
-		"target":          "1000000",
-		"total_donated":   "900000",
-		"withdraw_amount": "800000",
-		"creator":         sampleAddress,
-	}
-	sampleSpecialNeedProposalJson = map[string]interface{}{
-		"child":           sampleAddress,
-		"target":          "1000000",
-		"total_donated":   "900000",
-		"withdraw_amount": "800000",
-		"creator":         sampleAddress,
-		"approvers":       []string{"", "", "", "", "", "", "", "", "", ""},
-		"refusers":        []string{""},
-		"approve_weight":  "500000",
-		"refuse_weight":   "50000",
-		"is_confirm":      false,
-		"closed_at":       "1262304000000", // year 2010
-	}
-)
-
-// Gifts (for center)
-var (
-	sampleGiftJson1 = map[string]interface{}{
-		"description": "happy anniversary day",
-	}
-	sampleGiftJson2 = map[string]interface{}{
-		"description": "happy new year",
-	}
-	sampleGiftJson3 = map[string]interface{}{
-		"description": "merry X-mas",
-	}
-	sampleGiftJson4 = map[string]interface{}{
-		"description": "happy easter day",
-	}
-	sampleGiftJson5 = map[string]interface{}{
-		"description": "present",
-	}
-	sampleGiftJson6 = map[string]interface{}{
-		"description": "gift",
-	}
-	sampleGiftJson7 = map[string]interface{}{
-		"description": "description",
-	}
-	sampleGiftJson8 = map[string]interface{}{
-		"carrier": "GHTK",
-	}
-	sampleGiftJson9 = map[string]interface{}{
-		"carrier": "VNP",
-	}
-	sampleGiftJson10 = map[string]interface{}{
-		"carrier": "YHN",
-	}
-)
-
-var (
-	sampleIdentityCode string = "Identity Code"
-	sampleProfileObj          = entities.Profile{
-		IdentityCode: &sampleIdentityCode,
-	}
-)
-
-func getSampleCenterRequests(reqs int) []entities.CenterRequest {
-	var res = make([]entities.CenterRequest, reqs)
-	return res
-}
 
 const (
 	sampleManageObjId string = ""
@@ -1088,7 +656,7 @@ var (
 	sampleLocalLeaderNfts       = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
 	sampleLocalRegions          = []string{shared.HA_NOI_REGION, shared.HO_CHI_MINH_REGION, "3", "4", "5", "6", "7", "8", "9", "10"}
 	sampleChildrenCenters       = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
-	sampleCenterConfirmStatuses = []bool{false, true, true, true, false, false, true, true, true, true}
+	sampleCenterConfirmStatuses = []bool{true, true, true, true, false, false, true, true, true, true}
 	sampleCreatedCenters        = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
 	sampleDonorIds              = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
 	sampleDonorNfts             = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
@@ -1096,8 +664,7 @@ var (
 
 var (
 	sampleUploadedBankProfile = entities.BankProfile{
-		ProfileID: sampleSub,
-		Owner:     sampleAddress,
+		Owner:     "Owner",
 		BankOrg:   "Bank Owner",
 		OwnerName: "Owner Name",
 	}
@@ -1129,79 +696,4 @@ func getFoundJsonAdminNftsWithKeyWord() ([]map[string]interface{}, string) {
 		sampleJsonAdminNft9,
 		sampleJsonAdminNft10,
 	}, "ng"
-}
-
-func getFullJsonDonorNfts() []map[string]interface{} {
-	return []map[string]interface{}{
-		sampleJsonDonor1,
-		sampleJsonDonor2,
-		sampleJsonDonor3,
-		sampleJsonDonor4,
-		sampleJsonDonor5,
-		sampleJsonDonor6,
-		sampleJsonDonor7,
-		sampleJsonDonor8,
-		sampleJsonDonor9,
-		sampleJsonDonor10,
-	}
-}
-
-func getFoundJsonDonorNftsWithKeyWord() ([]map[string]interface{}, string) {
-	return []map[string]interface{}{
-		sampleJsonDonor1,
-		sampleJsonDonor3,
-		sampleJsonDonor7,
-		sampleJsonDonor9,
-		sampleJsonDonor10,
-	}, "ng"
-}
-
-func getFullJsonChildren() []map[string]interface{} {
-	return []map[string]interface{}{
-		sampleJsonChild1,
-		sampleJsonChild2,
-		sampleJsonChild3,
-		sampleJsonChild4,
-		sampleJsonChild5,
-		sampleJsonChild6,
-		sampleJsonChild7,
-		sampleJsonChild8,
-		sampleJsonChild9,
-		sampleJsonChild10,
-	}
-}
-
-func getFoundJsonChildrenWithKeyWord() ([]map[string]interface{}, string) {
-	return []map[string]interface{}{
-		sampleJsonChild1,
-		sampleJsonChild5,
-		sampleJsonChild6,
-		sampleJsonChild7,
-		sampleJsonChild10,
-	}, "ng"
-}
-
-func getFullJsonGìts() []map[string]interface{} {
-	return []map[string]interface{}{
-		sampleGiftJson1,
-		sampleGiftJson2,
-		sampleGiftJson3,
-		sampleGiftJson4,
-		sampleGiftJson5,
-		sampleGiftJson6,
-		sampleGiftJson7,
-		sampleGiftJson8,
-		sampleGiftJson9,
-		sampleGiftJson10,
-	}
-}
-
-func getFoundJsonGìtsWithKeyWord() ([]map[string]interface{}, string) {
-	return []map[string]interface{}{
-		sampleJsonChild1,
-		sampleJsonChild2,
-		sampleJsonChild3,
-		sampleJsonChild4,
-		sampleJsonChild10,
-	}, "y"
 }

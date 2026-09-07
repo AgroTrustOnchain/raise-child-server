@@ -27,7 +27,8 @@ func (s Donor) ToDonorResponse() response.DonorResponse {
 	totalDonation, _ := strconv.ParseInt(s.TotalDonation, 10, 64)
 
 	return response.DonorResponse{
-		ID:              s.Owner,
+		ID:              s.ID.ID,
+		Owner:           s.Owner,
 		FirstName:       s.FirstName,
 		LastName:        s.LastName,
 		Gender:          s.Gender,

@@ -1,6 +1,9 @@
 package entities
 
-import "time"
+import (
+	"raise-child/model/dtos/response"
+	"time"
+)
 
 type UploadChildRequest struct {
 	ID                     string                `json:"id"`
@@ -17,18 +20,13 @@ type UploadChildRequest struct {
 	HomeAddress            string                `json:"home_address"`
 	FirstGuardianProfile   ChildGuardianProfile  `json:"first_guardian_profile"`
 	SecondGuardianProfile  *ChildGuardianProfile `json:"second_guardian_profile"`
-	Approvers              []string              `json:"approvers"`
-	Refusers               []string              `json:"refusers"`
-	RefuseReasons          []string              `json:"refuse_reasons"`
-	AIEvaluation           string                `json:"ai_evaluation"`
-	Status                 string                `json:"status"`            // e.g. "Pending", "Approved", "Refused"
-	ReviewStatus           string                `json:"review_status"`     // e.g. "Pending", "Approved", "Refused"
-	IsConfirmUpload        bool                  `json:"is_confirm_upload"` // Default as false, when status approved, user clicks to update to true, call smart contract to register role
+	Status                 string                `json:"status"`
+	IsConfirmUpload        bool                  `json:"is_confirm_upload"`
 	CreatedBy              string                `json:"created_by"`
 	ReviewedBy             *string               `json:"reviewed_by"`
+	OnchainID              *string               `json:"on_chain_id"`
 	CreatedAt              time.Time             `json:"created_at"`
 	UpdatedAt              time.Time             `json:"updated_at"`
-	ClosedAt               *time.Time            `json:"closed_at"`
 }
 
 type ChildGuardianProfile struct {
@@ -36,4 +34,46 @@ type ChildGuardianProfile struct {
 	PhoneNumber        string `json:"phone_number"`
 	Relation           string `json:"relation"`
 	IdentityCardBlobID string `json:"identity_card_blob_id"`
+}
+
+func (u *UploadChildRequest) ToUploadChildRequestResponse() response.UploadChildRequestResponse {
+	if u == nil {
+		return response.UploadChildRequestResponse{}
+	}
+
+	var secondGuardianProfile *response.ChildGuardianProfile
+	if u.SecondGuardianProfile != nil {
+		secondGuardianProfile = &response.ChildGuardianProfile{
+			FullName:    u.SecondGuardianProfile.FullName,
+			PhoneNumber: u.SecondGuardianProfile.PhoneNumber,
+			Relation:    u.SecondGuardianProfile.Relation,
+		}
+	}
+
+	return response.UploadChildRequestResponse{
+		ID:                 u.ID,
+		ProfileID:          u.ProfileID,
+		IdentityCode:       u.IdentityCode,
+		AvatarWalrusBlobID: u.AvatarBlobId,
+		HomeWalrusBlobID:   u.HomeBlobID,
+		Region:             u.Region,
+		FirstName:          u.FirstName,
+		LastName:           u.LastName,
+		Gender:             u.Gender,
+		DateOfBirth:        u.DateOfBirth,
+		HomeAddress:        u.HomeAddress,
+		FirstGuardianProfile: response.ChildGuardianProfile{
+			FullName:    u.FirstGuardianProfile.FullName,
+			PhoneNumber: u.FirstGuardianProfile.PhoneNumber,
+			Relation:    u.FirstGuardianProfile.Relation,
+		},
+		SecondGuardianProfile: secondGuardianProfile,
+		Status:                u.Status,
+		IsConfirmUpload:       u.IsConfirmUpload,
+		CreatedBy:             u.CreatedBy,
+		ReviewedBy:            u.ReviewedBy,
+		OnchainID:             u.OnchainID,
+		CreatedAt:             u.CreatedAt,
+		UpdatedAt:             u.UpdatedAt,
+	}
 }

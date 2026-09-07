@@ -9,6 +9,6 @@ import (
 type IPendingCampaignRepository interface {
 	GetPendingCampaigns(req request.GetPendingCampaignsRequest, ctx context.Context) ([]entities.PendingCampaign, int, error)
 	GetPendingCampaign(id string, ctx context.Context) (*entities.PendingCampaign, error)
-	CreatePendingCampaign(campaign entities.PendingCampaign, ctx context.Context) error
-	UpdatePendingCampaign(campaign entities.PendingCampaign, ctx context.Context) error
+	CreatePendingCampaign(proposal entities.PendingCampaign, ctx context.Context) error
+	UpdatePendingCampaign(proposal entities.PendingCampaign, ctx context.Context) error
 }

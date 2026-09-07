@@ -99,7 +99,7 @@ func (o *onChainService) ExecuteTransaction(req request.ExecuteTransactionReques
 
 	if req.ProposalID != "" {
 		var events = res.Events
-		if events == nil || len(events) == 0 {
+		if len(events) == 0 {
 			return genericErr
 		}
 
@@ -119,11 +119,6 @@ func (o *onChainService) ExecuteTransaction(req request.ExecuteTransactionReques
 			return err
 		}
 
-		if req.IsConfirmRegister {
-			return genericErr
-		}
-
-		req.IsConfirmRegister = true
 		req.UpdatedAt = curTime
 
 		o.centerRepo.UpdateRegistrationRequest(*req, ctx)

@@ -26,6 +26,7 @@ import (
 	"raise-child/util/ai"
 	"raise-child/util/cache"
 	"raise-child/util/db"
+	"raise-child/util/image/cloudinary"
 	on_chain "raise-child/util/on_chain"
 	walrus_pkg "raise-child/util/walrus_pkg"
 	"slices"
@@ -47,6 +48,7 @@ type childService struct {
 	profileRepo                         i_repository.IProfileRepository
 	bankRepo                            i_repository.IBankProfileRepository
 	leaderNotiRepo                      i_repository.ILeaderNotiRepository
+	uploadChildReqRepo                  i_repository.IUploadChildRequestRepository
 	aiProvider                          ai.IAiClientProvider
 	walrusProvider                      walrus_pkg.IWalrusProvider
 	redisCache                          cache.IRedisCache
@@ -64,6 +66,7 @@ func initializeChildService(
 	profileRepo i_repository.IProfileRepository,
 	bankRepo i_repository.IBankProfileRepository,
 	leaderNotiRepo i_repository.ILeaderNotiRepository,
+	uploadChildReqRepo i_repository.IUploadChildRequestRepository,
 	aiProvider ai.IAiClientProvider,
 	walrusProvider walrus_pkg.IWalrusProvider,
 	clients map[string]sui.ISuiAPI,
@@ -79,6 +82,7 @@ func initializeChildService(
 		profileRepo:                         profileRepo,
 		bankRepo:                            bankRepo,
 		leaderNotiRepo:                      leaderNotiRepo,
+		uploadChildReqRepo:                  uploadChildReqRepo,
 		aiProvider:                          aiProvider,
 		walrusProvider:                      walrusProvider,
 		redisCache:                          cache.InitializeRedisCache(),
@@ -105,7 +109,8 @@ func GenerateChildService() (business.IChildService, error) {
 		repository.InitializeProfileRepository(cnn, errLogger),
 		repository.InitializeBankProfileRepository(cnn, errLogger),
 		repository.InitializeLeaderNotiRepository(cnn, errLogger),
-		ai.InitializeAiProvider(nil, errLogger),
+		repository.InitializeUploadChildRequestRepo(cnn, errLogger),
+		ai.InitializeAiProvider(errLogger),
 		walrus_pkg.InitializeWalrusProvider(errLogger),
 		_networkAliases,
 		errLogger,
@@ -119,11 +124,6 @@ func (c *childService) GetChild(id string, ctx context.Context) (response.ChildR
 	}
 
 	var res response.ChildResponse
-	var redisKey string = c.getGetChildRedisKey(id)
-	if c.redisCache.Get(redisKey, &res, ctx) {
-		return res, nil
-	}
-
 	var client = c.clients[constant.SuiTestnet]
 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
 		Client:    client,
@@ -142,9 +142,173 @@ func (c *childService) GetChild(id string, ctx context.Context) (response.ChildR
 		}
 	}
 
-	c.redisCache.Set(redisKey, res, time.Minute*5, ctx)
+	req, _ := c.uploadChildReqRepo.GetUploadChildRequestByOnchainId(id, ctx)
+	if req != nil {
+		res.BirthCertificateImgUrl = cloudinary.GetImageUrl(req.BirthCertificateBlobID)
+		res.FirstGuardian.IdentityCardImgUrl = cloudinary.GetImageUrl(req.FirstGuardianProfile.IdentityCardBlobID)
+
+		if req.SecondGuardianProfile != nil {
+			res.SecondGuardian.IdentityCardImgUrl = cloudinary.GetImageUrl(req.SecondGuardianProfile.IdentityCardBlobID)
+		}
+	}
 
 	return res, err
+}
+
+// GetUserSupportedChildren implements business.IChildService.
+func (c *childService) GetUserSupportedChildren(wallet string, req request.GetChildrenRequest, ctx context.Context) (response.PaginationDataResponse, error) {
+	if !util.IsValidSuiAddressStrict(wallet) {
+		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	var client = c.clients[constant.SuiTestnet]
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.PaginationDataResponse{}, err
+	}
+
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	if manage == nil {
+		return response.PaginationDataResponse{}, internalErr
+	}
+
+	var donorNftId string
+	for i, donor := range manage.DonorIds {
+		if donor == wallet {
+			donorNftId = manage.DonorNfts[i]
+			break
+		}
+	}
+
+	if donorNftId == "" {
+		return response.PaginationDataResponse{
+			Page:       1,
+			TotalPages: 1,
+		}, nil
+	}
+
+	nft, err := on_chain.GetOnChainObject[entities.Donor](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  donorNftId,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.PaginationDataResponse{}, err
+	}
+
+	if nft == nil {
+		return response.PaginationDataResponse{}, internalErr
+	}
+
+	if len(nft.SupportedChilds) == 0 {
+		return response.PaginationDataResponse{
+			Page:       1,
+			TotalPages: 1,
+		}, nil
+	}
+
+	children, err := on_chain.GetOnChainObjects[entities.Child](on_chain.GetOnChainObjectsRequest{
+		Client:    client,
+		ObjectIds: nft.SupportedChilds,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.PaginationDataResponse{}, err
+	}
+
+	if children == nil {
+		return response.PaginationDataResponse{}, internalErr
+	}
+
+	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
+	req.Keyword = util.StandardizeString(req.Keyword)
+	if req.Page < 1 {
+		req.Page = 1
+	}
+
+	if req.PageSize < 1 {
+		req.PageSize = default_page_size
+	}
+
+	var filteredChildren []entities.Child
+	for i := len(children) - 1; i >= 0; i-- {
+		var child entities.Child = children[i]
+
+		if req.Region != "" {
+			if child.Region != req.Region { // Not matched
+				continue
+			}
+		}
+
+		if req.Gender != "" {
+			if child.Gender != req.Gender { // Not matched
+				continue
+			}
+		}
+
+		if req.YearOfBirth != nil {
+			var dob time.Time = util.RawDateToTime(child.DateOfBirth)
+			if dob.Year() != *req.YearOfBirth { // Not matched
+				continue
+			}
+		}
+
+		if req.Keyword != "" {
+			var firstName string = util.StandardizeString(child.FirstName)
+			var lastName string = util.StandardizeString(child.LastName)
+			if !strings.Contains(firstName, req.Keyword) && !strings.Contains(lastName, req.Keyword) && !strings.Contains(child.IdentityCode, req.Keyword) { // Not matched
+				continue
+			}
+		}
+
+		filteredChildren = append(filteredChildren, child)
+	}
+
+	sort.Slice(filteredChildren, func(i, j int) bool {
+		var name1 string = filteredChildren[i].LastName + " " + filteredChildren[i].FirstName
+		var name2 string = filteredChildren[j].LastName + " " + filteredChildren[j].FirstName
+
+		if req.SortOrder == "ASC" {
+			return name1 < name2
+		}
+
+		return name2 > name1
+	})
+
+	var skippedRecords int = (req.Page - 1) * req.PageSize
+	if len(filteredChildren) <= skippedRecords {
+		return response.PaginationDataResponse{}, nil
+	}
+
+	var data []response.ChildResponse
+	for i := skippedRecords; i < len(filteredChildren); i++ {
+		var childRes = filteredChildren[i].ToMinimumChildResponse()
+		upChildReq, _ := c.uploadChildReqRepo.GetUploadChildRequestByOnchainId(childRes.ID, ctx)
+		if upChildReq != nil {
+			childRes.BirthCertificateImgUrl = cloudinary.GetImageUrl(upChildReq.BirthCertificateBlobID)
+			childRes.FirstGuardian.IdentityCardImgUrl = cloudinary.GetImageUrl(upChildReq.FirstGuardianProfile.IdentityCardBlobID)
+
+			if upChildReq.SecondGuardianProfile != nil {
+				childRes.SecondGuardian.IdentityCardImgUrl = cloudinary.GetImageUrl(upChildReq.SecondGuardianProfile.IdentityCardBlobID)
+			}
+		}
+
+		data = append(data, childRes)
+		if len(data) == req.PageSize {
+			break
+		}
+	}
+
+	return response.PaginationDataResponse{
+		Data:       data,
+		Amount:     len(data),
+		Page:       req.Page,
+		TotalPages: int(math.Ceil(float64(len(filteredChildren)) / float64(req.PageSize))),
+	}, nil
 }
 
 // GetChilds implements business.IChildService.
@@ -160,10 +324,6 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 	}
 
 	var res response.PaginationDataResponse
-	var redisKey string = c.getGetChildrenRedisKey(req)
-	if c.redisCache.Get(redisKey, &res, ctx) {
-		return res, nil
-	}
 
 	var client = c.clients[constant.SuiTestnet]
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
@@ -248,7 +408,18 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 
 	var data []response.ChildResponse
 	for i := skippedRecords; i < len(filteredChildren); i++ {
-		data = append(data, filteredChildren[i].ToMinimumChildResponse())
+		var childRes = filteredChildren[i].ToMinimumChildResponse()
+		upChildReq, _ := c.uploadChildReqRepo.GetUploadChildRequestByOnchainId(childRes.ID, ctx)
+		if upChildReq != nil {
+			childRes.BirthCertificateImgUrl = cloudinary.GetImageUrl(upChildReq.BirthCertificateBlobID)
+			childRes.FirstGuardian.IdentityCardImgUrl = cloudinary.GetImageUrl(upChildReq.FirstGuardianProfile.IdentityCardBlobID)
+
+			if upChildReq.SecondGuardianProfile != nil {
+				childRes.SecondGuardian.IdentityCardImgUrl = cloudinary.GetImageUrl(upChildReq.SecondGuardianProfile.IdentityCardBlobID)
+			}
+		}
+
+		data = append(data, childRes)
 		if len(data) == req.PageSize {
 			break
 		}
@@ -261,8 +432,534 @@ func (c *childService) GetChildren(req request.GetChildrenRequest, ctx context.C
 		TotalPages: int(math.Ceil(float64(len(filteredChildren)) / float64(req.PageSize))),
 	}
 
-	c.redisCache.Set(redisKey, res, time.Minute*5, ctx)
 	return res, nil
+}
+
+// ConfirmSpecialNeedProposal implements business.IChildService.
+func (c *childService) ConfirmSpecialNeedProposal(id string, ctx context.Context) error {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if !util.IsValidSuiAddressStrict(id) {
+		return genericErr
+	}
+
+	var client = c.clients[constant.SuiTestnet]
+	proposal, err := on_chain.GetOnChainObject[entities.SpecialNeedProposal](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  id,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if proposal == nil {
+		return genericErr
+	}
+
+	var sender string = ctx.Value("address").(string)
+	if proposal.Creator != sender {
+		return errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	}
+
+	if proposal.IsConfirm {
+		return errors.New(noti.SPECIAL_NEED_PROPOSAL_CONFIRMED_MESSAGE)
+	}
+
+	closedAt, _ := strconv.ParseInt(proposal.ClosedAt, 10, 64)
+	if util.MilliSecToTime(closedAt).After(time.Now()) {
+		return errors.New(noti.STILL_PENDING_REQUEST_MESSAGE)
+	}
+
+	dao, err := on_chain.GetOnChainObject[entities.DaoStruct](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.SPECIAL_NEED_DAO_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if !isProposalRateAvailableToConfirm(*dao, len(proposal.Approvers), len(proposal.Refusers), proposal.ApproveWeight, proposal.RefuseWeight) {
+		return errors.New(noti.PROPOSAL_FAIL_CONDITION_TO_CONFIRM_MESSAGE)
+	}
+
+	var childModule = on_chain.InitializeModuleChild()
+	_, errRes := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
+		Client:    client,
+		Module:    childModule.GetModule(),
+		Function:  childModule.GetFunctionConfirmChildSpecialNeedProposal(),
+		ErrLogger: c.errLogger,
+		Arguments: childModule.ToConfirmChildSpecialNeedProposalArguments(on_chain.ConfirmChildSpecialNeedProposalArguments{
+			ProposalID: id,
+			ChildID:    proposal.ChildID,
+			Sender:     sender,
+		}),
+	}, ctx)
+
+	return errRes
+}
+
+// UpdateBooksNeed implements business.IChildService.
+func (c *childService) UpdateBooksNeed(req request.UpdateChildNeedRequest, ctx context.Context) error {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if !util.IsValidSuiAddressStrict(req.ChildID) || !util.IsValidSuiAddressStrict(req.NeedID) {
+		return genericErr
+	}
+
+	var client = c.clients[constant.SuiTestnet]
+	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  req.ChildID,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if child == nil || !slices.Contains(child.BooksNeeds, req.NeedID) {
+		return genericErr
+	}
+
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	if manage == nil {
+		return internalErr
+	}
+
+	var sender string = ctx.Value("address").(string)
+	var foundIdx int = -1
+	for i, leader := range manage.LocalLeaderIds {
+		if leader == sender {
+			foundIdx = i
+			break
+		}
+	}
+
+	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	if foundIdx == -1 {
+		return genericRightErr
+	}
+
+	nft, err := on_chain.GetOnChainObject[entities.StaffNft](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  manage.LocalLeaderNfts[foundIdx],
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if nft == nil {
+		return internalErr
+	}
+
+	if nft.Region != child.Region {
+		return genericRightErr
+	}
+
+	if req.Value == nil {
+		return nil
+	}
+
+	if *req.Value < 10_000 {
+		return errors.New(noti.NEED_VALUE_INVALID_WARN_MSG)
+	}
+
+	need, err := on_chain.GetOnChainObject[entities.BooksNeed](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  req.NeedID,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var curTime time.Time = time.Now()
+	if need.IsUpdated {
+		if slices.Contains(need.YearChanges, fmt.Sprint(curTime.Year())) {
+			return errors.New(noti.CHILD_NEED_UPDATED_MESSAGE)
+		}
+
+		editDates, err := on_chain.GetOnChainObject[entities.EditNeedDates](on_chain.GetOnChainObjectRequest{
+			Client:    client,
+			ObjectId:  os.Getenv(env.EDIT_BOOKS_NEED_DATES_ID),
+			ErrLogger: c.errLogger,
+		}, ctx)
+		if err != nil {
+			return err
+		}
+
+		var startDate time.Time = util.ToStartOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.StartDate, curTime.Year())))
+		var endDate time.Time = util.ToEndOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.EndDate, curTime.Year())))
+		if curTime.Before(startDate) || curTime.After(endDate) {
+			return errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE)
+		}
+	}
+
+	var childModule = on_chain.InitializeModuleChild()
+	_, errRes := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
+		Client:    client,
+		Module:    childModule.GetModule(),
+		Function:  childModule.GetFunctionUpdateChildBooksNeed(),
+		ErrLogger: c.errLogger,
+		Arguments: childModule.ToUpdateChildNeedArguments(on_chain.UpdateChildNeedArguments{
+			StaffNft: nft.ID.ID,
+			ChildID:  req.ChildID,
+			NeedID:   req.NeedID,
+			Year:     curTime.Year(),
+			Value:    *req.Value,
+			Sender:   sender,
+		}),
+	}, ctx)
+
+	return errRes
+}
+
+// UpdateHealthInsuranceNeed implements business.IChildService.
+func (c *childService) UpdateHealthInsuranceNeed(req request.UpdateChildNeedRequest, ctx context.Context) error {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if !util.IsValidSuiAddressStrict(req.ChildID) || !util.IsValidSuiAddressStrict(req.NeedID) {
+		return genericErr
+	}
+
+	var client = c.clients[constant.SuiTestnet]
+	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  req.ChildID,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if child == nil || child.HealthInsuranceNeed != req.NeedID {
+		return genericErr
+	}
+
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	if manage == nil {
+		return internalErr
+	}
+
+	var sender string = ctx.Value("address").(string)
+	var foundIdx int = -1
+	for i, leader := range manage.LocalLeaderIds {
+		if leader == sender {
+			foundIdx = i
+			break
+		}
+	}
+
+	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	if foundIdx == -1 {
+		return genericRightErr
+	}
+
+	nft, err := on_chain.GetOnChainObject[entities.StaffNft](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  manage.LocalLeaderNfts[foundIdx],
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if nft == nil {
+		return internalErr
+	}
+
+	if nft.Region != child.Region {
+		return genericRightErr
+	}
+
+	if req.Value == nil {
+		return nil
+	}
+
+	if *req.Value < 10_000 {
+		return errors.New(noti.NEED_VALUE_INVALID_WARN_MSG)
+	}
+
+	need, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeed](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  req.NeedID,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var curTime time.Time = time.Now()
+	if need.IsUpdated {
+		if slices.Contains(need.YearChanges, fmt.Sprint(curTime.Year())) {
+			return errors.New(noti.CHILD_NEED_UPDATED_MESSAGE)
+		}
+
+		editDates, err := on_chain.GetOnChainObject[entities.EditNeedDates](on_chain.GetOnChainObjectRequest{
+			Client:    client,
+			ObjectId:  os.Getenv(env.EDIT_HEALTH_INSURANCE_NEED_DATES_ID),
+			ErrLogger: c.errLogger,
+		}, ctx)
+		if err != nil {
+			return err
+		}
+
+		var startDate time.Time = util.ToStartOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.StartDate, curTime.Year())))
+		var endDate time.Time = util.ToEndOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.EndDate, curTime.Year())))
+		if curTime.Before(startDate) || curTime.After(endDate) {
+			return errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE)
+		}
+	}
+
+	var childModule = on_chain.InitializeModuleChild()
+	_, errRes := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
+		Client:    client,
+		Module:    childModule.GetModule(),
+		Function:  childModule.GetFunctionUpdateChildHealthInsuranceNeed(),
+		ErrLogger: c.errLogger,
+		Arguments: childModule.ToUpdateChildNeedArguments(on_chain.UpdateChildNeedArguments{
+			StaffNft: nft.ID.ID,
+			ChildID:  req.ChildID,
+			NeedID:   req.NeedID,
+			Year:     curTime.Year(),
+			Value:    *req.Value,
+			Sender:   sender,
+		}),
+	}, ctx)
+
+	return errRes
+}
+
+// UpdateMealNeed implements business.IChildService.
+func (c *childService) UpdateMealNeed(req request.UpdateChildNeedRequest, ctx context.Context) error {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if !util.IsValidSuiAddressStrict(req.ChildID) || !util.IsValidSuiAddressStrict(req.NeedID) {
+		return genericErr
+	}
+
+	var client = c.clients[constant.SuiTestnet]
+	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  req.ChildID,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if child == nil || child.MealNeed != req.NeedID {
+		return genericErr
+	}
+
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	if manage == nil {
+		return internalErr
+	}
+
+	var sender string = ctx.Value("address").(string)
+	var foundIdx int = -1
+	for i, leader := range manage.LocalLeaderIds {
+		if leader == sender {
+			foundIdx = i
+			break
+		}
+	}
+
+	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	if foundIdx == -1 {
+		return genericRightErr
+	}
+
+	nft, err := on_chain.GetOnChainObject[entities.StaffNft](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  manage.LocalLeaderNfts[foundIdx],
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if nft == nil {
+		return internalErr
+	}
+
+	if nft.Region != child.Region {
+		return genericRightErr
+	}
+
+	if req.Value == nil {
+		return nil
+	}
+
+	if *req.Value < 10_000 {
+		return errors.New(noti.NEED_VALUE_INVALID_WARN_MSG)
+	}
+
+	need, err := on_chain.GetOnChainObject[entities.MealNeed](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  req.NeedID,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var curTime time.Time = time.Now()
+	if need.IsUpdated {
+		if slices.Contains(need.YearChanges, fmt.Sprint(curTime.Year())) {
+			return errors.New(noti.CHILD_NEED_UPDATED_MESSAGE)
+		}
+
+		editDates, err := on_chain.GetOnChainObject[entities.EditNeedDates](on_chain.GetOnChainObjectRequest{
+			Client:    client,
+			ObjectId:  os.Getenv(env.EDIT_MEAL_NEED_DATES_ID),
+			ErrLogger: c.errLogger,
+		}, ctx)
+		if err != nil {
+			return err
+		}
+
+		var startDate time.Time = util.ToStartOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.StartDate, curTime.Year())))
+		var endDate time.Time = util.ToEndOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.EndDate, curTime.Year())))
+		if curTime.Before(startDate) || curTime.After(endDate) {
+			return errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE)
+		}
+	}
+
+	var childModule = on_chain.InitializeModuleChild()
+	_, errRes := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
+		Client:    client,
+		Module:    childModule.GetModule(),
+		Function:  childModule.GetFunctionUpdateChildMealNeed(),
+		ErrLogger: c.errLogger,
+		Arguments: childModule.ToUpdateChildNeedArguments(on_chain.UpdateChildNeedArguments{
+			StaffNft: nft.ID.ID,
+			ChildID:  req.ChildID,
+			NeedID:   req.NeedID,
+			Year:     curTime.Year(),
+			Value:    *req.Value,
+			Sender:   sender,
+		}),
+	}, ctx)
+
+	return errRes
+}
+
+// VoteSpecialNeedProposal implements business.IChildService.
+func (c *childService) VoteSpecialNeedProposal(id string, req request.VoteRequest, ctx context.Context) error {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if !util.IsValidSuiAddressStrict(id) {
+		return genericErr
+	}
+
+	var client = c.clients[constant.SuiTestnet]
+	proposal, err := on_chain.GetOnChainObject[entities.SpecialNeedProposal](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  id,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if proposal == nil {
+		return genericErr
+	}
+
+	var sender string = ctx.Value("address").(string)
+	if proposal.Creator == sender {
+		return errors.New(noti.OWNER_VOTE_WARN_MSG)
+	}
+
+	closedAt, _ := strconv.ParseInt(proposal.ClosedAt, 10, 64)
+	if time.Now().After(util.MilliSecToTime(closedAt)) {
+		return errors.New(noti.REQUEST_CLOSED_MESSAGE)
+	}
+
+	if slices.Contains(proposal.Approvers, sender) || slices.Contains(proposal.Refusers, sender) {
+		return errors.New(noti.ALREADY_VOTE_MESSAGE)
+	}
+
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var foundIdx int = -1
+	for i, donor := range manage.DonorIds {
+		if donor == sender {
+			foundIdx = i
+			break
+		}
+	}
+
+	if foundIdx == -1 {
+		return errors.New(noti.HAVE_TO_DONATE_TO_VOTE)
+	}
+
+	nft, err := on_chain.GetOnChainObject[entities.Donor](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if nft == nil {
+		return errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	var refuseReason string = strings.TrimSpace(req.RefuseReason)
+	if refuseReason == "" {
+		refuseReason = "Refuse"
+	}
+
+	var needModule = on_chain.InitializeModuleNeed()
+	_, errRes := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
+		Client:    client,
+		Module:    needModule.GetModule(),
+		Function:  needModule.GetFunctionVoteSpecialNeedProposal(),
+		ErrLogger: c.errLogger,
+		Arguments: needModule.ToVoteSpecialNeedProposalArguments(on_chain.VoteSpecialNeedProposalArguments{
+			ProposalID:   id,
+			DonorNft:     nft.ID.ID,
+			IsApprove:    req.IsVoteYes,
+			RefuseReason: refuseReason,
+		}),
+	}, ctx)
+
+	return errRes
 }
 
 // UploadChild implements business.IChildService.
@@ -377,11 +1074,282 @@ func (c *childService) AddStringMetadata(id string, req request.AddChildStringMe
 	}, err
 }
 
+// // CreateBooksNeedWithdrawProposal implements business.IChildService.
+// func (c *childService) CreateBooksNeedWithdrawProposal(req request.CreateNormalNeedWithdrawProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+// 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+// 	if !util.IsValidSuiAddressStrict(req.NeedID) {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
+
+// 	var client = c.clients[constant.SuiTestnet]
+// 	need, err := on_chain.GetOnChainObject[entities.BooksNeed](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  req.NeedID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	// Already withdraw all
+// 	if len(need.Donations) == len(need.WithdrawsForNeed) {
+// 		return response.BuildTransactionResponse{}, errors.New("")
+// 	}
+
+// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  need.ChildID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	var staffModule = on_chain.InitializeModuleStaff()
+// 	var sender string = ctx.Value("address").(string)
+// 	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
+// 		Client:       client,
+// 		OwnerAddress: sender,
+// 		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
+// 		ErrLogger:    c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+// 	if staffNfts == nil || len(staffNfts) == 0 {
+// 		return response.BuildTransactionResponse{}, genericRightErr
+// 	}
+
+// 	var isLeaderOfRegion bool = false
+// 	for _, nft := range staffNfts {
+// 		if nft.Role == local_leader_role && nft.Region == child.Region {
+// 			isLeaderOfRegion = true
+// 			break
+// 		}
+// 	}
+
+// 	if !isLeaderOfRegion {
+// 		return response.BuildTransactionResponse{}, genericRightErr
+// 	}
+
+// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  os.Getenv(env.POOL_ID),
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+// 		Client:    client,
+// 		ObjectIds: pool.LocalPools,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	var localPoolId string
+// 	for _, localPool := range localPools {
+// 		if localPool.Region == child.Region {
+// 			localPoolId = localPool.ID.ID
+// 			break
+// 		}
+// 	}
+
+// 	var childModule = on_chain.InitializeModuleChild()
+// 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+// 		Client:    client,
+// 		Sender:    sender,
+// 		Module:    childModule.GetModule(),
+// 		Function:  childModule.GetFunctionCreateChildBooksNeedWithdrawProposal(),
+// 		ErrLogger: c.errLogger,
+// 		Arguments: childModule.ToCreateChildNormalNeedWithdrawProposalArguments(on_chain.CreateChildNormalNeedWithdrawProposalArguments{
+// 			NeedID:      req.NeedID,
+// 			ChildID:     need.ChildID,
+// 			LocalPool:   localPoolId,
+// 			Description: fmt.Sprintf("Withdraw Books Need Semester %s - %s for child %s %s", need.Semster, need.Year, child.LastName, child.FirstName),
+// 			ClosedAt:    util.ToMilliseconds(util.GetRequestDuration()),
+// 		}),
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	var proposalId string = util.GenerateId()
+// 	return response.BuildTransactionResponse{
+// 			TxBytes:    txBytes,
+// 			ProposalId: proposalId,
+// 		}, c.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
+// 			ID:        proposalId,
+// 			Purpose:   string(entities.BOOKS_NEED_PURPOSE),
+// 			Target:    req.NeedID,
+// 			CreatedAt: time.Now(),
+// 		}, ctx)
+// }
+
+// // CreateMealNeedWithdrawProposal implements business.IChildService.
+// func (c *childService) CreateMealNeedWithdrawProposal(req request.CreateNormalNeedWithdrawProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+// 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+// 	if !util.IsValidSuiAddressStrict(req.NeedID) {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
+
+// 	var client = c.clients[constant.SuiTestnet]
+// 	need, err := on_chain.GetOnChainObject[entities.MealNeed](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  req.NeedID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	totalSupportedMonths, _ := strconv.Atoi(need.TotalSupportedMonths)
+// 	var expectedDuration int = totalSupportedMonths - len(need.WithdrawsForNeed)
+// 	// Already withdraw all
+// 	if expectedDuration == 0 {
+// 		return response.BuildTransactionResponse{}, errors.New("")
+// 	}
+
+// 	var previousDuration int = 0
+// 	var expectedDay, expectedMonth int
+// 	var startDate, endDate time.Time
+// 	var curTime time.Time = time.Now()
+// 	for i := len(need.Durations) - 1; i >= 0; i-- {
+// 		var duration = need.Durations[0]
+// 		var startPeriod time.Time = util.RawDateToTime(duration.Fields.StartPeriod)
+// 		var endPeriod time.Time = util.RawDateToTime(duration.Fields.EndPeriod)
+// 		var startMonth int = int(startPeriod.Month())
+// 		var endMonth int = int(endPeriod.Month())
+// 		if endMonth == 1 { // To next year
+// 			endMonth = 13
+// 		}
+
+// 		var currentDuration int = endMonth - startMonth
+// 		var totalDuration int = currentDuration + previousDuration
+// 		var months int = totalDuration - expectedDuration
+// 		if months >= 0 {
+// 			startDate = startPeriod.AddDate(0, months, 0)
+// 			endDate = startDate.AddDate(0, 1, 0)
+
+// 			var expectedDate = startDate.AddDate(0, -3, 0)
+// 			expectedDay = expectedDate.Day()
+// 			expectedMonth = int(expectedDate.Month())
+// 			break
+// 		}
+
+// 		previousDuration = totalDuration
+// 	}
+
+// 	// Still not date to withdraw
+// 	if int(curTime.Month()) != expectedMonth || curTime.Day() != expectedDay {
+// 		return response.BuildTransactionResponse{}, errors.New("")
+// 	}
+
+// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  need.ChildID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	var sender string = ctx.Value("address").(string)
+// 	var staffModule = on_chain.InitializeModuleStaff()
+// 	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
+// 		Client:       client,
+// 		OwnerAddress: sender,
+// 		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
+// 		ErrLogger:    c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+// 	if staffNfts == nil || len(staffNfts) == 0 {
+// 		return response.BuildTransactionResponse{}, genericRightErr
+// 	}
+
+// 	var isLeaderOfRegion bool = false
+// 	for _, nft := range staffNfts {
+// 		if nft.Role == local_leader_role && nft.Region == child.Region {
+// 			isLeaderOfRegion = true
+// 			break
+// 		}
+// 	}
+
+// 	if !isLeaderOfRegion {
+// 		return response.BuildTransactionResponse{}, genericRightErr
+// 	}
+
+// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  os.Getenv(env.POOL_ID),
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+// 		Client:    client,
+// 		ObjectIds: pool.LocalPools,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	var localPoolId string
+// 	for _, localPool := range localPools {
+// 		if localPool.Region == child.Region {
+// 			localPoolId = localPool.ID.ID
+// 			break
+// 		}
+// 	}
+
+// 	var childModule = on_chain.InitializeModuleChild()
+// 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+// 		Client:    client,
+// 		Sender:    sender,
+// 		Module:    childModule.GetModule(),
+// 		Function:  childModule.GetFunctionCreateChildMealNeedWithdrawProposal(),
+// 		ErrLogger: c.errLogger,
+// 		Arguments: childModule.ToCreateChildNormalNeedWithdrawProposalArguments(on_chain.CreateChildNormalNeedWithdrawProposalArguments{
+// 			NeedID:      req.NeedID,
+// 			ChildID:     need.ChildID,
+// 			LocalPool:   localPoolId,
+// 			Description: fmt.Sprintf("Withdraw Meal Need %s - %s for child %s %s", util.TimeToRawDate(startDate), util.TimeToRawDate(endDate), child.LastName, child.FirstName),
+// 			ClosedAt:    util.ToMilliseconds(util.GetRequestDuration()),
+// 		}),
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
+
+// 	var proposalId string = util.GenerateId()
+// 	return response.BuildTransactionResponse{
+// 			TxBytes:    txBytes,
+// 			ProposalId: proposalId,
+// 		}, c.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
+// 			ID:        proposalId,
+// 			Purpose:   string(entities.MEAL_NEED_PURPOSE),
+// 			Target:    req.NeedID,
+// 			CreatedAt: curTime,
+// 		}, ctx)
+// }
+
 // CreateBooksNeedWithdrawProposal implements business.IChildService.
-func (c *childService) CreateBooksNeedWithdrawProposal(req request.CreateNormalNeedWithdrawProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+func (c *childService) CreateBooksNeedWithdrawProposal(req request.CreateNormalNeedWithdrawProposalRequest, ctx context.Context) error {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !util.IsValidSuiAddressStrict(req.NeedID) {
-		return response.BuildTransactionResponse{}, genericErr
+		return genericErr
 	}
 
 	var client = c.clients[constant.SuiTestnet]
@@ -391,12 +1359,12 @@ func (c *childService) CreateBooksNeedWithdrawProposal(req request.CreateNormalN
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
 	}
 
 	// Already withdraw all
 	if len(need.Donations) == len(need.WithdrawsForNeed) {
-		return response.BuildTransactionResponse{}, errors.New("")
+		return errors.New(noti.NEED_ALREADY_WITHDRAWN_MESSAGE)
 	}
 
 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
@@ -405,36 +1373,88 @@ func (c *childService) CreateBooksNeedWithdrawProposal(req request.CreateNormalN
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
 	}
 
-	var staffModule = on_chain.InitializeModuleStaff()
-	var sender string = ctx.Value("address").(string)
-	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
-		ErrLogger:    c.errLogger,
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
 	}
 
-	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if staffNfts == nil || len(staffNfts) == 0 {
-		return response.BuildTransactionResponse{}, genericRightErr
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	if manage == nil {
+		return internalErr
 	}
 
-	var isLeaderOfRegion bool = false
-	for _, nft := range staffNfts {
-		if nft.Role == local_leader_role && nft.Region == child.Region {
-			isLeaderOfRegion = true
+	var sender string = ctx.Value("address").(string)
+	var foundIdx int = -1
+	for i, leader := range manage.LocalLeaderIds {
+		if leader == sender {
+			foundIdx = i
 			break
 		}
 	}
 
-	if !isLeaderOfRegion {
-		return response.BuildTransactionResponse{}, genericRightErr
+	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	if foundIdx == -1 {
+		return genericRightErr
+	}
+
+	leaderNft, err := on_chain.GetOnChainObject[entities.StaffNft](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  manage.LocalLeaderNfts[foundIdx],
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if leaderNft.Region != child.Region {
+		return genericRightErr
+	}
+
+	leaderNoti, err := c.leaderNotiRepo.GetNotiByNeed(req.NeedID, ctx)
+	if err != nil {
+		return err
+	}
+
+	var curTime time.Time = time.Now()
+	var expectedStartDate time.Time
+	var index int = -1
+	for i := len(leaderNoti.ExpectedWithdrawPeriods) - 1; i >= 0; i-- {
+		var rawExpectedDate string = leaderNoti.ExpectedWithdrawPeriods[i]
+		var expectedDate time.Time = util.ToStartOfDate(util.RawDateToTime(rawExpectedDate))
+
+		if !curTime.Before(expectedDate) {
+			expectedStartDate = expectedDate
+			index = i
+			break
+		}
+	}
+
+	var notWithdrawDateErr error = errors.New(noti.NOT_WITHDRAW_EXPECTED_DATE_MESSAGE)
+	if index == -1 {
+		return notWithdrawDateErr
+	}
+
+	var expectedEndDate time.Time = util.ToEndOfDate(expectedStartDate.AddDate(0, 0, 7))
+	if curTime.Before(expectedStartDate) || curTime.After(expectedEndDate) {
+		return notWithdrawDateErr
+	}
+
+	var description string = leaderNoti.Contents[index]
+	withdrawAmount, _ := strconv.ParseInt(need.Value, 10, 64)
+	isProposed, err := c.pendingWithdrawProposalRepo.IsPendingWithdrawProposalProposedWithSpecificInfo(string(entities.MEAL_NEED_PURPOSE), req.NeedID, description, withdrawAmount, ctx)
+	if err != nil {
+		return err
+	}
+
+	if isProposed {
+		return errors.New(noti.STILL_PENDING_REQUEST_MESSAGE)
 	}
 
 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
@@ -443,7 +1463,11 @@ func (c *childService) CreateBooksNeedWithdrawProposal(req request.CreateNormalN
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
+	}
+
+	if pool == nil {
+		return internalErr
 	}
 
 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
@@ -452,7 +1476,11 @@ func (c *childService) CreateBooksNeedWithdrawProposal(req request.CreateNormalN
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
+	}
+
+	if localPools == nil {
+		return internalErr
 	}
 
 	var localPoolId string
@@ -463,42 +1491,257 @@ func (c *childService) CreateBooksNeedWithdrawProposal(req request.CreateNormalN
 		}
 	}
 
+	var offchainProposalId string = util.GenerateId()
+	if err := c.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
+		ID:          offchainProposalId,
+		Purpose:     string(entities.BOOKS_NEED_PURPOSE),
+		Target:      req.NeedID,
+		LocalPoolID: localPoolId,
+		CreatedAt:   time.Now(),
+	}, ctx); err != nil {
+		return err
+	}
+
 	var childModule = on_chain.InitializeModuleChild()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    client,
-		Sender:    sender,
-		Module:    childModule.GetModule(),
-		Function:  childModule.GetFunctionCreateChildBooksNeedWithdrawProposal(),
-		ErrLogger: c.errLogger,
+	res, err := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
+		Client:   client,
+		Module:   childModule.GetModule(),
+		Function: childModule.GetFunctionCreateChildBooksNeedWithdrawProposal(),
 		Arguments: childModule.ToCreateChildNormalNeedWithdrawProposalArguments(on_chain.CreateChildNormalNeedWithdrawProposalArguments{
 			NeedID:      req.NeedID,
 			ChildID:     need.ChildID,
 			LocalPool:   localPoolId,
-			Description: fmt.Sprintf("Withdraw Books Need Semester %s - %s for child %s %s", need.Semester, need.Year, child.LastName, child.FirstName),
+			Description: description,
+			ProofBlobID: req.ProofBlobID,
 			ClosedAt:    util.ToMilliseconds(util.GetRequestDuration()),
+			Sender:      sender,
 		}),
+		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
 	}
 
-	var proposalId string = util.GenerateId()
-	return response.BuildTransactionResponse{
-			TxBytes:    txBytes,
-			ProposalId: proposalId,
-		}, c.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
-			ID:        proposalId,
-			Purpose:   string(entities.BOOKS_NEED_PURPOSE),
-			Target:    req.NeedID,
-			CreatedAt: time.Now(),
-		}, ctx)
+	var events = res.Events
+	var poolModule = on_chain.InitializeModulePool()
+	var eventType string = fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), poolModule.GetModule(), poolModule.GetWithdrawProposalEventEmittedStruct())
+	for _, event := range events {
+		if event.Type == eventType {
+			if onChainProposal, ok := event.ParsedJson["id"].(string); ok {
+				for i := 1; i <= 3; i++ {
+					if c.withdrawRepo.SetOnChainProposalIdAfterExecuteTx(offchainProposalId, onChainProposal, ctx) == nil {
+						return nil
+					}
+				}
+				break
+			}
+		}
+	}
+
+	return internalErr
+}
+
+// CreateHealthInsuranceNeedWithdrawProposal implements business.IChildService.
+func (c *childService) CreateHealthInsuranceNeedWithdrawProposal(req request.CreateNormalNeedWithdrawProposalRequest, ctx context.Context) error {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if !util.IsValidSuiAddressStrict(req.NeedID) {
+		return genericErr
+	}
+
+	var client = c.clients[constant.SuiTestnet]
+	need, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeed](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  req.NeedID,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	// Already withdraw all
+	if len(need.Donations) == len(need.WithdrawsForNeed) {
+		return errors.New(noti.NEED_ALREADY_WITHDRAWN_MESSAGE)
+	}
+
+	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  need.ChildID,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	if manage == nil {
+		return internalErr
+	}
+
+	var sender string = ctx.Value("address").(string)
+	var foundIdx int = -1
+	for i, leader := range manage.LocalLeaderIds {
+		if leader == sender {
+			foundIdx = i
+			break
+		}
+	}
+
+	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	if foundIdx == -1 {
+		return genericRightErr
+	}
+
+	leaderNft, err := on_chain.GetOnChainObject[entities.StaffNft](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  manage.LocalLeaderNfts[foundIdx],
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if leaderNft.Region != child.Region {
+		return genericRightErr
+	}
+
+	leaderNoti, err := c.leaderNotiRepo.GetNotiByNeed(req.NeedID, ctx)
+	if err != nil {
+		return err
+	}
+
+	var curTime time.Time = time.Now()
+	var expectedStartDate time.Time
+	var index int = -1
+	for i := len(leaderNoti.ExpectedWithdrawPeriods) - 1; i >= 0; i-- {
+		var rawExpectedDate string = leaderNoti.ExpectedWithdrawPeriods[i]
+		var expectedDate time.Time = util.ToStartOfDate(util.RawDateToTime(rawExpectedDate))
+
+		if !curTime.Before(expectedDate) {
+			expectedStartDate = expectedDate
+			index = i
+			break
+		}
+	}
+
+	var notWithdrawDateErr error = errors.New(noti.NOT_WITHDRAW_EXPECTED_DATE_MESSAGE)
+	if index == -1 {
+		return notWithdrawDateErr
+	}
+
+	var expectedEndDate time.Time = util.ToEndOfDate(expectedStartDate.AddDate(0, 0, 7))
+	if curTime.Before(expectedStartDate) || curTime.After(expectedEndDate) {
+		return notWithdrawDateErr
+	}
+
+	var description string = leaderNoti.Contents[index]
+	withdrawAmount, _ := strconv.ParseInt(need.Value, 10, 64)
+	isProposed, err := c.pendingWithdrawProposalRepo.IsPendingWithdrawProposalProposedWithSpecificInfo(string(entities.HEALTH_INSURANCE_NEED_PURPOSE), req.NeedID, description, withdrawAmount, ctx)
+	if err != nil {
+		return err
+	}
+
+	if isProposed {
+		return errors.New(noti.STILL_PENDING_REQUEST_MESSAGE)
+	}
+
+	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.POOL_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if pool == nil {
+		return internalErr
+	}
+
+	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+		Client:    client,
+		ObjectIds: pool.LocalPools,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if localPools == nil {
+		return internalErr
+	}
+
+	var localPoolId string
+	for _, localPool := range localPools {
+		if localPool.Region == child.Region {
+			localPoolId = localPool.ID.ID
+			break
+		}
+	}
+
+	var offchainProposalId string = util.GenerateId()
+	if err := c.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
+		ID:          offchainProposalId,
+		Purpose:     string(entities.HEALTH_INSURANCE_NEED_PURPOSE),
+		Target:      req.NeedID,
+		LocalPoolID: localPoolId,
+		CreatedAt:   time.Now(),
+	}, ctx); err != nil {
+		return err
+	}
+
+	var childModule = on_chain.InitializeModuleChild()
+	res, err := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
+		Client:   client,
+		Module:   childModule.GetModule(),
+		Function: childModule.GetFunctionCreateChildHealthInsuranceNeedWithdrawProposal(),
+		Arguments: childModule.ToCreateChildNormalNeedWithdrawProposalArguments(on_chain.CreateChildNormalNeedWithdrawProposalArguments{
+			NeedID:      req.NeedID,
+			ChildID:     need.ChildID,
+			LocalPool:   localPoolId,
+			Description: description,
+			ProofBlobID: req.ProofBlobID,
+			ClosedAt:    util.ToMilliseconds(util.GetRequestDuration()),
+			Sender:      sender,
+		}),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var events = res.Events
+	var poolModule = on_chain.InitializeModulePool()
+	var eventType string = fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), poolModule.GetModule(), poolModule.GetWithdrawProposalEventEmittedStruct())
+	for _, event := range events {
+		if event.Type == eventType {
+			if onChainProposal, ok := event.ParsedJson["id"].(string); ok {
+				for i := 1; i <= 3; i++ {
+					if c.withdrawRepo.SetOnChainProposalIdAfterExecuteTx(offchainProposalId, onChainProposal, ctx) == nil {
+						return nil
+					}
+				}
+				break
+			}
+		}
+	}
+
+	return err
 }
 
 // CreateMealNeedWithdrawProposal implements business.IChildService.
-func (c *childService) CreateMealNeedWithdrawProposal(req request.CreateNormalNeedWithdrawProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+func (c *childService) CreateMealNeedWithdrawProposal(req request.CreateNormalNeedWithdrawProposalRequest, ctx context.Context) error {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	if !util.IsValidSuiAddressStrict(req.NeedID) {
-		return response.BuildTransactionResponse{}, genericErr
+		return genericErr
 	}
 
 	var client = c.clients[constant.SuiTestnet]
@@ -508,49 +1751,53 @@ func (c *childService) CreateMealNeedWithdrawProposal(req request.CreateNormalNe
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
 	}
 
 	totalSupportedMonths, _ := strconv.Atoi(need.TotalSupportedMonths)
 	var expectedDuration int = totalSupportedMonths - len(need.WithdrawsForNeed)
-	// Already withdraw all
 	if expectedDuration == 0 {
-		return response.BuildTransactionResponse{}, errors.New("")
+		return errors.New(noti.NEED_ALREADY_WITHDRAWN_MESSAGE)
 	}
 
-	var previousDuration int = 0
-	var expectedDay, expectedMonth int
-	var startDate, endDate time.Time
+	leaderNoti, err := c.leaderNotiRepo.GetNotiByNeed(req.NeedID, ctx)
+	if err != nil {
+		return err
+	}
+
 	var curTime time.Time = time.Now()
-	for i := len(need.Durations) - 1; i >= 0; i-- {
-		var duration = need.Durations[0]
-		var startPeriod time.Time = util.RawDateToTime(duration.Fields.StartPeriod)
-		var endPeriod time.Time = util.RawDateToTime(duration.Fields.EndPeriod)
-		var startMonth int = int(startPeriod.Month())
-		var endMonth int = int(endPeriod.Month())
-		if endMonth == 1 { // To next year
-			endMonth = 13
-		}
+	var expectedStartDate time.Time
+	var index int = -1
+	for i := len(leaderNoti.ExpectedWithdrawPeriods) - 1; i >= 0; i-- {
+		var rawExpectedDate string = leaderNoti.ExpectedWithdrawPeriods[i]
+		var expectedDate time.Time = util.ToStartOfDate(util.RawDateToTime(rawExpectedDate))
 
-		var currentDuration int = endMonth - startMonth
-		var totalDuration int = currentDuration + previousDuration
-		var months int = totalDuration - expectedDuration
-		if months >= 0 {
-			startDate = startPeriod.AddDate(0, months, 0)
-			endDate = startDate.AddDate(0, 1, 0)
-
-			var expectedDate = startDate.AddDate(0, -3, 0)
-			expectedDay = expectedDate.Day()
-			expectedMonth = int(expectedDate.Month())
+		if !curTime.Before(expectedDate) {
+			expectedStartDate = expectedDate
+			index = i
 			break
 		}
-
-		previousDuration = totalDuration
 	}
 
-	// Still not date to withdraw
-	if int(curTime.Month()) != expectedMonth || curTime.Day() != expectedDay {
-		return response.BuildTransactionResponse{}, errors.New("")
+	var notWithdrawDateErr error = errors.New(noti.NOT_WITHDRAW_EXPECTED_DATE_MESSAGE)
+	if index == -1 {
+		return notWithdrawDateErr
+	}
+
+	var expectedEndDate time.Time = util.ToEndOfDate(expectedStartDate.AddDate(0, 0, 7))
+	if curTime.Before(expectedStartDate) || curTime.After(expectedEndDate) {
+		return notWithdrawDateErr
+	}
+
+	var description string = leaderNoti.Contents[index]
+	withdrawAmount, _ := strconv.ParseInt(need.Value, 10, 64)
+	isProposed, err := c.pendingWithdrawProposalRepo.IsPendingWithdrawProposalProposedWithSpecificInfo(string(entities.BOOKS_NEED_PURPOSE), req.NeedID, description, withdrawAmount, ctx)
+	if err != nil {
+		return err
+	}
+
+	if isProposed {
+		return errors.New(noti.STILL_PENDING_REQUEST_MESSAGE)
 	}
 
 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
@@ -559,36 +1806,48 @@ func (c *childService) CreateMealNeedWithdrawProposal(req request.CreateNormalNe
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
+	}
+
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	if manage == nil {
+		return internalErr
 	}
 
 	var sender string = ctx.Value("address").(string)
-	var staffModule = on_chain.InitializeModuleStaff()
-	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
-		ErrLogger:    c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
-
-	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if staffNfts == nil || len(staffNfts) == 0 {
-		return response.BuildTransactionResponse{}, genericRightErr
-	}
-
-	var isLeaderOfRegion bool = false
-	for _, nft := range staffNfts {
-		if nft.Role == local_leader_role && nft.Region == child.Region {
-			isLeaderOfRegion = true
+	var foundIdx int = -1
+	for i, leader := range manage.LocalLeaderIds {
+		if leader == sender {
+			foundIdx = i
 			break
 		}
 	}
 
-	if !isLeaderOfRegion {
-		return response.BuildTransactionResponse{}, genericRightErr
+	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	if foundIdx == -1 {
+		return genericRightErr
+	}
+
+	leaderNft, err := on_chain.GetOnChainObject[entities.StaffNft](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  manage.LocalLeaderNfts[foundIdx],
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if leaderNft.Region != child.Region {
+		return genericRightErr
 	}
 
 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
@@ -597,7 +1856,7 @@ func (c *childService) CreateMealNeedWithdrawProposal(req request.CreateNormalNe
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
 	}
 
 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
@@ -606,7 +1865,7 @@ func (c *childService) CreateMealNeedWithdrawProposal(req request.CreateNormalNe
 		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
 	}
 
 	var localPoolId string
@@ -617,35 +1876,171 @@ func (c *childService) CreateMealNeedWithdrawProposal(req request.CreateNormalNe
 		}
 	}
 
+	var offchainProposalId string = util.GenerateId()
+	if err := c.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
+		ID:          offchainProposalId,
+		Purpose:     string(entities.MEAL_NEED_PURPOSE),
+		Target:      req.NeedID,
+		LocalPoolID: localPoolId,
+		CreatedAt:   time.Now(),
+	}, ctx); err != nil {
+		return err
+	}
+
 	var childModule = on_chain.InitializeModuleChild()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    client,
-		Sender:    sender,
-		Module:    childModule.GetModule(),
-		Function:  childModule.GetFunctionCreateChildMealNeedWithdrawProposal(),
-		ErrLogger: c.errLogger,
+	res, err := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
+		Client:   client,
+		Module:   childModule.GetModule(),
+		Function: childModule.GetFunctionCreateChildMealNeedWithdrawProposal(),
 		Arguments: childModule.ToCreateChildNormalNeedWithdrawProposalArguments(on_chain.CreateChildNormalNeedWithdrawProposalArguments{
 			NeedID:      req.NeedID,
 			ChildID:     need.ChildID,
 			LocalPool:   localPoolId,
-			Description: fmt.Sprintf("Withdraw Meal Need %s - %s for child %s %s", util.TimeToRawDate(startDate), util.TimeToRawDate(endDate), child.LastName, child.FirstName),
+			Description: description,
+			ProofBlobID: req.ProofBlobID,
 			ClosedAt:    util.ToMilliseconds(util.GetRequestDuration()),
+			Sender:      sender,
+		}),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var events = res.Events
+	var poolModule = on_chain.InitializeModulePool()
+	var eventType string = fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), poolModule.GetModule(), poolModule.GetWithdrawProposalEventEmittedStruct())
+	for _, event := range events {
+		if event.Type == eventType {
+			if onChainProposal, ok := event.ParsedJson["id"].(string); ok {
+				for i := 1; i <= 3; i++ {
+					if c.withdrawRepo.SetOnChainProposalIdAfterExecuteTx(offchainProposalId, onChainProposal, ctx) == nil {
+						return nil
+					}
+				}
+				break
+			}
+		}
+	}
+
+	return internalErr
+}
+
+// CreateSpecialNeedWithdrawProposal implements business.IChildService.
+func (c *childService) CreateSpecialNeedWithdrawProposal(req request.CreateSpecialNeedWithdrawProposalRequest, ctx context.Context) error {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if !util.IsValidSuiAddressStrict(req.CampaignID) {
+		return genericErr
+	}
+
+	var client = c.clients[constant.SuiTestnet]
+	campaign, err := on_chain.GetOnChainObject[entities.SpecialNeedCampaign](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  req.CampaignID,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	if campaign == nil {
+		return genericErr
+	}
+
+	var sender string = ctx.Value("address").(string)
+	if campaign.Creator != sender {
+		return errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	}
+
+	totalWithdrawAmount, _ := strconv.ParseInt(campaign.WithdrawAmount, 10, 64)
+	totalDonation, _ := strconv.ParseInt(campaign.TotalDonated, 10, 64)
+	if req.Amount > totalDonation-totalWithdrawAmount {
+		return errors.New(noti.CURRENT_BUDGET_NOT_ENOUGH_MESSAGE)
+	}
+
+	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.POOL_ID),
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+		Client:    client,
+		ObjectIds: pool.LocalPools,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  campaign.ChildID,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return err
+	}
+
+	var localPoolId string
+	for _, localPool := range localPools {
+		if localPool.Region == child.Region {
+			localPoolId = localPool.ID.ID
+			break
+		}
+	}
+
+	var offchainProposalId string = util.GenerateId()
+	if err := c.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
+		ID:          offchainProposalId,
+		Purpose:     string(entities.SPECIAL_NEED_PURPOSE),
+		Target:      req.CampaignID,
+		LocalPoolID: localPoolId,
+		CreatedAt:   time.Now(),
+	}, ctx); err != nil {
+		return err
+	}
+
+	var childModule = on_chain.InitializeModuleChild()
+	res, err := on_chain.ExecuteTransactionV2(on_chain.ExecuteTransactionRequestV2{
+		Client:   client,
+		Module:   childModule.GetModule(),
+		Function: childModule.GetFunctionCreateChildSpecialNeedWithdrawProposal(),
+		Arguments: childModule.ToCreateChildSpecialNeedWithdrawProposalArguments(on_chain.CreateChildSpecialNeedWithdrawProposalArguments{
+			CampaignID:     req.CampaignID,
+			LocalPool:      localPoolId,
+			ChildID:        campaign.ChildID,
+			WithdrawAmount: req.Amount,
+			Description:    req.Description,
+			ProofBlobID:    req.ProofBlobID,
+			ClosedAt:       util.ToMilliseconds(util.GetRequestDuration()),
+			Sender:         sender,
 		}),
 	}, ctx)
 	if err != nil {
-		return response.BuildTransactionResponse{}, err
+		return err
 	}
 
-	var proposalId string = util.GenerateId()
-	return response.BuildTransactionResponse{
-			TxBytes:    txBytes,
-			ProposalId: proposalId,
-		}, c.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
-			ID:        proposalId,
-			Purpose:   string(entities.MEAL_NEED_PURPOSE),
-			Target:    req.NeedID,
-			CreatedAt: curTime,
-		}, ctx)
+	var events = res.Events
+	var poolModule = on_chain.InitializeModulePool()
+	var eventType string = fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), poolModule.GetModule(), poolModule.GetWithdrawProposalEventEmittedStruct())
+	for _, event := range events {
+		if event.Type == eventType {
+			if onChainProposal, ok := event.ParsedJson["id"].(string); ok {
+				for i := 1; i <= 3; i++ {
+					if c.withdrawRepo.SetOnChainProposalIdAfterExecuteTx(offchainProposalId, onChainProposal, ctx) == nil {
+						return nil
+					}
+				}
+				break
+			}
+		}
+	}
+
+	return errors.New(noti.INTERNALL_ERR_MSG)
 }
 
 // CreateBooksNeedWithdrawProposalV2 implements business.IChildService.
@@ -700,7 +2095,7 @@ func (c *childService) CreateBooksNeedWithdrawProposalV2(req request.CreateNorma
 	}
 
 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if staffNfts == nil || len(staffNfts) == 0 {
+	if len(staffNfts) == 0 {
 		return nil, genericRightErr
 	}
 
@@ -785,20 +2180,19 @@ func (c *childService) CreateBooksNeedWithdrawProposalV2(req request.CreateNorma
 		}
 	}
 
-	var aiEvaluation string
-	if req.ProofBlobID != nil {
-		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
-		if proofBytes != nil {
-			aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
-				Purpose:         purpose,
-				WithdrawAmount:  withdrawAmount,
-				Description:     description,
-				ProofBytesImage: proofBytes,
-			}, ctx)
-		}
-	}
+	// var aiEvaluation string
+	// if req.ProofBlobID != nil {
+	// 	proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+	// 	if proofBytes != nil {
+	// 		aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+	// 			Purpose:         purpose,
+	// 			WithdrawAmount:  withdrawAmount,
+	// 			Description:     description,
+	// 			ProofBytesImage: proofBytes,
+	// 		}, ctx)
+	// 	}
+	// }
 
-	// todo: AI validation
 	var res = entities.PendingWithdrawProposal{
 		ID:             util.GenerateId(),
 		ProfileID:      ctx.Value("sub").(string),
@@ -811,9 +2205,9 @@ func (c *childService) CreateBooksNeedWithdrawProposalV2(req request.CreateNorma
 		ProofBlobID:    req.ProofBlobID,
 		Description:    description,
 		Status:         request_pending_status,
-		AIEvaluation:   aiEvaluation,
-		CreatedAt:      curTime,
-		UpdatedAt:      curTime,
+		// AIEvaluation:   aiEvaluation,
+		CreatedAt: curTime,
+		UpdatedAt: curTime,
 	}
 
 	return &res, c.pendingWithdrawProposalRepo.CreatePendingWithdrawProposal(res, ctx)
@@ -871,7 +2265,7 @@ func (c *childService) CreateHealthInsuranceNeedWithdrawProposalV2(req request.C
 	}
 
 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if staffNfts == nil || len(staffNfts) == 0 {
+	if len(staffNfts) == 0 {
 		return nil, genericRightErr
 	}
 
@@ -939,20 +2333,19 @@ func (c *childService) CreateHealthInsuranceNeedWithdrawProposalV2(req request.C
 		}
 	}
 
-	var aiEvaluation string
-	if req.ProofBlobID != nil {
-		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
-		if proofBytes != nil {
-			aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
-				Purpose:         purpose,
-				WithdrawAmount:  withdrawAmount,
-				Description:     description,
-				ProofBytesImage: proofBytes,
-			}, ctx)
-		}
-	}
+	// var aiEvaluation string
+	// if req.ProofBlobID != nil {
+	// 	proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+	// 	if proofBytes != nil {
+	// 		aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+	// 			Purpose:         purpose,
+	// 			WithdrawAmount:  withdrawAmount,
+	// 			Description:     description,
+	// 			ProofBytesImage: proofBytes,
+	// 		}, ctx)
+	// 	}
+	// }
 
-	// todo: AI validation
 	var res = entities.PendingWithdrawProposal{
 		ID:             util.GenerateId(),
 		ProfileID:      ctx.Value("sub").(string),
@@ -965,9 +2358,9 @@ func (c *childService) CreateHealthInsuranceNeedWithdrawProposalV2(req request.C
 		ProofBlobID:    req.ProofBlobID,
 		Description:    description,
 		Status:         request_pending_status,
-		AIEvaluation:   aiEvaluation,
-		CreatedAt:      curTime,
-		UpdatedAt:      curTime,
+		// AIEvaluation:   aiEvaluation,
+		CreatedAt: curTime,
+		UpdatedAt: curTime,
 	}
 
 	return &res, c.pendingWithdrawProposalRepo.CreatePendingWithdrawProposal(res, ctx)
@@ -1010,7 +2403,7 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 	var paymentId string = util.GenerateId()
 	var orderCode int = util.GenerateNumber()
 	var callbackUrl string = os.Getenv(payment.PAYMENT_CALLBACK_URL) + paymentId
-	var paymentDescription string = entities.HEALTH_INSURANCE_PAYMENT_DESCRIPTION.GenerateSupportPaymentDescription()
+	var paymentDescription string = entities.HEALTH_INSRUANCE_PAYMENT_DESCRIPTION.GenerateSupportPaymentDescription()
 	amount, _ := strconv.ParseInt(need.Value, 10, 64)
 	data, err := payos.CreatePaymentLink(payos.CheckoutRequestType{
 		OrderCode:   int64(orderCode),
@@ -1022,7 +2415,7 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()
@@ -1041,7 +2434,7 @@ func (c *childService) SupportHealthInsuranceNeed(id string, ctx context.Context
 	if data.ExpiredAt != nil {
 		expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
 	} else {
-		expiredAt = time.Now().Add(1 * time.Minute) // Default 15p nếu PayOS ko trả về
+		expiredAt = time.Now().Add(2 * time.Minute) // Default 15p nếu PayOS ko trả về
 	}
 
 	return response.PaymentUrlResponse{
@@ -1151,7 +2544,7 @@ func (c *childService) CreateMealNeedWithdrawProposalV2(req request.CreateNormal
 	}
 
 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if staffNfts == nil || len(staffNfts) == 0 {
+	if len(staffNfts) == 0 {
 		return nil, genericRightErr
 	}
 
@@ -1227,18 +2620,18 @@ func (c *childService) CreateMealNeedWithdrawProposalV2(req request.CreateNormal
 		}
 	}
 
-	var aiEvaluation string
-	if req.ProofBlobID != nil {
-		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
-		if proofBytes != nil {
-			aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
-				Purpose:         purpose,
-				WithdrawAmount:  withdrawAmount,
-				Description:     description,
-				ProofBytesImage: proofBytes,
-			}, ctx)
-		}
-	}
+	// var aiEvaluation string
+	// if req.ProofBlobID != nil {
+	// 	proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+	// 	if proofBytes != nil {
+	// 		aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+	// 			Purpose:         purpose,
+	// 			WithdrawAmount:  withdrawAmount,
+	// 			Description:     description,
+	// 			ProofBytesImage: proofBytes,
+	// 		}, ctx)
+	// 	}
+	// }
 
 	// todo: AI validation
 	var res = entities.PendingWithdrawProposal{
@@ -1253,9 +2646,9 @@ func (c *childService) CreateMealNeedWithdrawProposalV2(req request.CreateNormal
 		ProofBlobID:    req.ProofBlobID,
 		Description:    description,
 		Status:         request_pending_status,
-		AIEvaluation:   aiEvaluation,
-		CreatedAt:      curTime,
-		UpdatedAt:      curTime,
+		// AIEvaluation:   aiEvaluation,
+		CreatedAt: curTime,
+		UpdatedAt: curTime,
 	}
 
 	return &res, c.pendingWithdrawProposalRepo.CreatePendingWithdrawProposal(res, ctx)
@@ -1331,18 +2724,19 @@ func (c *childService) CreateSpecialNeedWithdrawProposalV2(req request.CreateSpe
 
 	var description string = strings.TrimSpace(req.Description)
 	var purpose string = string(entities.SPECIAL_NEED_PURPOSE)
-	var aiEvaluation string
-	if req.ProofBlobID != nil {
-		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
-		if proofBytes != nil {
-			aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
-				Purpose:         purpose,
-				WithdrawAmount:  req.Amount,
-				Description:     description,
-				ProofBytesImage: proofBytes,
-			}, ctx)
-		}
-	}
+
+	// var aiEvaluation string
+	// if req.ProofBlobID != nil {
+	// 	proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+	// 	if proofBytes != nil {
+	// 		aiEvaluation = c.aiProvider.ValidateWithdrawProposal(ai.ValidateWithdrawProposal{
+	// 			Purpose:         purpose,
+	// 			WithdrawAmount:  req.Amount,
+	// 			Description:     description,
+	// 			ProofBytesImage: proofBytes,
+	// 		}, ctx)
+	// 	}
+	// }
 
 	var curTime time.Time = time.Now()
 	var res = entities.PendingWithdrawProposal{
@@ -1357,79 +2751,79 @@ func (c *childService) CreateSpecialNeedWithdrawProposalV2(req request.CreateSpe
 		ProofBlobID:    req.ProofBlobID,
 		Description:    description,
 		Status:         request_pending_status,
-		AIEvaluation:   aiEvaluation,
-		CreatedAt:      curTime,
-		UpdatedAt:      curTime,
+		// AIEvaluation:   aiEvaluation,
+		CreatedAt: curTime,
+		UpdatedAt: curTime,
 	}
 
 	return &res, c.pendingWithdrawProposalRepo.CreatePendingWithdrawProposal(res, ctx)
 }
 
-// ConfirmSpecialNeedProposal implements business.IChildService.
-func (c *childService) ConfirmSpecialNeedProposal(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !util.IsValidSuiAddressStrict(id) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// // ConfirmSpecialNeedProposal implements business.IChildService.
+// func (c *childService) ConfirmSpecialNeedProposal(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
+// 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+// 	if !util.IsValidSuiAddressStrict(id) {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var client = c.clients[constant.SuiTestnet]
-	proposal, err := on_chain.GetOnChainObject[entities.SpecialNeedProposal](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  id,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	var client = c.clients[constant.SuiTestnet]
+// 	proposal, err := on_chain.GetOnChainObject[entities.SpecialNeedProposal](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  id,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	if proposal == nil {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// 	if proposal == nil {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var sender string = ctx.Value("address").(string)
-	if proposal.Creator != sender {
-		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	}
+// 	var sender string = ctx.Value("address").(string)
+// 	if proposal.Creator != sender {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+// 	}
 
-	if proposal.IsConfirm {
-		return response.BuildTransactionResponse{}, errors.New(noti.SPECIAL_NEED_PROPOSAL_CONFIRMED_MESSAGE)
-	}
+// 	if proposal.IsConfirm {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.SPECIAL_NEED_PROPOSAL_CONFIRMED_MESSAGE)
+// 	}
 
-	closedAt, _ := strconv.ParseInt(proposal.ClosedAt, 10, 64)
-	if util.MilliSecToTime(closedAt).After(time.Now()) {
-		return response.BuildTransactionResponse{}, errors.New(noti.STILL_PENDING_REQUEST_MESSAGE)
-	}
+// 	closedAt, _ := strconv.ParseInt(proposal.ClosedAt, 10, 64)
+// 	if util.MilliSecToTime(closedAt).After(time.Now()) {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.STILL_PENDING_REQUEST_MESSAGE)
+// 	}
 
-	dao, err := on_chain.GetOnChainObject[entities.DaoStruct](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  os.Getenv(env.SPECIAL_NEED_DAO_ID),
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	dao, err := on_chain.GetOnChainObject[entities.DaoStruct](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  os.Getenv(env.SPECIAL_NEED_DAO_ID),
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	if !isProposalRateAvailableToConfirm(*dao, len(proposal.Approvers), len(proposal.Refusers), proposal.ApproveWeight, proposal.RefuseWeight) {
-		return response.BuildTransactionResponse{}, errors.New(noti.PROPOSAL_FAIL_CONDITION_TO_CONFIRM_MESSAGE)
-	}
+// 	if !isProposalRateAvailableToConfirm(*dao, len(proposal.Approvers), len(proposal.Refusers), proposal.ApproveWeight, proposal.RefuseWeight) {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.PROPOSAL_FAIL_CONDITION_TO_CONFIRM_MESSAGE)
+// 	}
 
-	var childModule = on_chain.InitializeModuleChild()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    client,
-		Sender:    sender,
-		Module:    childModule.GetModule(),
-		Function:  childModule.GetFunctionConfirmChildSpecialNeedProposal(),
-		ErrLogger: c.errLogger,
-		Arguments: childModule.ToConfirmChildSpecialNeedProposalArguments(on_chain.ConfirmChildSpecialNeedProposalArguments{
-			ProposalID: id,
-			ChildID:    proposal.ChildID,
-		}),
-	}, ctx)
+// 	var childModule = on_chain.InitializeModuleChild()
+// 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+// 		Client:    client,
+// 		Sender:    sender,
+// 		Module:    childModule.GetModule(),
+// 		Function:  childModule.GetFunctionConfirmChildSpecialNeedProposal(),
+// 		ErrLogger: c.errLogger,
+// 		Arguments: childModule.ToConfirmChildSpecialNeedProposalArguments(on_chain.ConfirmChildSpecialNeedProposalArguments{
+// 			ProposalID: id,
+// 			ChildID:    proposal.ChildID,
+// 		}),
+// 	}, ctx)
 
-	return response.BuildTransactionResponse{
-		TxBytes: txBytes,
-	}, err
-}
+// 	return response.BuildTransactionResponse{
+// 		TxBytes: txBytes,
+// 	}, err
+// }
 
 // CreateSpecialNeedProposal implements business.IChildService.
 func (c *childService) CreateSpecialNeedProposal(req request.CreateSpecialNeedProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
@@ -1556,31 +2950,47 @@ func (c *childService) CreateSpecialNeedProposalV2(req request.CreateSpecialNeed
 		return nil, genericErr
 	}
 
-	var sender string = ctx.Value("address").(string)
-	var staffModule = on_chain.InitializeModuleStaff()
-	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
-		ErrLogger:    c.errLogger,
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: c.errLogger,
 	}, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if staffNfts == nil || len(staffNfts) == 0 {
-		return nil, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	if manage == nil {
+		return nil, internalErr
 	}
 
-	var isLeaderOfRegion bool = false
-	for _, nft := range staffNfts {
-		if nft.Region == child.Region && nft.Role == local_leader_role {
-			isLeaderOfRegion = true
+	var leaderNftId string
+	var sender string = ctx.Value("address").(string)
+	for i, leader := range manage.LocalLeaderIds {
+		if leader == sender {
+			leaderNftId = manage.LocalLeaderNfts[i]
 			break
 		}
 	}
 
-	if !isLeaderOfRegion {
+	if leaderNftId == "" {
+		return nil, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+	}
+
+	nft, err := on_chain.GetOnChainObject[entities.StaffNft](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  leaderNftId,
+		ErrLogger: c.errLogger,
+	}, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if nft == nil {
+		return nil, internalErr
+	}
+
+	if nft.Region != child.Region {
 		return nil, errors.New(noti.LEADER_NOT_OF_REGION_MESSAGE)
 	}
 
@@ -1593,20 +3003,21 @@ func (c *childService) CreateSpecialNeedProposalV2(req request.CreateSpecialNeed
 		return nil, errors.New(noti.LEADER_NOT_UPLOAD_BANK_PROFILE_MESSAGE)
 	}
 
-	var description string = strings.TrimSpace(req.Description)
+	// FIX: AI will be implemented later
+	// var description string = strings.TrimSpace(req.Description)
 	var aiEvaluation string
 	if req.ProofBlobID != nil {
-		proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
-		if proofBytes != nil {
-			aiEvaluation = c.aiProvider.ValidateChildSpecialNeedProposal(ai.ValidateChildSpecialNeedProposal{
-				CampaignTarget: req.Target,
-				Description:     description,
-				ProofBytesImage: proofBytes,
-			}, ctx)
-		}
+		// proofBytes, _ := c.walrusProvider.FetchBytesImage(*req.ProofBlobID)
+		// if proofBytes != nil {
+		// 	aiEvaluation = c.aiProvider.ValidateChildSpecialNeedProposal(ai.ValidateChildSpecialNeedProposal{
+		// 		CampaignTarget: req.Target,
+		// 		Description:     description,
+		// 		ProofBytesImage: proofBytes,
+		// 	}, ctx)
+		// }
 	}
 
-	// todo: AI validation
+	// TODO: AI validation
 	var curTime time.Time = time.Now()
 	var proposal = entities.PendingChildSpecialNeedProposal{
 		ID:             util.GenerateId(),
@@ -1625,110 +3036,105 @@ func (c *childService) CreateSpecialNeedProposalV2(req request.CreateSpecialNeed
 	return &proposal, c.pendingChildSpecialNeedProposalRepo.CreatePendingChildSpecialNeedProposal(proposal, ctx)
 }
 
-// CreateSpecialNeedWithdrawProposal implements business.IChildService.
-func (c *childService) CreateSpecialNeedWithdrawProposal(req request.CreateSpecialNeedWithdrawProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !util.IsValidSuiAddressStrict(req.CampaignID) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// // CreateSpecialNeedWithdrawProposal implements business.IChildService.
+// func (c *childService) CreateSpecialNeedWithdrawProposal(req request.CreateSpecialNeedWithdrawProposalRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+// 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+// 	if !util.IsValidSuiAddressStrict(req.CampaignID) {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var client = c.clients[constant.SuiTestnet]
-	campaign, err := on_chain.GetOnChainObject[entities.SpecialNeedCampaign](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  req.CampaignID,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	var client = c.clients[constant.SuiTestnet]
+// 	campaign, err := on_chain.GetOnChainObject[entities.SpecialNeedCampaign](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  req.CampaignID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	if campaign == nil {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// 	if campaign == nil {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var sender string = ctx.Value("address").(string)
-	if campaign.Creator != sender {
-		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	}
+// 	var sender string = ctx.Value("address").(string)
+// 	if campaign.Creator != sender {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+// 	}
 
-	totalWithdrawAmount, _ := strconv.ParseInt(campaign.WithdrawAmount, 10, 64)
-	totalDonation, _ := strconv.ParseInt(campaign.TotalDonated, 10, 64)
-	if req.Amount > totalDonation-totalWithdrawAmount {
-		return response.BuildTransactionResponse{}, errors.New(noti.CURRENT_BUDGET_NOT_ENOUGH_MESSAGE)
-	}
+// 	totalWithdrawAmount, _ := strconv.ParseInt(campaign.WithdrawAmount, 10, 64)
+// 	totalDonation, _ := strconv.ParseInt(campaign.TotalDonated, 10, 64)
+// 	if req.Amount > totalDonation-totalWithdrawAmount {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.CURRENT_BUDGET_NOT_ENOUGH_MESSAGE)
+// 	}
 
-	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  os.Getenv(env.POOL_ID),
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	pool, err := on_chain.GetOnChainObject[entities.MainPool](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  os.Getenv(env.POOL_ID),
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
-		Client:    client,
-		ObjectIds: pool.LocalPools,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	localPools, err := on_chain.GetOnChainObjects[entities.LocalPool](on_chain.GetOnChainObjectsRequest{
+// 		Client:    client,
+// 		ObjectIds: pool.LocalPools,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  campaign.ChildID,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  campaign.ChildID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	var localPoolId string
-	for _, localPool := range localPools {
-		if localPool.Region == child.Region {
-			localPoolId = localPool.ID.ID
-			break
-		}
-	}
+// 	var localPoolId string
+// 	for _, localPool := range localPools {
+// 		if localPool.Region == child.Region {
+// 			localPoolId = localPool.ID.ID
+// 			break
+// 		}
+// 	}
 
-	var childModule = on_chain.InitializeModuleChild()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    client,
-		Sender:    sender,
-		Module:    childModule.GetModule(),
-		Function:  childModule.GetFunctionCreateChildBooksNeedWithdrawProposal(),
-		ErrLogger: c.errLogger,
-		Arguments: childModule.ToCreateChildSpecialNeedWithdrawProposalArguments(on_chain.CreateChildSpecialNeedWithdrawProposalArguments{
-			CampaignID:     req.CampaignID,
-			LocalPool:      localPoolId,
-			ChildID:        campaign.ChildID,
-			WithdrawAmount: req.Amount,
-			Description:    req.Description,
-			ClosedAt:       util.ToMilliseconds(util.GetRequestDuration()),
-		}),
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	var childModule = on_chain.InitializeModuleChild()
+// 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+// 		Client:    client,
+// 		Sender:    sender,
+// 		Module:    childModule.GetModule(),
+// 		Function:  childModule.GetFunctionCreateChildBooksNeedWithdrawProposal(),
+// 		ErrLogger: c.errLogger,
+// 		Arguments: childModule.ToCreateChildSpecialNeedWithdrawProposalArguments(on_chain.CreateChildSpecialNeedWithdrawProposalArguments{
+// 			CampaignID:     req.CampaignID,
+// 			LocalPool:      localPoolId,
+// 			ChildID:        campaign.ChildID,
+// 			WithdrawAmount: req.Amount,
+// 			Description:    req.Description,
+// 			ClosedAt:       util.ToMilliseconds(util.GetRequestDuration()),
+// 		}),
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	var proposalId string = util.GenerateId()
+// 	var proposalId string = util.GenerateId()
 
-	return response.BuildTransactionResponse{
-			TxBytes:    txBytes,
-			ProposalId: proposalId,
-		}, c.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
-			ID:        proposalId,
-			Purpose:   string(entities.SPECIAL_NEED_PURPOSE),
-			Target:    req.CampaignID,
-			CreatedAt: time.Now(),
-		}, ctx)
-}
-
-// EditSpecialNeedDao implements business.IChildService.
-func (c *childService) EditSpecialNeedDao(req request.EditDaoRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	panic("unimplemented")
-}
+// 	return response.BuildTransactionResponse{
+// 			TxBytes:    txBytes,
+// 			ProposalId: proposalId,
+// 		}, c.withdrawRepo.CreateOffChainWithdrawProposal(entities.OffChainWithdrawProposal{
+// 			ID:        proposalId,
+// 			Purpose:   string(entities.SPECIAL_NEED_PURPOSE),
+// 			Target:    req.CampaignID,
+// 			CreatedAt: time.Now(),
+// 		}, ctx)
+// }
 
 // ConfirmProvideMealForChild implements business.IChildService.
 func (c *childService) ConfirmProvideMealForChild(id string, req request.ConfirmProvideMealForChildRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
@@ -1763,7 +3169,7 @@ func (c *childService) ConfirmProvideMealForChild(id string, req request.Confirm
 	}
 
 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if staffNfts == nil || len(staffNfts) == 0 {
+	if len(staffNfts) == 0 {
 		return response.BuildTransactionResponse{}, genericRightErr
 	}
 
@@ -1790,7 +3196,7 @@ func (c *childService) ConfirmProvideMealForChild(id string, req request.Confirm
 
 	var curTime time.Time = time.Now()
 	var rawProvideDate string = util.TimeToRawDate(curTime)
-	if slices.Contains(need.ProvideMealDates, rawProvideDate) {
+	if slices.Contains(need.ProvideDates, rawProvideDate) {
 		return response.BuildTransactionResponse{}, errors.New(noti.CHILD_PROVIDED_MEAL_MESSAGE)
 	}
 
@@ -1880,7 +3286,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	// leaderNoti, err := c.leaderNotiRepo.GetNotiByMealNeed(id, ctx)
@@ -1923,7 +3329,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 	// 	}
 
 	// 	var withdrawDate string
-	// 	if need.Semester == "1" {
+	// 	if need.Semster == "1" {
 	// 		withdrawDate = withdrawDates.FirstSemesterDate
 	// 	} else {
 	// 		withdrawDate = withdrawDates.SecondSemesterDate
@@ -1954,7 +3360,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 	// 		Region:                  child.Region,
 	// 		AssignedLeaders:         leaders,
 	// 		ExpectedWithdrawPeriods: []string{withdrawDate + "/" + need.Year},
-	// 		Content:                 fmt.Sprintf("Withdraw books need semester %s for child %s", need.Semester, util.FormatAddress(child.ID.ID)),
+	// 		Content:                 fmt.Sprintf("Withdraw books need semester %s for child %s", need.Semster, util.FormatAddress(child.ID.ID)),
 	// 		CreatedAt: curTime,
 	// 		UpdatedAt: curTime,
 	// 	}, ctx); err != nil {
@@ -1973,12 +3379,12 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 		return response.PaymentUrlResponse{}, err
 	}
 
-	var description string = fmt.Sprintf("Support Books Need Semester %s - %s", need.Semester, need.Year)
+	var description string = fmt.Sprintf("Support Books Need Semester %s - %s", need.Semster, need.Year)
 	var expiredAt time.Time
 	if data.ExpiredAt != nil {
 		expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
 	} else {
-		expiredAt = time.Now().Add(1 * time.Minute) // Default 15p nếu PayOS ko trả về
+		expiredAt = time.Now().Add(2 * time.Minute) // Default 15p nếu PayOS ko trả về
 	}
 
 	return response.PaymentUrlResponse{
@@ -2003,7 +3409,7 @@ func (c *childService) SupportBooksNeed(id string, ctx context.Context) (respons
 }
 
 // SupportMealNeed implements business.IChildService.
-func (c *childService) SupportMealNeed(id string, req request.SupportMealNeedRequest, ctx context.Context) (response.PaymentUrlResponse, error) {
+func (c *childService) SupportMealNeed(id string, req request.SupportMealNeadRequest, ctx context.Context) (response.PaymentUrlResponse, error) {
 	profile, err := c.profileRepo.GetProfile(ctx.Value("sub").(string), ctx)
 	if err != nil {
 		return response.PaymentUrlResponse{}, err
@@ -2034,26 +3440,28 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeedReq
 	}
 
 	var curTime time.Time = time.Now()
-	var lastDuration = need.Durations[len(need.Durations)-1]
-	var endPeriod time.Time = util.RawDateToTime(lastDuration.Fields.EndPeriod)
+	var endPeriod time.Time
+	if len(need.Durations) > 0 {
+		var lastDuration = need.Durations[len(need.Durations)-1]
+		endPeriod = util.RawDateToTime(lastDuration.Fields.EndPeriod)
+	} else {
+		endPeriod = curTime
+	}
+
 	var rawExpectedStart, rawExpectedEnd string
 	var nextStartPeriod time.Time
 	if curTime.Before(endPeriod) { // Donate time: 1/1/2026 | Last supported: 15/7/2026
-		nextStartPeriod = endPeriod.AddDate(0, 0, 2)
+		//nextStartPeriod = endPeriod.AddDate(0, 0, 2)
+		nextStartPeriod = endPeriod.AddDate(0, 0, 0) // For quick demo
 	} else {
-		nextStartPeriod = curTime.AddDate(0, 0, 2)
+		// nextStartPeriod = curTime.AddDate(0, 0, 2)
+		nextStartPeriod = curTime.AddDate(0, 0, 0) // For quick demo
 	}
 
 	var nextYear int = curTime.Year() + 1
 	var rawMaxSupportedEndPeriod string = fmt.Sprintf("15/01/%d", nextYear)
 	var nextEndPeriod time.Time = nextStartPeriod.AddDate(0, req.Months, 0)
 	if nextEndPeriod.After(util.RawDateToTime(rawMaxSupportedEndPeriod)) {
-		// Support 6 months -> 16/1/2027 -> Deny
-		c.errLogger.Println("Raw last end period:", lastDuration.Fields.EndPeriod)
-		c.errLogger.Println("Last end period:", endPeriod)
-		c.errLogger.Println("Next year:", nextYear)
-		c.errLogger.Println("Next start period:", nextStartPeriod)
-		c.errLogger.Println("Next end period:", nextEndPeriod)
 		return response.PaymentUrlResponse{}, errors.New(noti.MEAL_NEED_SUPPORT_DURATION_OUT_RANGE_MESSAGE)
 	}
 
@@ -2076,7 +3484,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeedReq
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
 		c.errLogger.Println("Fail at create payos")
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	// var expectedWithdrawDate time.Time = nextEndPeriod.AddDate(0, 0, -1)
@@ -2176,7 +3584,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeedReq
 	// 	ID:                 util.GenerateId(),
 	// 	ChildID:            need.ChildID,
 	// 	Region:             child.Region,
-	// 	AssignedVolunteers: volunteerAddresses,
+	// 	AssginedVolunteers: volunteerAddresses,
 	// 	Content:            fmt.Sprintf("Provide meal for child %s from %s to %s", util.FormatAddress(child.ID.ID), rawExpectedStart, rawExpectedEnd),
 	// 	StartPeriod:        nextStartPeriod,
 	// 	EndPeriod:          nextEndPeriod,
@@ -2209,7 +3617,7 @@ func (c *childService) SupportMealNeed(id string, req request.SupportMealNeedReq
 	if data.ExpiredAt != nil {
 		expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
 	} else {
-		expiredAt = time.Now().Add(1 * time.Minute) // Default 15p nếu PayOS ko trả về
+		expiredAt = time.Now().Add(2 * time.Minute) // Default 15p nếu PayOS ko trả về
 	}
 
 	return response.PaymentUrlResponse{
@@ -2282,7 +3690,7 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 	})
 	if err != nil {
 		c.errLogger.Println("Err: ", err.Error())
-		return response.PaymentUrlResponse{}, errors.New(noti.INTERNAL_ERR_MSG)
+		return response.PaymentUrlResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	var donationId string = util.GenerateId()
@@ -2300,7 +3708,7 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 	if data.ExpiredAt != nil {
 		expiredAt = time.Unix(int64(*data.ExpiredAt), 0)
 	} else {
-		expiredAt = time.Now().Add(1 * time.Minute) // Default 15p nếu PayOS ko trả về
+		expiredAt = time.Now().Add(2 * time.Minute) // Default 15p nếu PayOS ko trả về
 	}
 
 	return response.PaymentUrlResponse{
@@ -2324,409 +3732,409 @@ func (c *childService) SupportSpecialNeed(id string, req request.SupportSpecialN
 		}, ctx)
 }
 
-// VoteSpecialNeedProposal implements business.IChildService.
-func (c *childService) VoteSpecialNeedProposal(id string, req request.VoteRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !util.IsValidSuiAddressStrict(id) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// // VoteSpecialNeedProposal implements business.IChildService.
+// func (c *childService) VoteSpecialNeedProposal(id string, req request.VoteRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+// 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+// 	if !util.IsValidSuiAddressStrict(id) {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var client = c.clients[constant.SuiTestnet]
-	proposal, err := on_chain.GetOnChainObject[entities.SpecialNeedProposal](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  id,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	var client = c.clients[constant.SuiTestnet]
+// 	proposal, err := on_chain.GetOnChainObject[entities.SpecialNeedProposal](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  id,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	if proposal == nil {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// 	if proposal == nil {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var sender string = ctx.Value("address").(string)
-	if proposal.Creator == sender {
-		return response.BuildTransactionResponse{}, errors.New(noti.OWNER_VOTE_WARN_MSG)
-	}
+// 	var sender string = ctx.Value("address").(string)
+// 	if proposal.Creator == sender {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.OWNER_VOTE_WARN_MSG)
+// 	}
 
-	closedAt, _ := strconv.ParseInt(proposal.ClosedAt, 10, 64)
-	if time.Now().After(util.MilliSecToTime(closedAt)) {
-		return response.BuildTransactionResponse{}, errors.New(noti.REQUEST_CLOSED_MESSAGE)
-	}
+// 	closedAt, _ := strconv.ParseInt(proposal.ClosedAt, 10, 64)
+// 	if time.Now().After(util.MilliSecToTime(closedAt)) {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.REQUEST_CLOSED_MESSAGE)
+// 	}
 
-	if slices.Contains(proposal.Approvers, sender) || slices.Contains(proposal.Refusers, sender) {
-		return response.BuildTransactionResponse{}, errors.New(noti.ALREADY_VOTE_MESSAGE)
-	}
+// 	if slices.Contains(proposal.Approvers, sender) || slices.Contains(proposal.Refusers, sender) {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.ALREADY_VOTE_MESSAGE)
+// 	}
 
-	var donorModule = on_chain.InitializeModuleDonor()
-	nfts, _ := on_chain.GetOnChainOwnedObjects[entities.Donor](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), donorModule.GetModule(), donorModule.GetDonorNftStruct()),
-		ErrLogger:    c.errLogger,
-	}, ctx)
-	if nfts == nil || len(nfts) == 0 {
-		return response.BuildTransactionResponse{}, errors.New(noti.HAVE_TO_DONATE_TO_VOTE)
-	}
+// 	var donorModule = on_chain.InitializeModuleDonor()
+// 	nfts, _ := on_chain.GetOnChainOwnedObjects[entities.Donor](on_chain.GetOnChainOwnedObjectsRequest{
+// 		Client:       client,
+// 		OwnerAddress: sender,
+// 		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), donorModule.GetModule(), donorModule.GetDonorNftStruct()),
+// 		ErrLogger:    c.errLogger,
+// 	}, ctx)
+// 	if nfts == nil || len(nfts) == 0 {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.HAVE_TO_DONATE_TO_VOTE)
+// 	}
 
-	var refuseReason string = strings.TrimSpace(req.RefuseReason)
-	if refuseReason == "" {
-		refuseReason = "Refuse"
-	}
+// 	var refuseReason string = strings.TrimSpace(req.RefuseReason)
+// 	if refuseReason == "" {
+// 		refuseReason = "Refuse"
+// 	}
 
-	var needModule = on_chain.InitializeModuleNeed()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    client,
-		Sender:    sender,
-		Module:    needModule.GetModule(),
-		Function:  needModule.GetFunctionVoteSpecialNeedProposal(),
-		ErrLogger: c.errLogger,
-		Arguments: needModule.ToVoteSpecialNeedProposalArguments(on_chain.VoteSpecialNeedProposalArguments{
-			ProposalID:   id,
-			DonorNft:     nfts[0].ID.ID,
-			IsApprove:    req.IsVoteYes,
-			RefuseReason: refuseReason,
-		}),
-	}, ctx)
+// 	var needModule = on_chain.InitializeModuleNeed()
+// 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+// 		Client:    client,
+// 		Sender:    sender,
+// 		Module:    needModule.GetModule(),
+// 		Function:  needModule.GetFunctionVoteSpecialNeedProposal(),
+// 		ErrLogger: c.errLogger,
+// 		Arguments: needModule.ToVoteSpecialNeedProposalArguments(on_chain.VoteSpecialNeedProposalArguments{
+// 			ProposalID:   id,
+// 			DonorNft:     nfts[0].ID.ID,
+// 			IsApprove:    req.IsVoteYes,
+// 			RefuseReason: refuseReason,
+// 		}),
+// 	}, ctx)
 
-	return response.BuildTransactionResponse{
-		TxBytes: txBytes,
-	}, err
-}
+// 	return response.BuildTransactionResponse{
+// 		TxBytes: txBytes,
+// 	}, err
+// }
 
-// UpdateBooksNeed implements business.IChildService.
-func (c *childService) UpdateBooksNeed(req request.UpdateChildNeedRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !util.IsValidSuiAddressStrict(req.ChildID) || !util.IsValidSuiAddressStrict(req.NeedID) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// // UpdateBooksNeed implements business.IChildService.
+// func (c *childService) UpdateBooksNeed(req request.UpdateChildNeedRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+// 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+// 	if !util.IsValidSuiAddressStrict(req.ChildID) || !util.IsValidSuiAddressStrict(req.NeedID) {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var client = c.clients[constant.SuiTestnet]
-	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  req.ChildID,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	var client = c.clients[constant.SuiTestnet]
+// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  req.ChildID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	if child == nil || !slices.Contains(child.BooksNeeds, req.NeedID) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// 	if child == nil || !slices.Contains(child.BooksNeeds, req.NeedID) {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var sender string = ctx.Value("address").(string)
-	var staffModule = on_chain.InitializeModuleStaff()
-	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
-		ErrLogger:    c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	var sender string = ctx.Value("address").(string)
+// 	var staffModule = on_chain.InitializeModuleStaff()
+// 	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
+// 		Client:       client,
+// 		OwnerAddress: sender,
+// 		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
+// 		ErrLogger:    c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if staffNfts == nil || len(staffNfts) == 0 {
-		return response.BuildTransactionResponse{}, genericRightErr
-	}
+// 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+// 	if staffNfts == nil || len(staffNfts) == 0 {
+// 		return response.BuildTransactionResponse{}, genericRightErr
+// 	}
 
-	var leaderNftId string
-	for _, nft := range staffNfts {
-		if nft.Role == local_leader_role && nft.Region == child.Region {
-			leaderNftId = nft.ID.ID
-			break
-		}
-	}
+// 	var leaderNftId string
+// 	for _, nft := range staffNfts {
+// 		if nft.Role == local_leader_role && nft.Region == child.Region {
+// 			leaderNftId = nft.ID.ID
+// 			break
+// 		}
+// 	}
 
-	if leaderNftId == "" {
-		return response.BuildTransactionResponse{}, genericRightErr
-	}
+// 	if leaderNftId == "" {
+// 		return response.BuildTransactionResponse{}, genericRightErr
+// 	}
 
-	if req.Value == nil {
-		return response.BuildTransactionResponse{}, nil
-	}
+// 	if req.Value == nil {
+// 		return response.BuildTransactionResponse{}, nil
+// 	}
 
-	if *req.Value < 10_000 {
-		return response.BuildTransactionResponse{}, errors.New(noti.NEED_VALUE_INVALID_WARN_MSG)
-	}
+// 	if *req.Value < 10_000 {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.NEED_VALUE_INVALID_WARN_MSG)
+// 	}
 
-	need, err := on_chain.GetOnChainObject[entities.BooksNeed](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  req.NeedID,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	need, err := on_chain.GetOnChainObject[entities.BooksNeed](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  req.NeedID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	var curTime time.Time = time.Now()
-	if need.IsUpdated {
-		if slices.Contains(need.YearChanges, fmt.Sprint(curTime.Year())) {
-			return response.BuildTransactionResponse{}, errors.New(noti.CHILD_NEED_UPDATED_MESSAGE)
-		}
+// 	var curTime time.Time = time.Now()
+// 	if need.IsUpdated {
+// 		if slices.Contains(need.YearChanges, fmt.Sprint(curTime.Year())) {
+// 			return response.BuildTransactionResponse{}, errors.New(noti.CHILD_NEED_UPDATED_MESSAGE)
+// 		}
 
-		editDates, err := on_chain.GetOnChainObject[entities.EditNeedDates](on_chain.GetOnChainObjectRequest{
-			Client:    client,
-			ObjectId:  os.Getenv(env.EDIT_BOOKS_NEED_DATES_ID),
-			ErrLogger: c.errLogger,
-		}, ctx)
-		if err != nil {
-			return response.BuildTransactionResponse{}, err
-		}
+// 		editDates, err := on_chain.GetOnChainObject[entities.EditNeedDates](on_chain.GetOnChainObjectRequest{
+// 			Client:    client,
+// 			ObjectId:  os.Getenv(env.EDIT_BOOKS_NEED_DATES_ID),
+// 			ErrLogger: c.errLogger,
+// 		}, ctx)
+// 		if err != nil {
+// 			return response.BuildTransactionResponse{}, err
+// 		}
 
-		var startDate time.Time = util.ToStartOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.StartDate, curTime.Year())))
-		var endDate time.Time = util.ToEndOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.EndDate, curTime.Year())))
-		if curTime.Before(startDate) || curTime.After(endDate) {
-			return response.BuildTransactionResponse{}, errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE)
-		}
-	}
+// 		var startDate time.Time = util.ToStartOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.StartDate, curTime.Year())))
+// 		var endDate time.Time = util.ToEndOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.EndDate, curTime.Year())))
+// 		if curTime.Before(startDate) || curTime.After(endDate) {
+// 			return response.BuildTransactionResponse{}, errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE)
+// 		}
+// 	}
 
-	var childModule = on_chain.InitializeModuleChild()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    client,
-		Sender:    sender,
-		Module:    childModule.GetModule(),
-		Function:  childModule.GetFunctionUpdateChildBooksNeed(),
-		ErrLogger: c.errLogger,
-		Arguments: childModule.ToUpdateChildNeedArguments(on_chain.UpdateChildNeedArguments{
-			StaffNft: leaderNftId,
-			ChildID:  req.ChildID,
-			NeedID:   req.NeedID,
-			Year:     curTime.Year(),
-			Value:    *req.Value,
-		}),
-	}, ctx)
+// 	var childModule = on_chain.InitializeModuleChild()
+// 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+// 		Client:    client,
+// 		Sender:    sender,
+// 		Module:    childModule.GetModule(),
+// 		Function:  childModule.GetFunctionUpdateChildBooksNeed(),
+// 		ErrLogger: c.errLogger,
+// 		Arguments: childModule.ToUpdateChildNeedArguments(on_chain.UpdateChildNeedArguments{
+// 			StaffNft: leaderNftId,
+// 			ChildID:  req.ChildID,
+// 			NeedID:   req.NeedID,
+// 			Year:     curTime.Year(),
+// 			Value:    *req.Value,
+// 		}),
+// 	}, ctx)
 
-	return response.BuildTransactionResponse{
-		TxBytes: txBytes,
-	}, err
-}
+// 	return response.BuildTransactionResponse{
+// 		TxBytes: txBytes,
+// 	}, err
+// }
 
-// UpdateHealthInsuranceNeed implements business.IChildService.
-func (c *childService) UpdateHealthInsuranceNeed(req request.UpdateChildNeedRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !util.IsValidSuiAddressStrict(req.ChildID) || !util.IsValidSuiAddressStrict(req.NeedID) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// // UpdateHealthInsuranceNeed implements business.IChildService.
+// func (c *childService) UpdateHealthInsuranceNeed(req request.UpdateChildNeedRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+// 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+// 	if !util.IsValidSuiAddressStrict(req.ChildID) || !util.IsValidSuiAddressStrict(req.NeedID) {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var client = c.clients[constant.SuiTestnet]
-	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  req.ChildID,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	var client = c.clients[constant.SuiTestnet]
+// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  req.ChildID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	if child == nil || child.HealthInsuranceNeed != req.NeedID {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// 	if child == nil || child.HealthInsuranceNeed != req.NeedID {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var sender string = ctx.Value("address").(string)
-	var staffModule = on_chain.InitializeModuleStaff()
-	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
-		ErrLogger:    c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	var sender string = ctx.Value("address").(string)
+// 	var staffModule = on_chain.InitializeModuleStaff()
+// 	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
+// 		Client:       client,
+// 		OwnerAddress: sender,
+// 		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
+// 		ErrLogger:    c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if staffNfts == nil || len(staffNfts) == 0 {
-		return response.BuildTransactionResponse{}, genericRightErr
-	}
+// 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+// 	if staffNfts == nil || len(staffNfts) == 0 {
+// 		return response.BuildTransactionResponse{}, genericRightErr
+// 	}
 
-	var leaderNftId string
-	for _, nft := range staffNfts {
-		if nft.Role == local_leader_role && nft.Region == child.Region {
-			leaderNftId = nft.ID.ID
-			break
-		}
-	}
+// 	var leaderNftId string
+// 	for _, nft := range staffNfts {
+// 		if nft.Role == local_leader_role && nft.Region == child.Region {
+// 			leaderNftId = nft.ID.ID
+// 			break
+// 		}
+// 	}
 
-	if leaderNftId == "" {
-		return response.BuildTransactionResponse{}, genericRightErr
-	}
+// 	if leaderNftId == "" {
+// 		return response.BuildTransactionResponse{}, genericRightErr
+// 	}
 
-	if req.Value == nil {
-		return response.BuildTransactionResponse{}, nil
-	}
+// 	if req.Value == nil {
+// 		return response.BuildTransactionResponse{}, nil
+// 	}
 
-	if *req.Value < 10_000 {
-		return response.BuildTransactionResponse{}, errors.New(noti.NEED_VALUE_INVALID_WARN_MSG)
-	}
+// 	if *req.Value < 10_000 {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.NEED_VALUE_INVALID_WARN_MSG)
+// 	}
 
-	need, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeed](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  req.NeedID,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	need, err := on_chain.GetOnChainObject[entities.HealthInsuranceNeed](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  req.NeedID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	var curTime time.Time = time.Now()
-	if need.IsUpdated {
-		if slices.Contains(need.YearChanges, fmt.Sprint(curTime.Year())) {
-			return response.BuildTransactionResponse{}, errors.New(noti.CHILD_NEED_UPDATED_MESSAGE)
-		}
+// 	var curTime time.Time = time.Now()
+// 	if need.IsUpdated {
+// 		if slices.Contains(need.YearChanges, fmt.Sprint(curTime.Year())) {
+// 			return response.BuildTransactionResponse{}, errors.New(noti.CHILD_NEED_UPDATED_MESSAGE)
+// 		}
 
-		editDates, err := on_chain.GetOnChainObject[entities.EditNeedDates](on_chain.GetOnChainObjectRequest{
-			Client:    client,
-			ObjectId:  os.Getenv(env.EDIT_HEALTH_INSURANCE_NEED_DATES_ID),
-			ErrLogger: c.errLogger,
-		}, ctx)
-		if err != nil {
-			return response.BuildTransactionResponse{}, err
-		}
+// 		editDates, err := on_chain.GetOnChainObject[entities.EditNeedDates](on_chain.GetOnChainObjectRequest{
+// 			Client:    client,
+// 			ObjectId:  os.Getenv(env.EDIT_HEALTH_INSURANCE_NEED_DATES_ID),
+// 			ErrLogger: c.errLogger,
+// 		}, ctx)
+// 		if err != nil {
+// 			return response.BuildTransactionResponse{}, err
+// 		}
 
-		var startDate time.Time = util.ToStartOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.StartDate, curTime.Year())))
-		var endDate time.Time = util.ToEndOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.EndDate, curTime.Year())))
-		if curTime.Before(startDate) || curTime.After(endDate) {
-			return response.BuildTransactionResponse{}, errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE)
-		}
-	}
+// 		var startDate time.Time = util.ToStartOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.StartDate, curTime.Year())))
+// 		var endDate time.Time = util.ToEndOfDate(util.RawDateToTime(fmt.Sprintf("%s/%d", editDates.EndDate, curTime.Year())))
+// 		if curTime.Before(startDate) || curTime.After(endDate) {
+// 			return response.BuildTransactionResponse{}, errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE)
+// 		}
+// 	}
 
-	var childModule = on_chain.InitializeModuleChild()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    client,
-		Sender:    sender,
-		Module:    childModule.GetModule(),
-		Function:  childModule.GetFunctionUpdateChildHealthInsuranceNeed(),
-		ErrLogger: c.errLogger,
-		Arguments: childModule.ToUpdateChildNeedArguments(on_chain.UpdateChildNeedArguments{
-			StaffNft: leaderNftId,
-			ChildID:  req.ChildID,
-			NeedID:   req.NeedID,
-			Year:     curTime.Year(),
-			Value:    *req.Value,
-		}),
-	}, ctx)
+// 	var childModule = on_chain.InitializeModuleChild()
+// 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+// 		Client:    client,
+// 		Sender:    sender,
+// 		Module:    childModule.GetModule(),
+// 		Function:  childModule.GetFunctionUpdateChildHealthInsuranceNeed(),
+// 		ErrLogger: c.errLogger,
+// 		Arguments: childModule.ToUpdateChildNeedArguments(on_chain.UpdateChildNeedArguments{
+// 			StaffNft: leaderNftId,
+// 			ChildID:  req.ChildID,
+// 			NeedID:   req.NeedID,
+// 			Year:     curTime.Year(),
+// 			Value:    *req.Value,
+// 		}),
+// 	}, ctx)
 
-	return response.BuildTransactionResponse{
-		TxBytes: txBytes,
-	}, err
-}
+// 	return response.BuildTransactionResponse{
+// 		TxBytes: txBytes,
+// 	}, err
+// }
 
-// UpdateMealNeed implements business.IChildService.
-func (c *childService) UpdateMealNeed(req request.UpdateChildNeedRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
-	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
-	if !util.IsValidSuiAddressStrict(req.ChildID) || !util.IsValidSuiAddressStrict(req.NeedID) {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// // UpdateMealNeed implements business.IChildService.
+// func (c *childService) UpdateMealNeed(req request.UpdateChildNeedRequest, ctx context.Context) (response.BuildTransactionResponse, error) {
+// 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+// 	if !util.IsValidSuiAddressStrict(req.ChildID) || !util.IsValidSuiAddressStrict(req.NeedID) {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var client = c.clients[constant.SuiTestnet]
-	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  req.ChildID,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	var client = c.clients[constant.SuiTestnet]
+// 	child, err := on_chain.GetOnChainObject[entities.Child](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  req.ChildID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	if child == nil || child.MealNeed != req.NeedID {
-		return response.BuildTransactionResponse{}, genericErr
-	}
+// 	if child == nil || child.MealNeed != req.NeedID {
+// 		return response.BuildTransactionResponse{}, genericErr
+// 	}
 
-	var sender string = ctx.Value("address").(string)
-	var staffModule = on_chain.InitializeModuleStaff()
-	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
-		ErrLogger:    c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	var sender string = ctx.Value("address").(string)
+// 	var staffModule = on_chain.InitializeModuleStaff()
+// 	staffNfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
+// 		Client:       client,
+// 		OwnerAddress: sender,
+// 		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), staffModule.GetModule(), staffModule.GetStaffNftObjectStruct()),
+// 		ErrLogger:    c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if staffNfts == nil || len(staffNfts) == 0 {
-		return response.BuildTransactionResponse{}, genericRightErr
-	}
+// 	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
+// 	if staffNfts == nil || len(staffNfts) == 0 {
+// 		return response.BuildTransactionResponse{}, genericRightErr
+// 	}
 
-	var leaderNftId string
-	for _, nft := range staffNfts {
-		if nft.Role == local_leader_role && nft.Region == child.Region {
-			leaderNftId = nft.ID.ID
-			break
-		}
-	}
+// 	var leaderNftId string
+// 	for _, nft := range staffNfts {
+// 		if nft.Role == local_leader_role && nft.Region == child.Region {
+// 			leaderNftId = nft.ID.ID
+// 			break
+// 		}
+// 	}
 
-	if leaderNftId == "" {
-		return response.BuildTransactionResponse{}, genericRightErr
-	}
+// 	if leaderNftId == "" {
+// 		return response.BuildTransactionResponse{}, genericRightErr
+// 	}
 
-	if req.Value == nil {
-		return response.BuildTransactionResponse{}, nil
-	}
+// 	if req.Value == nil {
+// 		return response.BuildTransactionResponse{}, nil
+// 	}
 
-	if *req.Value < 10_000 {
-		return response.BuildTransactionResponse{}, errors.New(noti.NEED_VALUE_INVALID_WARN_MSG)
-	}
+// 	if *req.Value < 10_000 {
+// 		return response.BuildTransactionResponse{}, errors.New(noti.NEED_VALUE_INVALID_WARN_MSG)
+// 	}
 
-	need, err := on_chain.GetOnChainObject[entities.MealNeed](on_chain.GetOnChainObjectRequest{
-		Client:    client,
-		ObjectId:  req.NeedID,
-		ErrLogger: c.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
+// 	need, err := on_chain.GetOnChainObject[entities.MealNeed](on_chain.GetOnChainObjectRequest{
+// 		Client:    client,
+// 		ObjectId:  req.NeedID,
+// 		ErrLogger: c.errLogger,
+// 	}, ctx)
+// 	if err != nil {
+// 		return response.BuildTransactionResponse{}, err
+// 	}
 
-	var curTime time.Time = time.Now()
-	if need.IsUpdated {
-		var rawCurYear string = fmt.Sprintf("%d", curTime.Year())
-		if need.Year == rawCurYear {
-			return response.BuildTransactionResponse{}, errors.New(noti.CHILD_NEED_UPDATED_MESSAGE)
-		}
+// 	var curTime time.Time = time.Now()
+// 	if need.IsUpdated {
+// 		var rawCurYear string = fmt.Sprintf("%d", curTime.Year())
+// 		if need.Year == rawCurYear {
+// 			return response.BuildTransactionResponse{}, errors.New(noti.CHILD_NEED_UPDATED_MESSAGE)
+// 		}
 
-		editDates, err := on_chain.GetOnChainObject[entities.EditNeedDates](on_chain.GetOnChainObjectRequest{
-			Client:    client,
-			ObjectId:  os.Getenv(env.EDIT_BOOKS_NEED_DATES_ID),
-			ErrLogger: c.errLogger,
-		}, ctx)
-		if err != nil {
-			return response.BuildTransactionResponse{}, err
-		}
+// 		editDates, err := on_chain.GetOnChainObject[entities.EditNeedDates](on_chain.GetOnChainObjectRequest{
+// 			Client:    client,
+// 			ObjectId:  os.Getenv(env.EDIT_BOOKS_NEED_DATES_ID),
+// 			ErrLogger: c.errLogger,
+// 		}, ctx)
+// 		if err != nil {
+// 			return response.BuildTransactionResponse{}, err
+// 		}
 
-		var startDate time.Time = util.ToStartOfDate(util.RawDateToTime(fmt.Sprintf("%s/%s", editDates.StartDate, rawCurYear)))
-		var endDate time.Time = util.ToEndOfDate(util.RawDateToTime(fmt.Sprintf("%s/%s", editDates.EndDate, rawCurYear)))
-		if curTime.Before(startDate) || curTime.After(endDate) {
-			return response.BuildTransactionResponse{}, errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE)
-		}
-	}
+// 		var startDate time.Time = util.ToStartOfDate(util.RawDateToTime(fmt.Sprintf("%s/%s", editDates.StartDate, rawCurYear)))
+// 		var endDate time.Time = util.ToEndOfDate(util.RawDateToTime(fmt.Sprintf("%s/%s", editDates.EndDate, rawCurYear)))
+// 		if curTime.Before(startDate) || curTime.After(endDate) {
+// 			return response.BuildTransactionResponse{}, errors.New(noti.NOTE_UPDATE_CHILD_NEED_DATE_MESSAGE)
+// 		}
+//
 
-	var childModule = on_chain.InitializeModuleChild()
-	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
-		Client:    client,
-		Sender:    sender,
-		Module:    childModule.GetModule(),
-		Function:  childModule.GetFunctionUpdateChildMealNeed(),
-		ErrLogger: c.errLogger,
-		Arguments: childModule.ToUpdateChildNeedArguments(on_chain.UpdateChildNeedArguments{
-			StaffNft: leaderNftId,
-			ChildID:  req.ChildID,
-			NeedID:   req.NeedID,
-			Year:     curTime.Year(),
-			Value:    *req.Value,
-		}),
-	}, ctx)
+// 	var childModule = on_chain.InitializeModuleChild()
+// 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
+// 		Client:    client,
+// 		Sender:    sender,
+// 		Module:    childModule.GetModule(),
+// 		Function:  childModule.GetFunctionUpdateChildMealNeed(),
+// 		ErrLogger: c.errLogger,
+// 		Arguments: childModule.ToUpdateChildNeedArguments(on_chain.UpdateChildNeedArguments{
+// 			StaffNft: leaderNftId,
+// 			ChildID:  req.ChildID,
+// 			NeedID:   req.NeedID,
+// 			Year:     curTime.Year(),
+// 			Value:    *req.Value,
+// 		}),
+// 	}, ctx)
 
-	return response.BuildTransactionResponse{
-		TxBytes: txBytes,
-	}, err
-}
+// 	return response.BuildTransactionResponse{
+// 		TxBytes: txBytes,
+// 	}, err
+// }
 
-func (c *childService) getGetChildrenRedisKey(req request.GetChildrenRequest) string {
+func (c *childService) getGetChildrenRediskey(req request.GetChildrenRequest) string {
 	var keyword string = "empty"
 	if req.Keyword != "" {
 		keyword = req.Keyword
@@ -2751,6 +4159,6 @@ func (c *childService) getGetChildrenRedisKey(req request.GetChildrenRequest) st
 		keyword, region, yob, req.SortOrder, gender, req.PageSize, req.Page)
 }
 
-func (c *childService) getGetChildRedisKey(id string) string {
+func (c *childService) getGetChildRediskey(id string) string {
 	return fmt.Sprintf("child:%s", id)
 }

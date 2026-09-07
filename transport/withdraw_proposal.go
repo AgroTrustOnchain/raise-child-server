@@ -72,22 +72,19 @@ func GetWithdrawProposals(ctx *gin.Context) {
 	})
 }
 
-// VoteWithdrawProposal godoc
-// @Summary      Vote on a withdraw proposal
-// @Description  Submit a vote for a specific withdraw proposal. Note: This uses query parameters for the vote data.
+// GetOnChainPendingWithdrawProposals godoc
+// @Summary      List on-chain pending withdraw proposals
+// @Description  Retrieve a list of on-chain pending withdraw proposals with optional query filters
 // @Tags         Withdrawal
 // @Accept       json
 // @Produce      json
-// @Security     BearerAuth
-// @Param        id     path      string               true  "Withdraw Proposal ID"
-// @Param        query  query     request.VoteRequest  true  "Vote Action Details"
-// @Success      200    {object}  response.BuildTransactionResponse
+// @Param        request  query     request.GetOnchainPendingWithdrawProposalsRequest  true  "Filter Criteria"
+// @Success      200      {object}  response.PaginationDataResponse
 // @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
-// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
-// @Router       /withdraw-proposals/{id}/vote [post]
-func VoteWithdrawProposal(ctx *gin.Context) {
-	var request request.VoteRequest
+// @Router       /withdraw-proposals/pending [get]
+func GetOnChainPendingWithdrawProposals(ctx *gin.Context) {
+	var request request.GetOnchainPendingWithdrawProposalsRequest
 	if ctx.ShouldBindQuery(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return
@@ -99,13 +96,64 @@ func VoteWithdrawProposal(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.VoteWithdrawProposal(ctx.Param("id"), request, ctx)
+	res, err := service.GetPendingWithdrawProposals(request, ctx)
 	util.ProcessResponse(response.APIResponse{
 		Data1:    res,
 		Data2:    res,
 		ErrMsg:   err,
 		Context:  ctx,
 		PostType: action_type.NON_POST,
+	})
+}
+
+// VoteWithdrawProposal godoc
+// @Summary      Vote on a withdraw proposal
+// @Description  Submit a vote for a specific withdraw proposal. Note: This uses query parameters for the vote data.
+// @Tags         Withdrawal
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id     path      string               true  "Withdraw Proposal ID"
+// @Success      200    {object}  response.MessageAPIResponse "Success"
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /withdraw-proposals/{id}/vote [post]
+func VoteWithdrawProposal(ctx *gin.Context) {
+	service, err := business.GenerateWithdrawProposalService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	util.ProcessResponse(response.APIResponse{
+		ErrMsg:  service.VoteWithdrawProposal(ctx.Param("id"), ctx),
+		Context: ctx,
+	})
+}
+
+// ProposeChildrenWithdrawRequests godoc
+// @Summary      Propose children withdraw proposals
+// @Description  Propose children withdraw proposals
+// @Tags         Withdrawal
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200    {object}  response.MessageAPIResponse "Success"
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      401      {object}  response.MessageAPIResponse "You have no rights to access this action."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /withdraw-proposals/children/propose [post]
+func ProposeChildrenWithdrawRequests(ctx *gin.Context) {
+	service, err := business.GenerateWithdrawProposalService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
+
+	util.ProcessResponse(response.APIResponse{
+		ErrMsg:  service.ProposeChildrenWithdrawRequests(ctx),
+		Context: ctx,
 	})
 }
 
@@ -178,14 +226,14 @@ func ConfirmMainPoolWithdrawProposal(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        request  body      request.CreateWithdrawProposalRequest   true  "Withdraw Proposal details (e.g., "withdraw amount", "description")"
-// @Success      201  {object}  response.BuildTransactionResponse
+// @Success      201  {object}  response.MessageAPIResponse "Success"
 // @Failure      400  {object}  response.MessageAPIResponse "Invalid data. Please try again."
 // @Failure      401  {object}  response.MessageAPIResponse "You have no rights to access this action."
 // @Failure      500  {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /withdraw-proposals [post]
 func CreateWithdrawProposal(ctx *gin.Context) {
 	var request request.CreateWithdrawProposalRequest
-	if ctx.ShouldBindQuery(&request) != nil {
+	if ctx.ShouldBindJSON(&request) != nil {
 		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
 		return
 	}
@@ -196,12 +244,8 @@ func CreateWithdrawProposal(ctx *gin.Context) {
 		return
 	}
 
-	res, err := service.CreateWithdrawProposal(request, ctx)
 	util.ProcessResponse(response.APIResponse{
-		Data1:    res,
-		Data2:    res,
-		ErrMsg:   err,
-		Context:  ctx,
-		PostType: action_type.CREATE_ACTION,
+		ErrMsg:  service.CreateWithdrawProposal(request, ctx),
+		Context: ctx,
 	})
 }

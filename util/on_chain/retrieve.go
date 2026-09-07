@@ -47,9 +47,7 @@ type GetOnChainSpecificTypeObjectsRequest struct {
 }
 
 func GetOnChainObject[T any](req GetOnChainObjectRequest, ctx context.Context) (*T, error) {
-	req.ErrLogger.Println("On-chain object id:", req.ObjectId)
-
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 	var retrieveReq = models.SuiGetObjectRequest{
 		ObjectId: req.ObjectId,
 		Options: models.SuiObjectDataOptions{
@@ -59,8 +57,15 @@ func GetOnChainObject[T any](req GetOnChainObjectRequest, ctx context.Context) (
 
 	res, err := req.Client.SuiGetObject(ctx, retrieveReq)
 	if err != nil {
+		if strings.Contains(err.Error(), "no result") {
+			return nil, nil
+		}
 		req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
 		return nil, internalErr
+	}
+
+	if res.Data.Content == nil || res.Data.Content.Fields == nil {
+		return nil, nil
 	}
 
 	var jsonData = res.Data.Content.Fields
@@ -81,7 +86,7 @@ func GetOnChainObject[T any](req GetOnChainObjectRequest, ctx context.Context) (
 
 func GetOnChainObjects[T any](req GetOnChainObjectsRequest, ctx context.Context) ([]T, error) {
 	// VER 1
-	// var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	// var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 	// var retrieveReq = models.SuiMultiGetObjectsRequest{
 	// 	ObjectIds: req.ObjectIds,
 	// 	Options: models.SuiObjectDataOptions{
@@ -167,7 +172,7 @@ func GetOnChainObjects[T any](req GetOnChainObjectsRequest, ctx context.Context)
 
 	var objects []T
 	if suiRes == nil {
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	for batchRes := range suiRes {
@@ -187,7 +192,7 @@ func GetOnChainObjects[T any](req GetOnChainObjectsRequest, ctx context.Context)
 
 func GetOnChainOwnedObjects[T any](req GetOnChainOwnedObjectsRequest, ctx context.Context) ([]T, error) {
 	// VER 1
-	// var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	// var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 	// var filter = map[string]interface{}{
 	// 	"StructType": req.StructType,
 	// }
@@ -252,7 +257,7 @@ func GetOnChainOwnedObjects[T any](req GetOnChainOwnedObjectsRequest, ctx contex
 			}
 
 			req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
-			return nil, errors.New(noti.INTERNAL_ERR_MSG)
+			return nil, errors.New(noti.INTERNALL_ERR_MSG)
 		}
 
 		for _, object := range res.Data {
@@ -279,17 +284,17 @@ func GetOnChainOwnedObjects[T any](req GetOnChainOwnedObjectsRequest, ctx contex
 }
 
 func GetDynamicFields(id string, client sui.ISuiAPI, errLogger *log.Logger, ctx context.Context) (map[string]interface{}, error) {
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 	fields, err := client.SuiXGetDynamicField(ctx, models.SuiXGetDynamicFieldRequest{
 		ObjectId: id,
 	})
 
 	if err != nil {
-		errLogger.Println(noti.RETRIEVE_DYNAMIC_FIELDS_ERR_MSG + err.Error())
+		errLogger.Println(noti.ApproRETRIEVE_DYNAMIC_FIELDS_ERR_MSGvers + err.Error())
 		return nil, internalErr
 	}
 
-	var res map[string]interface{}
+	var res = make(map[string]interface{})
 	for _, fieldInfo := range fields.Data {
 		fieldValue, err := client.SuiXGetDynamicFieldObject(ctx, models.SuiXGetDynamicFieldObjectRequest{
 			ObjectId: fieldInfo.ObjectId,
@@ -300,7 +305,7 @@ func GetDynamicFields(id string, client sui.ISuiAPI, errLogger *log.Logger, ctx 
 		})
 
 		if err != nil {
-			errLogger.Println(noti.RETRIEVE_DYNAMIC_FIELDS_ERR_MSG + err.Error())
+			errLogger.Println(noti.ApproRETRIEVE_DYNAMIC_FIELDS_ERR_MSGvers + err.Error())
 			return nil, internalErr
 		}
 
@@ -308,6 +313,7 @@ func GetDynamicFields(id string, client sui.ISuiAPI, errLogger *log.Logger, ctx 
 		for k, v := range field {
 			res[k] = v
 		}
+
 	}
 
 	return res, nil
@@ -337,7 +343,7 @@ func GetOnChainSpecificTypeObjects[T any](req GetOnChainSpecificTypeObjectsReque
 	var res response.SuiGraphQlObjectResponse
 	if err := req.Client.Run(ctx, retrieveReq, &res); err != nil {
 		req.ErrLogger.Println(noti.RETRIEVE_ON_CHAIN_DATA_ERR_MSG + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	var objects []T
@@ -361,10 +367,8 @@ func handleGetEmptyOnChainObject(err, id string, logger *log.Logger) {
 	switch err {
 	case "deleted":
 		msg = fmt.Sprintf("Object %s was deleted from the network.", id)
-		break
 	case "notExists":
 		msg = fmt.Sprintf("Object %s does not exist.", id)
-		break
 	}
 
 	if msg != "" {

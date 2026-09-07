@@ -20,8 +20,11 @@ func init() {
 	_wallets = make(map[string]string)
 }
 
-func GetWallets() map[string]string {
-	return _wallets
+func IsWalletRegistered(sub string) bool {
+	_shareMu.RLock()
+	defer _shareMu.RUnlock()
+	_, exists := _wallets[sub]
+	return exists
 }
 
 func setLogin(sub, addr string) {
@@ -71,8 +74,8 @@ func setLoggedIn(addr string, exp int64) {
 func isLoggedIn(addr string) bool {
 	_shareMu.RLock()
 	defer _shareMu.RUnlock()
-	_, isLogin := _addresses[addr]
-	return isLogin
+	_, isLoggin := _addresses[addr]
+	return isLoggin
 }
 
 func removeLoggedIn(addr string) {

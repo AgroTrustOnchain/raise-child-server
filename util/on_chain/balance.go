@@ -6,21 +6,21 @@ import (
 	"log"
 	"raise-child/constants/noti"
 	internal_sui "raise-child/constants/on-chain/sui"
-	"raise-child/util"
 	"strconv"
 
 	"github.com/block-vision/sui-go-sdk/constant"
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/block-vision/sui-go-sdk/utils"
 )
 
 func FaucetTestnetBalance(client sui.ISuiAPI, address string, errLogger *log.Logger, ctx context.Context) error {
 	// Invalid sui wallet
-	if !util.IsValidSuiAddressStrict(address) {
+	if !utils.IsValidSuiAddress(models.SuiAddress(address)) {
 		return errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 	res, err := client.SuiXGetBalance(ctx, models.SuiXGetBalanceRequest{
 		Owner:    address,
 		CoinType: internal_sui.SUI_COIN_TYPE,

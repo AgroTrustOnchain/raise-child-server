@@ -43,7 +43,7 @@ func (p *pendingWithdrawProposalRepo) CreatePendingWithdrawProposal(proposal ent
 		proposal.Status, proposal.AIEvaluation, proposal.CreatedAt, proposal.UpdatedAt); err != nil {
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -65,7 +65,7 @@ func (p *pendingWithdrawProposalRepo) GetPendingWithdrawProposal(id string, ctx 
 		}
 
 		p.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -74,61 +74,61 @@ func (p *pendingWithdrawProposalRepo) GetPendingWithdrawProposal(id string, ctx 
 // GetPendingWithdrawProposals implements repository.IPendingWithdrawProposalRepository.
 func (p *pendingWithdrawProposalRepo) GetPendingWithdrawProposals(req request.GetPendingWithdrawProposalsRequest, ctx context.Context) ([]entities.PendingWithdrawProposal, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PENDING_WITHDRAW_PROPOSAL_REPOSITORY) + "GetPendingWithdrawProposals - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviousCondition bool = false
+	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
-		queryCondition += fmt.Sprintf("(LOWER(pool_name) LIKE LOWER('%s') OR LOWER(description) LIKE LOWER('%s'))", req.Keyword, req.Keyword)
-		isHavePreviousCondition = true
+		queryCondition += fmt.Sprintf("(LOWER(pool_name) LIKE LOWER('%%%s%%') OR LOWER(description) LIKE LOWER('%%%s%%'))", req.Keyword, req.Keyword)
+		isHavePreviosCondition = true
 	}
 
 	if req.Creator != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("creator = '%s'", req.Creator)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.Reviewer != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("reviewed_by = '%s'", req.Reviewer)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.MinAmount != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("withdraw_amount >= %d", *req.MinAmount)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.MaxAmount != nil {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("withdraw_amount <= %d", *req.MaxAmount)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.Status != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%s')", req.Status)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
-	if isHavePreviousCondition {
+	if isHavePreviosCondition {
 		queryCondition += " "
 	}
 
@@ -174,7 +174,7 @@ func (p *pendingWithdrawProposalRepo) GetPendingWithdrawProposals(req request.Ge
 	var totalRecords int
 	p.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(pending_withdraw_proposal_table, queryCondition)).Scan(&totalRecords)
 
-	return res, calculateTotalPages(totalRecords, req.PageSize), nil
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
 
 // UpdatePendingWithdrawProposal implements repository.IPendingWithdrawProposalRepository.
@@ -184,7 +184,7 @@ func (p *pendingWithdrawProposalRepo) UpdatePendingWithdrawProposal(proposal ent
 		"reviewed_by = $5 WHERE id = $6"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.PENDING_WITHDRAW_PROPOSAL_REPOSITORY) + "UpdatePendingWithdrawProposal - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	res, err := p.db.ExecContext(ctx, query, proposal.WithdrawAmount, proposal.ProofBlobID, proposal.Description, proposal.Status, proposal.ReviewedBy, proposal.ID)
 	if err != nil {
@@ -199,7 +199,7 @@ func (p *pendingWithdrawProposalRepo) UpdatePendingWithdrawProposal(proposal ent
 	}
 
 	if rowsAffected == 0 {
-		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, pending_withdraw_proposal_table))
+		return fmt.Errorf(noti.UNDEFINED_OBJECT_WARN_MSG, pending_withdraw_proposal_table)
 	}
 
 	return nil
@@ -216,7 +216,7 @@ func (p *pendingWithdrawProposalRepo) IsPendingWithdrawProposalProposedWithSpeci
 		}
 
 		p.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.PENDING_WITHDRAW_PROPOSAL_REPOSITORY) + "IsPendingWithdrawProposalProposedWithSpecificInfo - " + err.Error())
-		return false, errors.New(noti.INTERNAL_ERR_MSG)
+		return false, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return id != "", nil

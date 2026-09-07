@@ -11,6 +11,7 @@ import (
 	"raise-child/interfaces/repository"
 	"raise-child/model/dtos/request"
 	"raise-child/model/entities"
+	"time"
 )
 
 type taskProofRepo struct {
@@ -31,16 +32,17 @@ func InitializeTaskProofRepository(db *sql.DB, errLogger *log.Logger) repository
 func (t *taskProofRepo) CreateTaskProof(proof entities.TaskProof, ctx context.Context) error {
 	var query string = "INSERT INTO " + task_proof_table +
 		" (id, task_id, description, actor_profile_id, actor_address, " +
-		"image_blob_id, ai_evaluation, raw_submit_date, created_at, updated_at) " +
-		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+		"image_walrus_blob_id, image_cloudinary_blob_id, ai_evaluation, " +
+		"ai_reason, raw_submit_date, created_at, updated_at) " +
+		"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_PROOF_REPOSITORY) + "CreateTaskProof - "
 
-	if _, err := t.db.ExecContext(ctx, query, proof.ID, proof.TaskID, proof.Description, proof.ActorProfileID, proof.ActorAddress,
-		proof.ImageBlobID, proof.AIEvaluation, proof.RawSubmitDate, proof.CreatedAt, proof.UpdatedAt); err != nil {
+	if _, err := t.db.ExecContext(ctx, query, proof.ID, proof.TaskID, proof.Description, proof.ActorProfileID, proof.ActorAddress, proof.ImageWalrusBlobID,
+		proof.ImageCloudinaryBlobID, proof.AIEvaluation, proof.AIReason, proof.RawSubmitDate, proof.CreatedAt, proof.UpdatedAt); err != nil {
 
 		t.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -54,15 +56,15 @@ func (t *taskProofRepo) GetTaskProof(id string, ctx context.Context) (*entities.
 	var res entities.TaskProof
 	if err := t.db.QueryRowContext(ctx, query, id).Scan(
 		&res.ID, &res.TaskID, &res.Description, &res.ActorProfileID, &res.ActorAddress,
-		&res.ImageBlobID, &res.ReviewedBy, &res.AIEvaluation, &res.ReviewStatus,
-		&res.RawSubmitDate, &res.CreatedAt, &res.UpdatedAt); err != nil {
+		&res.ImageWalrusBlobID, &res.ImageCloudinaryBlobID, &res.ReviewedBy, &res.AIEvaluation, &res.AIReason,
+		&res.ReviewStatus, &res.RawSubmitDate, &res.CreatedAt, &res.UpdatedAt); err != nil {
 
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 
 		t.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil
@@ -71,40 +73,40 @@ func (t *taskProofRepo) GetTaskProof(id string, ctx context.Context) (*entities.
 // GetTaskProofs implements repository.ITaskProofRepository.
 func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx context.Context) ([]entities.TaskProof, int, error) {
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_PROOF_REPOSITORY) + "GetTaskProofs - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
 	var queryCondition string
-	var isHavePreviousCondition bool = false
+	var isHavePreviosCondition bool = false
 	if req.Keyword != "" {
 		queryCondition += fmt.Sprintf("LOWER(description) LIKE LOWER('%s'))", req.Keyword)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.Status != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
-		queryCondition += fmt.Sprintf("LOWER(status) = LOWER('%s')", req.Status)
-		isHavePreviousCondition = true
+		queryCondition += fmt.Sprintf("LOWER(review_status) = LOWER('%s')", req.Status)
+		isHavePreviosCondition = true
 	}
 
 	if req.ActorAddress != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("actor_address = '%s'", req.ActorAddress)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	if req.ReviewedBy != "" {
-		if isHavePreviousCondition {
+		if isHavePreviosCondition {
 			queryCondition += " AND "
 		}
 
 		queryCondition += fmt.Sprintf("reviewed_by = '%s'", req.ReviewedBy)
-		isHavePreviousCondition = true
+		isHavePreviosCondition = true
 	}
 
 	var order string = "DESC"
@@ -113,7 +115,7 @@ func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx cont
 	}
 
 	var query string = generateRetrieveQuery(generateRetrieveQueryRequest{
-		table:       task_table,
+		table:       task_proof_table,
 		limitAmount: req.PageSize,
 		condition:   queryCondition,
 		order:       " ORDER BY created_at " + order,
@@ -126,6 +128,7 @@ func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx cont
 		t.errLogger.Println(errLogMsg + err.Error())
 		return nil, 0, internalErr
 	}
+	defer rows.Close()
 
 	var res []entities.TaskProof
 	for rows.Next() {
@@ -133,7 +136,7 @@ func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx cont
 
 		if err := rows.Scan(
 			&x.ID, &x.TaskID, &x.Description, &x.ActorProfileID, &x.ActorAddress,
-			&x.ImageBlobID, &x.ReviewedBy, &x.AIEvaluation, &x.ReviewStatus,
+			&x.ImageWalrusBlobID, &x.ImageCloudinaryBlobID, &x.ReviewedBy, &x.AIEvaluation, &x.AIReason, &x.ReviewStatus,
 			&x.RawSubmitDate, &x.CreatedAt, &x.UpdatedAt); err != nil {
 
 			t.errLogger.Println(errLogMsg + err.Error())
@@ -146,11 +149,220 @@ func (t *taskProofRepo) GetTaskProofs(req request.GetTaskProofsRequest, ctx cont
 	var totalRecords int
 	t.db.QueryRowContext(ctx, generateCountTotalRecordsQuery(task_proof_table, queryCondition)).Scan(&totalRecords)
 
-	return res, calculateTotalPages(totalRecords, req.PageSize), nil
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
 }
 
-// IsTaskProofSubmittedWithDetail implements repository.ITaskProofRepository.
-func (t *taskProofRepo) IsTaskProofSubmittedWithDetail(taskId string, description string, actorAddress string, rawSubmitDate string, ctx context.Context) (bool, error) {
+// GetTaskProofsWithIsChildTask implements repository.ITaskProofRepository.
+func (t *taskProofRepo) GetTaskProofsWithIsChildTask(req request.GetTaskProofsRequest, ctx context.Context) ([]entities.TaskProofWithIsChildTask, int, error) {
+	var retrieveQueryHeader string = "SELECT tp.*, t.is_child_task "
+	var queryBody string = `FROM task_proofs tp
+							JOIN tasks t ON tp.task_id = t.id`
+
+	var isHavePreviosCondition bool
+	var queryCondition string
+	if req.Keyword != "" {
+		queryCondition += fmt.Sprintf("LOWER(tp.description) LIKE LOWER('%s')", req.Keyword)
+		isHavePreviosCondition = true
+	}
+
+	if req.Status != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("LOWER(tp.review_status) = LOWER('%s')", req.Status)
+		isHavePreviosCondition = true
+	}
+
+	if req.IsChildTask != nil {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("t.is_child_task = %v", *req.IsChildTask)
+		isHavePreviosCondition = true
+	}
+
+	if req.Region != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("LOWER(t.region) LIKE LOWER('%s')", req.Region)
+		isHavePreviosCondition = true
+	}
+
+	if req.ActorAddress != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("tp.actor_address = '%s'", req.ActorAddress)
+		isHavePreviosCondition = true
+	}
+
+	if req.ReviewedBy != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("tp.reviewed_by = '%s'", req.ReviewedBy)
+		isHavePreviosCondition = true
+	}
+
+	var order string = "DESC"
+	if req.SortOrder != "" {
+		order = req.SortOrder
+	}
+
+	var offSet int = (req.Page - 1) * req.PageSize
+	var paginationFilterCond string = fmt.Sprintf(" ORDER BY tp.created_at %s LIMIT %d OFFSET %d", order, req.PageSize, offSet)
+
+	var query string = retrieveQueryHeader + queryBody
+	if queryCondition != "" {
+		query += " WHERE " + queryCondition
+	}
+
+	query += paginationFilterCond
+
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_REPOSITORY) + "GetTaskProofsWithIsChildTask - "
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	rows, err := t.db.QueryContext(ctx, query)
+	if err != nil {
+		t.errLogger.Println(errLogMsg + err.Error())
+		return nil, 0, internalErr
+	}
+	defer rows.Close()
+
+	var res []entities.TaskProofWithIsChildTask
+	for rows.Next() {
+		var x entities.TaskProofWithIsChildTask
+
+		if err := rows.Scan(
+			&x.ID, &x.TaskID, &x.Description, &x.ActorProfileID, &x.ActorAddress,
+			&x.ImageBlobID, &x.ImageCloudinaryBlobID, &x.ReviewedBy, &x.AIEvaluation, &x.AIReason, &x.ReviewStatus,
+			&x.RawSubmitDate, &x.CreatedAt, &x.UpdatedAt, &x.IsChildTask); err != nil {
+
+			t.errLogger.Println(errLogMsg + err.Error())
+			return nil, 0, internalErr
+		}
+
+		res = append(res, x)
+	}
+
+	var totalCountQuery string = "SELECT COUNT(*) " + queryBody
+	if queryCondition != "" {
+		totalCountQuery += " WHERE " + queryCondition
+	}
+
+	var totalRecords int
+	t.db.QueryRowContext(ctx, totalCountQuery).Scan(&totalRecords)
+
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
+}
+
+// GetTaskProofsV2 implements repository.ITaskProofRepository.
+func (t *taskProofRepo) GetTaskProofsV2(req request.GetTaskProofsRequest, ctx context.Context) ([]entities.TaskProof, int, error) {
+	var retrieveQueryHeader string = "SELECT tp.* "
+	var queryBody string = `FROM task_proofs tp
+							JOIN tasks t ON tp.task_id = t.id`
+
+	var isHavePreviosCondition bool
+	var queryCondition string
+	if req.Keyword != "" {
+		queryCondition += fmt.Sprintf("LOWER(tp.description) LIKE LOWER('%s')", req.Keyword)
+		isHavePreviosCondition = true
+	}
+
+	if req.Status != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("LOWER(tp.review_status) = LOWER('%s')", req.Status)
+		isHavePreviosCondition = true
+	}
+
+	if req.Region != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("LOWER(t.region) LIKE LOWER('%s')", req.Region)
+		isHavePreviosCondition = true
+	}
+
+	if req.ActorAddress != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("tp.actor_address = '%s'", req.ActorAddress)
+		isHavePreviosCondition = true
+	}
+
+	if req.ReviewedBy != "" {
+		if isHavePreviosCondition {
+			queryCondition += " AND "
+		}
+
+		queryCondition += fmt.Sprintf("tp.reviewed_by = '%s'", req.ReviewedBy)
+		isHavePreviosCondition = true
+	}
+
+	var order string = "DESC"
+	if req.SortOrder != "" {
+		order = req.SortOrder
+	}
+
+	var offSet int = (req.Page - 1) * req.PageSize
+	var paginationFilterCond string = fmt.Sprintf(" ORDER BY tp.created_at %s LIMIT %d OFFSET %d", order, req.PageSize, offSet)
+
+	var query string = retrieveQueryHeader + queryBody
+	if queryCondition != "" {
+		query += " WHERE " + queryCondition
+	}
+
+	query += paginationFilterCond
+
+	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_REPOSITORY) + "GetTaskProofsV2 - "
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
+	rows, err := t.db.QueryContext(ctx, query)
+	if err != nil {
+		t.errLogger.Println(errLogMsg + err.Error())
+		return nil, 0, internalErr
+	}
+	defer rows.Close()
+
+	var res []entities.TaskProof
+	for rows.Next() {
+		var x entities.TaskProof
+
+		if err := rows.Scan(
+			&x.ID, &x.TaskID, &x.Description, &x.ActorProfileID, &x.ActorAddress,
+			&x.ImageWalrusBlobID, &x.ImageCloudinaryBlobID, &x.ReviewedBy, &x.AIEvaluation, &x.AIReason, &x.ReviewStatus,
+			&x.RawSubmitDate, &x.CreatedAt, &x.UpdatedAt); err != nil {
+
+			t.errLogger.Println(errLogMsg + err.Error())
+			return nil, 0, internalErr
+		}
+
+		res = append(res, x)
+	}
+
+	var totalCountQuery string = "SELECT COUNT(*) " + queryBody
+	if queryCondition != "" {
+		totalCountQuery += " WHERE " + queryCondition
+	}
+
+	var totalRecords int
+	t.db.QueryRowContext(ctx, totalCountQuery).Scan(&totalRecords)
+
+	return res, caculateTotalPages(totalRecords, req.PageSize), nil
+}
+
+// IsTaskProofSumittedWithDetail implements repository.ITaskProofRepository.
+func (t *taskProofRepo) IsTaskProofSumittedWithDetail(taskId string, description string, actorAddress string, rawSubmitDate string, ctx context.Context) (bool, error) {
 	var query string = "SELECT id FROM " + task_proof_table + " WHERE task_id = $1 AND description = $2 AND actor_address = $3 AND raw_submit_date = $4 AND (review_status = 'Pending' OR review_status = 'Approved') LIMIT 1"
 
 	var id string
@@ -159,8 +371,8 @@ func (t *taskProofRepo) IsTaskProofSubmittedWithDetail(taskId string, descriptio
 			return false, nil
 		}
 
-		t.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_PROOF_REPOSITORY) + "IsTaskProofSubmittedWithDetail - " + err.Error())
-		return false, errors.New(noti.INTERNAL_ERR_MSG)
+		t.errLogger.Println(fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_PROOF_REPOSITORY) + "IsTaskProofSumittedWithDetail - " + err.Error())
+		return false, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return id != "", nil
@@ -169,12 +381,12 @@ func (t *taskProofRepo) IsTaskProofSubmittedWithDetail(taskId string, descriptio
 // UpdateTaskProof implements repository.ITaskProofRepository.
 func (t *taskProofRepo) UpdateTaskProof(proof entities.TaskProof, ctx context.Context) error {
 	var query string = "UPDATE " + task_proof_table + " SET " +
-		"reviewed_by = $1, review_status = $2 WHERE id = $3"
+		"reviewed_by = $1, review_status = $2, updated_at = $3 WHERE id = $4"
 
 	var errLogMsg string = fmt.Sprintf(noti.REPO_ERR_MSG, shared.TASK_PROOF_REPOSITORY) + "UpdateTaskProof - "
-	var internalErr error = errors.New(noti.INTERNAL_ERR_MSG)
+	var internalErr error = errors.New(noti.INTERNALL_ERR_MSG)
 
-	res, err := t.db.ExecContext(ctx, query, proof.ReviewedBy, proof.ReviewStatus, proof.ID)
+	res, err := t.db.ExecContext(ctx, query, proof.ReviewedBy, proof.ReviewStatus, time.Now(), proof.ID)
 	if err != nil {
 		t.errLogger.Println(errLogMsg + err.Error())
 		return internalErr
@@ -187,7 +399,7 @@ func (t *taskProofRepo) UpdateTaskProof(proof entities.TaskProof, ctx context.Co
 	}
 
 	if rowsAffected == 0 {
-		return errors.New(fmt.Sprintf(noti.UNDEFINED_OBJECT_WARN_MSG, task_proof_table))
+		return fmt.Errorf(noti.UNDEFINED_OBJECT_WARN_MSG, task_proof_table)
 	}
 
 	return nil

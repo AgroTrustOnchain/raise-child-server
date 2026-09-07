@@ -11,9 +11,10 @@ type MealNeedResponse struct {
 	Durations            []WrapDuration      `json:"durations"`
 	TotalSupportedMonths int                 `json:"total_supported_months"`
 	SupportedYears       []WrapSupportedYear `json:"supported_years"`
-	ProvideMealDates     []string            `json:"provide_meal_dates"`
-	ProvideMealPeriods   []time.Time         `json:"provide_meal_periods"`
-	ProvideMealStaffs    []string            `json:"provide_meal_staffs"`
+	ProvideDates         []string            `json:"provide_dates"`
+	ProvidePeriods       []string            `json:"provide_periods"`
+	ProvideStaffs        []string            `json:"provide_staffs"`
+	ProvideImageBlobIDs  []string            `json:"provide_image_blob_ids"`
 	WithdrawProposals    []string            `json:"withdraw_proposals"`
 	WithdrawsForNeed     []string            `json:"withdraws_for_need"`
 }
@@ -29,26 +30,34 @@ type WrapSupportedYear struct {
 }
 
 type BooksNeedResponse struct {
-	ID                string   `json:"id"`
-	Year              int      `json:"year"`
-	YearChanges       []int    `json:"year_changes"`
-	Semester           int      `json:"semester"`
-	Value             int64    `json:"value"`
-	SupportedYears    []int    `json:"supported_years"`
-	Donors            []string `json:"donors"`
-	Donations         []string `json:"donations"`
-	WithdrawProposals []string `json:"withdraw_proposals"`
-	WithdrawsForNeed  []string `json:"withdraws_for_need"`
+	ID                  string   `json:"id"`
+	Year                int      `json:"year"`
+	YearChanges         []int    `json:"year_changes"`
+	Semster             int      `json:"semester"`
+	Value               int64    `json:"value"`
+	SupportedYears      []int    `json:"supported_years"`
+	Donors              []string `json:"donors"`
+	ProvideDates        []string `json:"provide_dates"`
+	ProvidePeriods      []string `json:"provide_periods"`
+	ProvideStaffs       []string `json:"provide_staffs"`
+	ProvideImageBlobIDs []string `json:"provide_image_blob_ids"`
+	Donations           []string `json:"donations"`
+	WithdrawProposals   []string `json:"withdraw_proposals"`
+	WithdrawsForNeed    []string `json:"withdraws_for_need"`
 }
 
 type HealthInsuranceNeedResponse struct {
-	ID                string   `json:"id"`
-	Year              int      `json:"year"`
-	YearChanges       []int    `json:"year_changes"`
-	Value             int64    `json:"value"`
-	SupportedYears    []int    `json:"supported_years"`
-	Donors            []string `json:"donors"`
-	Donations         []string `json:"donations"`
-	WithdrawProposals []string `json:"withdraw_proposals"`
-	WithdrawsForNeed  []string `json:"withdraws_for_need"`
+	ID                  string   `json:"id"`
+	Year                int      `json:"year"`
+	YearChanges         []int    `json:"year_changes"`
+	Value               int64    `json:"value"`
+	SupportedYears      []int    `json:"supported_years"`
+	Donors              []string `json:"donors"`
+	ProvideDates        []string `json:"provide_dates"`
+	ProvidePeriods      []string `json:"provide_periods"`
+	ProvideStaffs       []string `json:"provide_staffs"`
+	ProvideImageBlobIDs []string `json:"provide_image_blob_ids"`
+	Donations           []string `json:"donations"`
+	WithdrawProposals   []string `json:"withdraw_proposals"`
+	WithdrawsForNeed    []string `json:"withdraws_for_need"`
 }

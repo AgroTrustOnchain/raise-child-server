@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"net/http"
 	"raise-child/business"
 	action_type "raise-child/constants/action_type"
 	"raise-child/model/dtos/request"
@@ -23,64 +22,82 @@ import (
 // @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
 // @Router       /admins [get]
 func GetAdmins(ctx *gin.Context) {
-	// var request request.GetAdminsRequest
-	// if ctx.ShouldBindQuery(&request) != nil {
-	// 	util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
-	// 	return
-	// }
+	var request request.GetAdminsRequest
+	if ctx.ShouldBindQuery(&request) != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, nil))
+		return
+	}
 
-	// service, err := business.GenerateAdminService()
-	// if err != nil {
-	// 	util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
-	// 	return
-	// }
+	service, err := business.GenerateAdminService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
 
-	// res, err := service.GetAdmins(request, ctx)
-	// util.ProcessResponse(response.APIResponse{
-	// 	Data1:    res,
-	// 	Data2:    res,
-	// 	ErrMsg:   err,
-	// 	Context:  ctx,
-	// 	PostType: action_type.NON_POST,
-	// })
+	res, err := service.GetAdmins(request, ctx)
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
 
-	// ctx.Redirect(http.StatusSeeOther, "raisechild://payment/callback")
+// GetAdmin godoc
+// @Summary      Retrieve an admin
+// @Description  Retrieve an admin
+// @Tags         admins
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Admin NFT ID"
+// @Success      200      {object}  response.AdminNftResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /admins/{id} [get]
+func GetAdmin(ctx *gin.Context) {
+	service, err := business.GenerateAdminService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
 
-	html := `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đang chuyển hướng...</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
-        .btn { 
-            display: inline-block; padding: 12px 24px; margin-top: 20px;
-            background-color: #007bff; color: white; text-decoration: none; 
-            border-radius: 8px; font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <h3>Đang quay lại ứng dụng Raisechild...</h3>
-    <p>Nếu ứng dụng không tự động mở, vui lòng nhấn vào nút bên dưới:</p>
-    
-    <a href="raisechild://payment/callback" class="btn">Mở ứng dụng</a>
+	res, err := service.GetAdmin(ctx.Param("id"), ctx)
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
+}
 
-    <script>
-        // Chạy ngay lập tức
-        window.location.href = "raisechild://payment/callback";
+// GetAdminByOwner godoc
+// @Summary      Retrieve an admin by owner address
+// @Description  Retrieve an admin by owner address
+// @Tags         admins
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Admin Address"
+// @Success      200      {object}  response.AdminNftResponse
+// @Failure      400      {object}  response.MessageAPIResponse "Invalid data. Please try again."
+// @Failure      500      {object}  response.MessageAPIResponse "There is something wrong in the system during the process. Please try again later."
+// @Router       /admins/user/{id} [get]
+func GetAdminByOwner(ctx *gin.Context) {
+	service, err := business.GenerateAdminService()
+	if err != nil {
+		util.ProcessResponse(util.GenerateInvalidRequestAndSystemProblemModel(ctx, err))
+		return
+	}
 
-        // Thêm một lần thử lại sau 1 giây nếu lệnh trên bị trình duyệt chặn
-        setTimeout(function() {
-            window.location.href = "raisechild://payment/callback";
-        }, 1000);
-    </script>
-</body>
-</html>`
-
-	ctx.Header("Content-Type", "text/html; charset=utf-8")
-	ctx.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
+	res, err := service.GetAdminByOwner(ctx.Param("id"), ctx)
+	util.ProcessResponse(response.APIResponse{
+		Data1:    res,
+		Data2:    res,
+		ErrMsg:   err,
+		Context:  ctx,
+		PostType: action_type.NON_POST,
+	})
 }
 
 // UpdatePublisherInfo godoc

@@ -23,7 +23,7 @@ type Gift struct {
 	UploadedAt           string `json:"uploaded_at"`
 	UpdatedAt            string `json:"updated_at"`
 	DeliveredAt          string `json:"delivered_at"`
-	ConfirmReceivedBy    string `json:"confirm_recieved_by"`
+	ConfirmRecievedBy    string `json:"confirm_recieved_by"`
 }
 
 func (g Gift) ToGiftResponse() response.GiftResponse {
@@ -52,6 +52,6 @@ func (g Gift) ToGiftResponse() response.GiftResponse {
 		UploadedAt:           util.MilliSecToTime(uploadedAt),
 		UpdatedAt:            util.MilliSecToTime(updatedAt),
 		DeliveredAt:          util.MilliSecToTime(deliveredAt),
-		ConfirmReceivedBy:    g.ConfirmReceivedBy,
+		ConfirmRecievedBy:    g.ConfirmRecievedBy,
 	}
 }

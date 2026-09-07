@@ -13,51 +13,8 @@ type registrationRequestMockRepo struct {
 	mock.Mock
 }
 
-func InitializeRegistrationRequestMockRepo() repository.IRegistrationRequestRepository {
+func InializeRegistrationRequestMockRepo() repository.IRegistrationRequestRepository {
 	return &registrationRequestMockRepo{}
-}
-
-// CreateRegistrationRequest implements repository.IRegistrationRequestRepository.
-func (r *registrationRequestMockRepo) CreateRegistrationRequest(req entities.RegistrationRequest, ctx context.Context) error {
-	var mockData = r.Called(req, ctx)
-
-	if mockFunc, ok := mockData.Get(0).(func(entities.RegistrationRequest, context.Context) error); ok {
-		return mockFunc(req, ctx)
-	}
-
-	if err, ok := mockData.Error(0).(error); ok {
-		return err
-	}
-
-	return nil
-}
-
-// GetPendingRequests implements repository.IRegistrationRequestRepository.
-func (r *registrationRequestMockRepo) GetPendingRequests(ctx context.Context) ([]entities.BackgroundRecord, []entities.BackgroundRecord, error) {
-	var mockData = r.Called(ctx)
-
-	var res1 []entities.BackgroundRecord
-	if mockFunc, ok := mockData.Get(0).(func(context.Context) []entities.BackgroundRecord); ok {
-		res1 = mockFunc(ctx)
-	} else {
-		res1 = mockData.Get(0).([]entities.BackgroundRecord)
-	}
-
-	var res2 []entities.BackgroundRecord
-	if mockFunc, ok := mockData.Get(1).(func(context.Context) []entities.BackgroundRecord); ok {
-		res2 = mockFunc(ctx)
-	} else {
-		res2 = mockData.Get(1).([]entities.BackgroundRecord)
-	}
-
-	var res3 error
-	if mockFunc, ok := mockData.Get(2).(func(context.Context) error); ok {
-		res3 = mockFunc(ctx)
-	} else {
-		res3 = mockData.Error(2)
-	}
-
-	return res1, res2, res3
 }
 
 // GetRegistrationRequest implements repository.IRegistrationRequestRepository.
@@ -135,6 +92,85 @@ func (r *registrationRequestMockRepo) GetWalletRegistrationRequests(id string, c
 	panic("unimplemented")
 }
 
+// CreateRegistrationRequest implements repository.IRegistrationRequestRepository.
+func (r *registrationRequestMockRepo) CreateRegistrationRequest(req entities.RegistrationRequest, ctx context.Context) error {
+	var mockData = r.Called(req, ctx)
+
+	if mockFunc, ok := mockData.Get(0).(func(entities.RegistrationRequest, context.Context) error); ok {
+		return mockFunc(req, ctx)
+	}
+
+	if err, ok := mockData.Error(0).(error); ok {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateRegistrationRequest implements repository.IRegistrationRequestRepository.
+func (r *registrationRequestMockRepo) UpdateRegistrationRequest(req entities.RegistrationRequest, ctx context.Context) error {
+	var mockData = r.Called(req, ctx)
+
+	if mockFunc, ok := mockData.Get(0).(func(entities.RegistrationRequest, context.Context) error); ok {
+		return mockFunc(req, ctx)
+	}
+
+	if err, ok := mockData.Error(0).(error); ok {
+		return err
+	}
+
+	return nil
+}
+
+// GetPendingRequests implements repository.IRegistrationRequestRepository.
+func (r *registrationRequestMockRepo) GetPendingRequests(ctx context.Context) ([]entities.BackgroundRecord, []entities.BackgroundRecord, error) {
+	var mockData = r.Called(ctx)
+
+	var res1 []entities.BackgroundRecord
+	if mockFunc, ok := mockData.Get(0).(func(context.Context) []entities.BackgroundRecord); ok {
+		res1 = mockFunc(ctx)
+	} else {
+		res1 = mockData.Get(0).([]entities.BackgroundRecord)
+	}
+
+	var res2 []entities.BackgroundRecord
+	if mockFunc, ok := mockData.Get(1).(func(context.Context) []entities.BackgroundRecord); ok {
+		res2 = mockFunc(ctx)
+	} else {
+		res2 = mockData.Get(1).([]entities.BackgroundRecord)
+	}
+
+	var res3 error
+	if mockFunc, ok := mockData.Get(2).(func(context.Context) error); ok {
+		res3 = mockFunc(ctx)
+	} else {
+		res3 = mockData.Error(2)
+	}
+
+	return res1, res2, res3
+}
+
+// GetPendingRequestsV2 implements repository.IRegistrationRequestRepository.
+func (r *registrationRequestMockRepo) GetPendingRequestsV2(ctx context.Context) ([]entities.RegistrationRequest, error) {
+	var mockData = r.Called(ctx)
+
+	var res1 []entities.RegistrationRequest
+	if mockFunc, ok := mockData.Get(0).(func(context.Context) []entities.RegistrationRequest); ok {
+		res1 = mockFunc(ctx)
+	} else {
+		res1 = mockData.Get(0).([]entities.RegistrationRequest)
+	}
+
+	var res2 error
+	if mockFunc, ok := mockData.Get(1).(func(context.Context) error); ok {
+		res2 = mockFunc(ctx)
+	} else {
+		res2 = mockData.Error(1)
+	}
+
+	return res1, res2
+}
+
 // SetApprovedStatuses implements repository.IRegistrationRequestRepository.
 func (r *registrationRequestMockRepo) SetApprovedStatuses(reqs []entities.BackgroundRecord, ctx context.Context) error {
 	var mockData = r.Called(reqs, ctx)
@@ -165,12 +201,27 @@ func (r *registrationRequestMockRepo) SetRefusedStatuses(reqs []entities.Backgro
 	return nil
 }
 
-// UpdateRegistrationRequest implements repository.IRegistrationRequestRepository.
-func (r *registrationRequestMockRepo) UpdateRegistrationRequest(req entities.RegistrationRequest, ctx context.Context) error {
-	var mockData = r.Called(req, ctx)
+// SetApprovedStatusesV2 implements repository.IRegistrationRequestRepository.
+func (r *registrationRequestMockRepo) SetApprovedStatusesV2(reqs []entities.RegistrationRequest, ctx context.Context) error {
+	var mockData = r.Called(reqs, ctx)
 
-	if mockFunc, ok := mockData.Get(0).(func(entities.RegistrationRequest, context.Context) error); ok {
-		return mockFunc(req, ctx)
+	if mockFunc, ok := mockData.Get(0).(func([]entities.RegistrationRequest, context.Context) error); ok {
+		return mockFunc(reqs, ctx)
+	}
+
+	if err, ok := mockData.Error(0).(error); ok {
+		return err
+	}
+
+	return nil
+}
+
+// SetRefusedStatusesV2 implements repository.IRegistrationRequestRepository.
+func (r *registrationRequestMockRepo) SetRefusedStatusesV2(reqs []entities.RegistrationRequest, ctx context.Context) error {
+	var mockData = r.Called(reqs, ctx)
+
+	if mockFunc, ok := mockData.Get(0).(func([]entities.RegistrationRequest, context.Context) error); ok {
+		return mockFunc(reqs, ctx)
 	}
 
 	if err, ok := mockData.Error(0).(error); ok {

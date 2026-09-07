@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"raise-child/constants/env"
@@ -59,7 +58,12 @@ func GenerateVolunteerRequestService() (business.IVolunteerRequestService, error
 // ConfirmRequest implements business.IVolunteerRequestService.
 func (v *volunteerRequestService) ConfirmRequest(id string, ctx context.Context) (response.BuildTransactionResponse, error) {
 	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+
 	var sender string = ctx.Value("address").(string)
+	if !utils.IsValidSuiAddress(models.SuiAddress(sender)) {
+		return response.BuildTransactionResponse{}, genericErr
+	}
+
 	req, err := v.volunteerRequestRepo.GetRequest(id, ctx)
 	if err != nil {
 		return response.BuildTransactionResponse{}, err
@@ -104,17 +108,6 @@ func (v *volunteerRequestService) ConfirmRequest(id string, ctx context.Context)
 	}
 
 	var client = v.clients[constant.SuiTestnet]
-	var mangeModule = on_chain.InitializeModuleManage()
-	caps, err := on_chain.GetOnChainOwnedObjects[entities.Cap](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       client,
-		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), mangeModule.GetModule(), mangeModule.GetRegisterAdminCapStruct()),
-		ErrLogger:    v.errLogger,
-	}, ctx)
-	if err != nil {
-		return response.BuildTransactionResponse{}, err
-	}
-
 	var staffModule = on_chain.InitializeModuleStaff()
 	txBytes, err := on_chain.BuildTransaction(on_chain.BuildTransactionRequest{
 		Client:    client,
@@ -125,7 +118,6 @@ func (v *volunteerRequestService) ConfirmRequest(id string, ctx context.Context)
 		Arguments: staffModule.ToRegisterVolunteerArguments(on_chain.RegisterVolunteerArguments{
 			Region: req.Region,
 			RegisterAdminArguments: on_chain.RegisterAdminArguments{
-				CapID:              caps[0].ID.ID,
 				IdentityCode:       req.IdentityCode,
 				IdentityCardBlobID: req.IdentityCardBlobID,
 				AvatarBlobID:       req.AvatarBlobID,
@@ -158,7 +150,7 @@ func (v *volunteerRequestService) CreateRequest(req request.VolunteerRegistratio
 		return nil, err
 	}
 
-	if reqs != nil && len(reqs) > 0 {
+	if len(reqs) > 0 {
 		for _, req := range reqs {
 			if req.Status == request_pending_status || req.Status == request_approved_status {
 				return nil, genericErr

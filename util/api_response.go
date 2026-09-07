@@ -20,7 +20,7 @@ func ProcessResponse(data response.APIResponse) {
 	}
 
 	if data.PostType != action_type.NON_POST {
-		processSuccessPostResponse(data.Data2, data.PostType, data.Context)
+		processSuccessPostReponse(data.Data2, data.PostType, data.Context)
 		return
 	}
 
@@ -101,7 +101,7 @@ func processFailResponse(err error, ctx *gin.Context) {
 	var errCode int
 
 	switch err.Error() {
-	case noti.INTERNAL_ERR_MSG:
+	case noti.INTERNALL_ERR_MSG:
 		errCode = http.StatusInternalServerError
 	case noti.GENERIC_RIGHT_ACCESS_WARN_MSG:
 		errCode = http.StatusForbidden
@@ -120,7 +120,7 @@ func processFailResponse(err error, ctx *gin.Context) {
 	})
 }
 
-func processSuccessPostResponse(res interface{}, postType string, ctx *gin.Context) {
+func processSuccessPostReponse(res interface{}, postType string, ctx *gin.Context) {
 	switch postType {
 	case action_type.REDIRECT:
 		processRedirectResponse(fmt.Sprint(res), ctx)

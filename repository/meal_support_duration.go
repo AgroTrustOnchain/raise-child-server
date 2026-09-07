@@ -35,7 +35,7 @@ func (m *mealSupportDurationRepo) CreateMealSupportDuration(duration entities.Of
 	if _, err := m.db.ExecContext(ctx, query, duration.ID, duration.StartPeriod, duration.EndPeriod); err != nil {
 
 		m.errLogger.Println(errLogMsg + err.Error())
-		return errors.New(noti.INTERNAL_ERR_MSG)
+		return errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return nil
@@ -55,7 +55,7 @@ func (m *mealSupportDurationRepo) GetMealSupportDuration(id string, ctx context.
 		}
 
 		m.errLogger.Println(errLogMsg + err.Error())
-		return nil, errors.New(noti.INTERNAL_ERR_MSG)
+		return nil, errors.New(noti.INTERNALL_ERR_MSG)
 	}
 
 	return &res, nil

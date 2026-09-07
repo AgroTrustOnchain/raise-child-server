@@ -19,6 +19,7 @@ import (
 	"raise-child/util/cache"
 	"raise-child/util/db"
 	on_chain "raise-child/util/on_chain"
+	"slices"
 
 	"github.com/block-vision/sui-go-sdk/constant"
 	"github.com/block-vision/sui-go-sdk/sui"
@@ -65,32 +66,17 @@ func (n *notiService) GetCurrentWalletNotis(wallet string, req request.GetNotisR
 		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
 	}
 
-	var module = on_chain.InitializeModuleStaff()
-	nfts, err := on_chain.GetOnChainOwnedObjects[entities.StaffNft](on_chain.GetOnChainOwnedObjectsRequest{
-		Client:       n.clients[constant.SuiTestnet],
-		OwnerAddress: wallet,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), module.GetModule(), module.GetStaffNftObjectStruct()),
-		ErrLogger:    n.errLogger,
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    n.clients[constant.SuiTestnet],
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: n.errLogger,
 	}, ctx)
 	if err != nil {
 		return response.PaginationDataResponse{}, err
 	}
 
-	var genericRightErr error = errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
-	if nfts == nil || len(nfts) == 0 {
-		return response.PaginationDataResponse{}, genericRightErr
-	}
-
-	var isLeader bool = false
-	for _, nft := range nfts {
-		if nft.Role == local_leader_role {
-			isLeader = true
-			break
-		}
-	}
-
-	if !isLeader {
-		return response.PaginationDataResponse{}, genericRightErr
+	if !slices.Contains(manage.LocalLeaderIds, wallet) {
+		return response.PaginationDataResponse{}, errors.New(noti.GENERIC_RIGHT_ACCESS_WARN_MSG)
 	}
 
 	if req.Page < 1 {
@@ -101,15 +87,9 @@ func (n *notiService) GetCurrentWalletNotis(wallet string, req request.GetNotisR
 		req.PageSize = default_page_size
 	}
 
-	var res response.PaginationDataResponse
-	var redisKey string = n.getGetCurrentWalletNotisRedisKey(wallet, req)
-	if n.redisCache.Get(redisKey, &res, ctx) {
-		return res, nil
-	}
-
 	data, err := n.leaderNotiRepo.GetCurrentLeaderNotis(req, wallet, ctx)
 	var amount int
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		amount = 0
 	} else {
 		amount = len(data)

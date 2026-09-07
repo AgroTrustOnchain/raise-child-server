@@ -65,6 +65,63 @@ const (
 	admin_records_limit int = 10
 )
 
+// GetAdmin implements business.IAdminService.
+func (a *adminService) GetAdmin(id string, ctx context.Context) (response.AdminNftResponse, error) {
+	if !util.IsValidSuiAddressStrict(id) {
+		return response.AdminNftResponse{}, errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	}
+
+	adminNft, err := on_chain.GetOnChainObject[entities.AdminNft](on_chain.GetOnChainObjectRequest{
+		Client:    a.clients[constant.SuiTestnet],
+		ObjectId:  id,
+		ErrLogger: a.errLogger,
+	}, ctx)
+
+	return adminNft.ToAdminNftResponse(), err
+}
+
+// GetAdminByOwner implements business.IAdminService.
+func (a *adminService) GetAdminByOwner(id string, ctx context.Context) (response.AdminNftResponse, error) {
+	var genericErr error = errors.New(noti.GENERIC_ERROR_WARN_MSG)
+	if !util.IsValidSuiAddressStrict(id) {
+		return response.AdminNftResponse{}, genericErr
+	}
+
+	var client = a.clients[constant.SuiTestnet]
+	manage, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  os.Getenv(env.MANAGE_OBJECT_ID),
+		ErrLogger: a.errLogger,
+	}, ctx)
+	if err != nil {
+		return response.AdminNftResponse{}, err
+	}
+
+	if manage == nil {
+		return response.AdminNftResponse{}, errors.New(noti.INTERNALL_ERR_MSG)
+	}
+
+	var adminNftId string
+	for i, admin := range manage.AdminIds {
+		if admin == id {
+			adminNftId = manage.AdminNfts[i]
+			break
+		}
+	}
+
+	if adminNftId == "" {
+		return response.AdminNftResponse{}, genericErr
+	}
+
+	adminNft, err := on_chain.GetOnChainObject[entities.AdminNft](on_chain.GetOnChainObjectRequest{
+		Client:    client,
+		ObjectId:  adminNftId,
+		ErrLogger: a.errLogger,
+	}, ctx)
+
+	return adminNft.ToAdminNftResponse(), err
+}
+
 // GetAdmins implements business.IAdminService.
 func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Context) (response.PaginationDataResponse, error) {
 	req.SortOrder = util.StandardizeSortOrder(req.SortOrder)
@@ -78,10 +135,6 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 	}
 
 	var res response.PaginationDataResponse
-	var redisKey string = a.getGetAdminsRedisKey(req)
-	if a.redisCache.Get(redisKey, &res, ctx) {
-		return res, nil
-	}
 
 	var client = a.clients[constant.SuiTestnet]
 	manageObj, err := on_chain.GetOnChainObject[entities.Manage](on_chain.GetOnChainObjectRequest{
@@ -102,7 +155,7 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 		return response.PaginationDataResponse{}, err
 	}
 
-	if admins == nil || len(admins) == 0 {
+	if len(admins) == 0 {
 		return response.PaginationDataResponse{
 			Page:   req.Page,
 			Amount: 0,
@@ -137,6 +190,11 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 		filteredAdmins = append(filteredAdmins, admin)
 	}
 
+	var skippedRecords int = (req.Page - 1) * req.PageSize
+	if len(filteredAdmins) <= skippedRecords {
+		return response.PaginationDataResponse{}, nil
+	}
+
 	sort.Slice(filteredAdmins, func(i, j int) bool {
 		if req.SortCriteria == "date_of_birth" {
 			var dob1 time.Time = util.RawDateToTime(filteredAdmins[i].DateOfBirth)
@@ -155,11 +213,6 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 		return true
 	})
 
-	var skippedRecords int = (req.Page - 1) * req.PageSize
-	if len(filteredAdmins) <= skippedRecords {
-		return response.PaginationDataResponse{}, nil
-	}
-
 	var data []response.AdminNftResponse
 	for i := skippedRecords; i < len(filteredAdmins); i++ {
 		data = append(data, filteredAdmins[i].ToAdminNftResponse())
@@ -174,8 +227,6 @@ func (a *adminService) GetAdmins(req request.GetAdminsRequest, ctx context.Conte
 		Page:       req.Page,
 		TotalPages: int(math.Ceil(float64(len(filteredAdmins)) / float64(req.PageSize))),
 	}
-
-	a.redisCache.Set(redisKey, res, time.Minute*5, ctx)
 
 	return res, nil
 }
@@ -225,11 +276,11 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 
 	var client = a.clients[constant.SuiTestnet]
 	var sender string = ctx.Value("address").(string)
-	var manageModule = on_chain.InitializeModuleManage()
+	var manangeModule = on_chain.InitializeModuleManage()
 	nfts, err := on_chain.GetOnChainOwnedObjects[entities.AdminNft](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
 		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manageModule.GetModule(), manageModule.GetAdminNftStruct()),
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manangeModule.GetModule(), manangeModule.GetAdminNftStruct()),
 		ErrLogger:    a.errLogger,
 	}, ctx)
 	if err != nil {
@@ -239,7 +290,7 @@ func (a *adminService) UpdatePublisherInfo(req request.UpdatePublisherInfoReques
 	editProfileCaps, err := on_chain.GetOnChainOwnedObjects[entities.Cap](on_chain.GetOnChainOwnedObjectsRequest{
 		Client:       client,
 		OwnerAddress: sender,
-		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manageModule.GetModule(), manageModule.GetUpdateAdminInfoCapStruct()),
+		StructType:   fmt.Sprintf("%s::%s::%s", os.Getenv(env.PACKAGE_ID), manangeModule.GetModule(), manangeModule.GetUpdateAdminInfoCapStruct()),
 		ErrLogger:    a.errLogger,
 	}, ctx)
 	if err != nil {
@@ -315,4 +366,127 @@ func (a *adminService) getGetAdminsRedisKey(req request.GetAdminsRequest) string
 	return fmt.Sprintf("admin:kw:%s:g:%s:y:%s:sc:%s:o:%s:s:%d:p:%d",
 		keyword, gender, yob, sortCriteria, req.SortOrder, req.PageSize, req.Page,
 	)
+}
+
+var mockAdmins = []response.AdminNftResponse{
+	{
+		ID: "1", IdentityCode: "001092000123", IdentityCardBlobID: "ic-101", AvatarBlobID: "avt-101",
+		FirstName: "An", LastName: "Nguyễn", Gender: "Female", DateOfBirth: time.Date(1992, 5, 15, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0901234567", Email: "an.nguyen@example.com", UploadedAt: time.Now(),
+		Name: "Golden Dragon", Url: "https://nft.com",
+	},
+	{
+		ID: "2", IdentityCode: "001092000456", IdentityCardBlobID: "ic-102", AvatarBlobID: "avt-102",
+		FirstName: "Bình", LastName: "Trần", Gender: "Male", DateOfBirth: time.Date(1988, 11, 20, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0912345678", Email: "binh.tran@example.com", UploadedAt: time.Now(),
+		Name: "Cyber Punk", Url: "https://nft.com",
+	},
+	{
+		ID: "3", IdentityCode: "001092000789", IdentityCardBlobID: "ic-103", AvatarBlobID: "avt-103",
+		FirstName: "Chi", LastName: "Lê", Gender: "Female", DateOfBirth: time.Date(1995, 2, 10, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0923456789", Email: "chi.le@example.com", UploadedAt: time.Now(),
+		Name: "Ethereal", Url: "https://nft.com",
+	},
+	{
+		ID: "4", IdentityCode: "001092000111", IdentityCardBlobID: "ic-104", AvatarBlobID: "avt-104",
+		FirstName: "Dũng", LastName: "Phạm", Gender: "Male", DateOfBirth: time.Date(1990, 8, 30, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0934567890", Email: "dung.pham@example.com", UploadedAt: time.Now(),
+		Name: "Mecha War", Url: "https://nft.com",
+	},
+	{
+		ID: "5", IdentityCode: "001092000222", IdentityCardBlobID: "ic-105", AvatarBlobID: "avt-105",
+		FirstName: "Giang", LastName: "Hoàng", Gender: "Female", DateOfBirth: time.Date(1993, 12, 12, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0945678901", Email: "giang.hoang@example.com", UploadedAt: time.Now(),
+		Name: "Pixel Cat", Url: "https://nft.com",
+	},
+	{
+		ID: "6", IdentityCode: "001092000333", IdentityCardBlobID: "ic-106", AvatarBlobID: "avt-106",
+		FirstName: "Hải", LastName: "Vũ", Gender: "Male", DateOfBirth: time.Date(1985, 3, 25, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0956789012", Email: "hai.vu@example.com", UploadedAt: time.Now(),
+		Name: "Ancient", Url: "https://nft.com",
+	},
+	{
+		ID: "7", IdentityCode: "001092000444", IdentityCardBlobID: "ic-107", AvatarBlobID: "avt-107",
+		FirstName: "Khánh", LastName: "Phan", Gender: "Male", DateOfBirth: time.Date(1998, 7, 19, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0967890123", Email: "khanh.phan@example.com", UploadedAt: time.Now(),
+		Name: "Neon City", Url: "https://nft.com",
+	},
+	{
+		ID: "8", IdentityCode: "001092000555", IdentityCardBlobID: "ic-108", AvatarBlobID: "avt-108",
+		FirstName: "Lan", LastName: "Đặng", Gender: "Female", DateOfBirth: time.Date(1994, 9, 05, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0978901234", Email: "lan.dang@example.com", UploadedAt: time.Now(),
+		Name: "Lotus Flower", Url: "https://nft.com",
+	},
+	{
+		ID: "9", IdentityCode: "001092000666", IdentityCardBlobID: "ic-109", AvatarBlobID: "avt-109",
+		FirstName: "Minh", LastName: "Bùi", Gender: "Male", DateOfBirth: time.Date(1991, 1, 14, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0989012345", Email: "minh.bui@example.com", UploadedAt: time.Now(),
+		Name: "Ocean Wave", Url: "https://nft.com",
+	},
+	{
+		ID: "10", IdentityCode: "001092000777", IdentityCardBlobID: "ic-110", AvatarBlobID: "avt-110",
+		FirstName: "Nga", LastName: "Đỗ", Gender: "Female", DateOfBirth: time.Date(1996, 6, 21, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0990123456", Email: "nga.do@example.com", UploadedAt: time.Now(),
+		Name: "Starry Night", Url: "https://nft.com0",
+	},
+	{
+		ID: "11", IdentityCode: "001092000888", IdentityCardBlobID: "ic-111", AvatarBlobID: "avt-111",
+		FirstName: "Phong", LastName: "Hồ", Gender: "Male", DateOfBirth: time.Date(1989, 4, 18, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0321234567", Email: "phong.ho@example.com", UploadedAt: time.Now(),
+		Name: "Mountain", Url: "https://nft.com1",
+	},
+	{
+		ID: "12", IdentityCode: "001092000999", IdentityCardBlobID: "ic-112", AvatarBlobID: "avt-112",
+		FirstName: "Quỳnh", LastName: "Ngô", Gender: "Female", DateOfBirth: time.Date(1997, 10, 31, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0332345678", Email: "quynh.ngo@example.com", UploadedAt: time.Now(),
+		Name: "Violet Aura", Url: "https://nft.com2",
+	},
+	{
+		ID: "13", IdentityCode: "001092001122", IdentityCardBlobID: "ic-113", AvatarBlobID: "avt-113",
+		FirstName: "Sơn", LastName: "Dương", Gender: "Male", DateOfBirth: time.Date(1990, 2, 14, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0343456789", Email: "son.duong@example.com", UploadedAt: time.Now(),
+		Name: "Abstract", Url: "https://nft.com3",
+	},
+	{
+		ID: "14", IdentityCode: "001092001133", IdentityCardBlobID: "ic-114", AvatarBlobID: "avt-114",
+		FirstName: "Thảo", LastName: "Lý", Gender: "Female", DateOfBirth: time.Date(1993, 3, 03, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0354567890", Email: "thao.ly@example.com", UploadedAt: time.Now(),
+		Name: "Green Forest", Url: "https://nft.com4",
+	},
+	{
+		ID: "15", IdentityCode: "001092001144", IdentityCardBlobID: "ic-115", AvatarBlobID: "avt-115",
+		FirstName: "Tuấn", LastName: "Lương", Gender: "Male", DateOfBirth: time.Date(1987, 12, 25, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0365678901", Email: "tuan.luong@example.com", UploadedAt: time.Now(),
+		Name: "Iron Knight", Url: "https://nft.com5",
+	},
+	{
+		ID: "16", IdentityCode: "001092001155", IdentityCardBlobID: "ic-116", AvatarBlobID: "avt-116",
+		FirstName: "Vân", LastName: "Vương", Gender: "Female", DateOfBirth: time.Date(1999, 1, 01, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0376789012", Email: "van.vuong@example.com", UploadedAt: time.Now(),
+		Name: "Cloud Nine", Url: "https://nft.com6",
+	},
+	{
+		ID: "17", IdentityCode: "001092001166", IdentityCardBlobID: "ic-117", AvatarBlobID: "avt-117",
+		FirstName: "Việt", LastName: "Tạ", Gender: "Male", DateOfBirth: time.Date(1992, 11, 11, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0387890123", Email: "viet.ta@example.com", UploadedAt: time.Now(),
+		Name: "Red Phoenix", Url: "https://nft.com7",
+	},
+	{
+		ID: "18", IdentityCode: "001092001177", IdentityCardBlobID: "ic-118", AvatarBlobID: "avt-118",
+		FirstName: "Xuân", LastName: "Trịnh", Gender: "Female", DateOfBirth: time.Date(1991, 4, 30, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0398901234", Email: "xuan.trinh@example.com", UploadedAt: time.Now(),
+		Name: "Spring", Url: "https://nft.com8",
+	},
+	{
+		ID: "19", IdentityCode: "001092001188", IdentityCardBlobID: "ic-119", AvatarBlobID: "avt-119",
+		FirstName: "Yên", LastName: "Mạc", Gender: "Female", DateOfBirth: time.Date(1995, 8, 15, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0869012345", Email: "yen.mac@example.com", UploadedAt: time.Now(),
+		Name: "Silent Night", Url: "https://nft.com9",
+	},
+	{
+		ID: "20", IdentityCode: "001092001199", IdentityCardBlobID: "ic-120", AvatarBlobID: "avt-120",
+		FirstName: "Hùng", LastName: "Cao", Gender: "Male", DateOfBirth: time.Date(1986, 10, 10, 0, 0, 0, 0, time.UTC),
+		PhoneNumber: "0880123456", Email: "hung.cao@example.com", UploadedAt: time.Now(),
+		Name: "Deep Space", Url: "https://nft.com0",
+	},
 }
